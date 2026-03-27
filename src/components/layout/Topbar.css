@@ -1,0 +1,68 @@
+.topbar {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 28px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.topbar-logo {
+  font-weight: 700;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.topbar-nav {
+  display: flex;
+  gap: 8px;
+  background: var(--card-bg);
+  border-radius: 48px;
+  padding: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.topbar-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 24px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: var(--transition);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.topbar-btn.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.topbar-actions button {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  padding: 8px;
+  border-radius: 40px;
+}
+
+.topbar-actions button:hover {
+  color: var(--accent);
+  background: var(--card-bg);
+  transform: scale(1.05);
+}
