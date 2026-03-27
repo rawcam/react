@@ -1,0 +1,19 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-layout {
+  display: flex;
+  flex: 1;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  transition: max-width 0.2s;
+  min-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+}
