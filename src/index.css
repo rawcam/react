@@ -1,148 +1,41 @@
+@import './variables.css'; /* если есть, иначе можно удалить */
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-body {
-  font-family: 'Inter', sans-serif;
-  background: #f5f7fb;
-  color: #1e293b;
-}
-
-/* Хендлы — тонкие линии */
-.react-flow__node .react-flow__handle {
-  width: 8px !important;
-  height: 1px !important;
-  min-width: 8px !important;
-  max-width: 8px !important;
-  min-height: 1px !important;
-  max-height: 1px !important;
-  border-radius: 0 !important;
-  border: none !important;
-  background: inherit !important;
-  transform: translateY(-50%) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.react-flow__node .react-flow__handle-left {
-  left: -27px !important;
-}
-
-.react-flow__node .react-flow__handle-right {
-  right: -27px !important;
-}
-
-/* Ортогональные рёбра без стрелок и анимации */
-.react-flow__edge-path {
-  stroke: #2563eb !important;
-  stroke-width: 2 !important;
-  animation: none !important;
-  marker-end: none !important;
-  marker-start: none !important;
-}
-
-.react-flow__edge.selected .react-flow__edge-path {
-  stroke: #ef4444 !important;
-}
-
-.react-flow__edge marker {
-  display: none !important;
-}
-/* Сайдбар */
-.sidebar {
-  width: 280px;
-  background: white;
-  border-right: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  padding: 16px 12px;
-  overflow-y: auto;
-  font-family: 'Inter', sans-serif;
-}
-
-.sidebar-section {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.sidebar-section h4 {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #64748b;
-  margin: 0 0 12px 0;
-}
-
-.sidebar-section label {
-  display: block;
-  font-size: 11px;
-  color: #334155;
-  margin-bottom: 4px;
-  margin-top: 10px;
-}
-
-.sidebar-section input,
-.sidebar-section select {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 12px;
-  background: white;
-}
-
-.sidebar-section input[type="checkbox"] {
-  width: auto;
-  margin-right: 8px;
-}
-
-.sidebar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.sidebar-actions button {
-  flex: 1 0 calc(50% - 4px);
-  padding: 6px 0;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-.sidebar-actions button:hover {
-  background: #e2e8f0;
-}
-/* Добавьте в конец файла */
-
-/* Переменные тем */
 :root {
-  --bg-page: #f5f7fb;
+  --bg-page: #f4f7fb;
   --bg-panel: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-light: #e2e8f0;
+  --text-primary: #1e2b3c;
+  --text-secondary: #4a5a6e;
+  --border-light: #d9e1ec;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --card-bg: #f9fcff;
+  --shadow: 0 8px 20px -8px rgba(0, 20, 40, 0.15);
+  --danger: #dc2626;
 }
 
 .dark {
-  --bg-page: #0f172a;
-  --bg-panel: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border-light: #334155;
+  --bg-page: #121212;
+  --bg-panel: #1e1e1e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --border-light: #333333;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --card-bg: #2a2a2a;
+  --shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.7);
 }
 
 body {
   background: var(--bg-page);
   color: var(--text-primary);
+  transition: background 0.2s, color 0.2s;
 }
 
 /* Сайдбар */
@@ -154,7 +47,6 @@ body {
   flex-direction: column;
   padding: 16px 12px;
   overflow-y: auto;
-  font-family: 'Inter', sans-serif;
   color: var(--text-primary);
 }
 
@@ -190,11 +82,6 @@ body {
   font-size: 12px;
   background: var(--bg-panel);
   color: var(--text-primary);
-}
-
-.sidebar-section input[type="checkbox"] {
-  width: auto;
-  margin-right: 8px;
 }
 
 .sidebar-actions {
