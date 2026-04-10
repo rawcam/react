@@ -104,11 +104,11 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       position={Position.Left}
                       id={input.id}
                       style={{
-                        background: borderColor,
-                        border: '1px solid white',
+                        background: '#ff6600', // ярко-оранжевый для отладки
                         width: 14,
                         height: 2,
                         borderRadius: 0,
+                        border: 'none',
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
                         left: -8,
                         transform: 'translateY(-50%)',
@@ -127,11 +127,11 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       position={Position.Right}
                       id={output.id}
                       style={{
-                        background: borderColor,
-                        border: '1px solid white',
+                        background: '#ff6600', // ярко-оранжевый для отладки
                         width: 14,
                         height: 2,
                         borderRadius: 0,
+                        border: 'none',
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
                         right: -8,
                         transform: 'translateY(-50%)',
