@@ -113,7 +113,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       position={Position.Left}
                       id={input.id}
                       style={{
-                        background: borderColor,
+                        background: 'red',
                         width: '14px',
                         height: '2px',
                         borderRadius: 0,
