@@ -96,7 +96,9 @@ const FlowEditor: React.FC = () => {
     localStorage.setItem('flow_grid_settings', JSON.stringify(newSettings));
   };
 
-  const updateGridVariant = (variant: string) => saveGridSettings({ ...gridSettings, variant: variant as BackgroundVariant });
+  const updateGridVariant = (variant: string) => {
+    saveGridSettings({ ...gridSettings, variant: variant as BackgroundVariant });
+  };
   const updateGridGap = (gap: number) => saveGridSettings({ ...gridSettings, gap, snapGrid: [gap, gap] });
   const updateSnapToGrid = (snap: boolean) => saveGridSettings({ ...gridSettings, snapToGrid: snap });
 
