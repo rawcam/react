@@ -1,4 +1,3 @@
-/* Сброс */
 * {
   margin: 0;
   padding: 0;
@@ -6,32 +5,23 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', sans-serif;
   background: #f5f7fb;
   color: #1e293b;
 }
 
-/* Убираем любые глобальные переопределения хендлов — всё задано инлайн */
-/* ===== ГАРАНТИРОВАННОЕ ПЕРЕОПРЕДЕЛЕНИЕ ХЕНДЛОВ ===== */
-.react-flow__node .react-flow__handle {
-  width: 14px !important;
-  height: 2px !important;
-  min-width: 14px !important;
-  max-width: 14px !important;
-  min-height: 2px !important;
-  max-height: 2px !important;
-  border-radius: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-  transform: translateY(-50%) !important;
-  z-index: 10 !important;
-  /* цвет задаётся инлайн */
+/* Ортогональные рёбра без анимации */
+.react-flow__edge-path {
+  stroke: #2563eb;
+  stroke-width: 2;
+  animation: none !important;
 }
 
-/* .react-flow__node .react-flow__handle-left {
-  left: -8px !important;
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #ef4444 !important;
 }
 
-.react-flow__node .react-flow__handle-right {
-  right: -8px !important;
-} */
+/* Убираем маркеры (стрелки) */
+.react-flow__edge marker {
+  display: none;
+}
