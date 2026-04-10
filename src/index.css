@@ -12,3 +12,26 @@ body {
 }
 
 /* Убираем любые глобальные переопределения хендлов — всё задано инлайн */
+/* ===== ГАРАНТИРОВАННОЕ ПЕРЕОПРЕДЕЛЕНИЕ ХЕНДЛОВ ===== */
+.react-flow__node .react-flow__handle {
+  width: 14px !important;
+  height: 2px !important;
+  min-width: 14px !important;
+  max-width: 14px !important;
+  min-height: 2px !important;
+  max-height: 2px !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+  /* цвет задаётся инлайн */
+}
+
+.react-flow__node .react-flow__handle-left {
+  left: -8px !important;
+}
+
+.react-flow__node .react-flow__handle-right {
+  right: -8px !important;
+}
