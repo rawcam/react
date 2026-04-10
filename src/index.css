@@ -28,10 +28,10 @@ body {
   /* цвет задаётся инлайн */
 }
 
-.react-flow__node .react-flow__handle-left {
+/* .react-flow__node .react-flow__handle-left {
   left: -8px !important;
 }
 
 .react-flow__node .react-flow__handle-right {
   right: -8px !important;
-}
+} */
