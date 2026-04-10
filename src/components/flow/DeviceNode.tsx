@@ -2,13 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from 'reactflow';
 import { DeviceNodeData } from '../../types/flowTypes';
 
+/**
+ * Компонент узла (ноды) устройства.
+ * Отображает название, список входов/выходов, питание, PoE.
+ */
 const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
+  // === СОСТОЯНИЕ ДЛЯ РЕДАКТИРОВАНИЯ НАЗВАНИЯ ===
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(data.label);
   const inputRef = useRef<HTMLInputElement>(null);
   const borderColor = data.color || '#2563eb';
   const { setNodes } = useReactFlow();
 
+  // === ОБРАБОТЧИКИ ===
   const handleLabelSubmit = () => {
     if (editLabel.trim()) {
       data.label = editLabel;
@@ -43,6 +49,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     );
   };
 
+  // === ИНФОРМАЦИЯ О ПИТАНИИ ===
   const powerInterface = [...data.inputs, ...data.outputs].find(
     (iface) =>
       (iface.connector === 'IEC' || iface.connector === 'PowerCON' || iface.protocol === 'Power') &&
@@ -52,6 +59,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
   const totalPoE = data.totalPoEConsumption ?? 0;
   const maxRows = Math.max(data.inputs.length, data.outputs.length);
 
+  // === РЕНДЕР ===
   return (
     <div
       style={{
@@ -69,6 +77,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         height: data.height || 'auto',
       }}
     >
+      {/* ========== ЗАГОЛОВОК НОДЫ ========== */}
       <div
         style={{
           fontWeight: 'bold',
@@ -86,6 +95,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         </span>
       </div>
 
+      {/* ========== СТРОКИ ИНТЕРФЕЙСОВ (ВХОДЫ / ВЫХОДЫ) ========== */}
       <div style={{ fontSize: '10px', lineHeight: '1.4', color: '#334155', padding: '0 12px' }}>
         {Array.from({ length: maxRows }).map((_, rowIndex) => {
           const input = data.inputs[rowIndex];
@@ -102,36 +112,53 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                 position: 'relative',
               }}
             >
+              {/* ---------- ЛЕВАЯ СТОРОНА (ВХОД) ---------- */}
               <div style={{ flex: 1, textAlign: 'left', position: 'relative' }}>
                 {input && (
                   <>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {input.name}
                     </span>
+                    {/*
+                      ⚠️ ОТЛАДОЧНЫЙ ХЕНДЛ: большой красный квадрат.
+                      Если он не появится на левой границе ноды — хендлы не рендерятся.
+                      Позже заменим стили на тонкую полоску нужного цвета.
+                    */}
                     <Handle
                       type="target"
                       position={Position.Left}
                       id={input.id}
                       style={{
-                        background: borderColor,
+                        background: 'red',           // ярко-красный для отладки
+                        width: 20,                   // большой размер
+                        height: 20,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
                         left: -8,
+                        transform: 'translateY(-50%)',
                       } as React.CSSProperties}
                     />
                   </>
                 )}
               </div>
+
+              {/* ---------- ПРАВАЯ СТОРОНА (ВЫХОД) ---------- */}
               <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
                 {output && (
                   <>
+                    {/*
+                      ⚠️ ОТЛАДОЧНЫЙ ХЕНДЛ (ВЫХОД): большой зелёный квадрат.
+                    */}
                     <Handle
                       type="source"
                       position={Position.Right}
                       id={output.id}
                       style={{
-                        background: borderColor,
+                        background: 'green',
+                        width: 20,
+                        height: 20,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
                         right: -8,
+                        transform: 'translateY(-50%)',
                       } as React.CSSProperties}
                     />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -145,6 +172,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         })}
       </div>
 
+      {/* ========== ПИТАНИЕ (AC/DC) ========== */}
       {powerInterface && (
         <div
           style={{
@@ -164,6 +192,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         </div>
       )}
 
+      {/* ========== POE ИНФОРМАЦИЯ ========== */}
       {totalPoE > 0 && !powerInterface && (
         <div
           style={{
@@ -182,6 +211,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         </div>
       )}
 
+      {/* ========== КОНТРОЛЛЕР РАЗМЕРА ========== */}
       <NodeResizeControl
         nodeId={id}
         minWidth={180}
@@ -192,6 +222,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         style={{ background: 'transparent', border: 'none' }}
       />
 
+      {/* ========== ПОЛЕ ВВОДА ДЛЯ РЕДАКТИРОВАНИЯ НАЗВАНИЯ ========== */}
       {isEditing && (
         <input
           ref={inputRef}
