@@ -47,12 +47,10 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       style={{
         background: 'white',
         border: `1px solid ${borderColor}`,
-        borderRadius: '8x',
+        borderRadius: 8,
         padding: '8px 0 4px 0',
-        minWidth: '180px',
-        boxShadow: selected
-          ? '0 0 0 2px #2563eb, 0 4px 12px rgba(0,0,0,0.15)'
-          : '0 4px 6px rgba(0,0,0,0.1)',
+        minWidth: 180,
+        boxShadow: selected ? '0 0 0 2px #2563eb' : 'none',
         cursor: 'grab',
         position: 'relative',
         width: data.width || 'auto',
@@ -62,21 +60,22 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       <div
         style={{
           fontWeight: 'bold',
-          marginBottom: '6px',
+          fontSize: 10,
+          marginBottom: 6,
           display: 'flex',
           alignItems: 'center',
-          gap: '6px',
+          gap: 6,
           borderBottom: '1px solid #e2e8f0',
           padding: '0 12px 4px 12px',
         }}
       >
-        <i className={data.icon} style={{ fontSize: '14px', width: '16px' }}></i>
+        <i className={data.icon} style={{ fontSize: 14, width: 16 }}></i>
         <span style={{ cursor: 'pointer' }} onClick={() => setIsEditing(true)}>
           {data.label}
         </span>
       </div>
 
-      <div style={{ fontSize: '10px', lineHeight: '1.4', color: '#334155', padding: '0 12px' }}>
+      <div style={{ fontSize: 6, textTransform: 'uppercase', lineHeight: 1.4, color: '#334155', padding: '0 12px' }}>
         {Array.from({ length: maxRows }).map((_, rowIndex) => {
           const input = data.inputs[rowIndex];
           const output = data.outputs[rowIndex];
@@ -92,7 +91,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                 position: 'relative',
               }}
             >
-              {/* ВХОД (СЛЕВА) */}
               <div style={{ flex: 1, textAlign: 'left', position: 'relative' }}>
                 {input && (
                   <>
@@ -105,16 +103,19 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       id={input.id}
                       style={{
                         background: borderColor,
+                        width: 8,
+                        height: 1,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
                         left: -27,
                         transform: 'translateY(-50%)',
+                        border: 'none',
+                        borderRadius: 0,
                       }}
                     />
                   </>
                 )}
               </div>
 
-              {/* ВЫХОД (СПРАВА) */}
               <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
                 {output && (
                   <>
@@ -124,9 +125,13 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       id={output.id}
                       style={{
                         background: borderColor,
+                        width: 8,
+                        height: 1,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
                         right: -27,
                         transform: 'translateY(-50%)',
+                        border: 'none',
+                        borderRadius: 0,
                       }}
                     />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -143,15 +148,15 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       {powerInterface && (
         <div
           style={{
-            marginTop: '6px',
-            fontSize: '9px',
+            marginTop: 6,
+            fontSize: 9,
             color: '#64748b',
             borderTop: '1px solid #e2e8f0',
             padding: '4px 12px 0 12px',
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            gap: '4px',
+            gap: 4,
           }}
         >
           <span>🔌 {powerInterface.voltage || 'AC'}</span>
@@ -162,15 +167,15 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       {totalPoE > 0 && !powerInterface && (
         <div
           style={{
-            marginTop: '6px',
-            fontSize: '9px',
+            marginTop: 6,
+            fontSize: 9,
             color: '#64748b',
             borderTop: '1px solid #e2e8f0',
             padding: '4px 12px 0 12px',
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            gap: '4px',
+            gap: 4,
           }}
         >
           <span>🌐 PoE {totalPoE} Вт</span>
@@ -197,11 +202,11 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
           onKeyDown={handleKeyDown}
           style={{
             position: 'absolute',
-            top: '10px',
-            left: '32px',
+            top: 10,
+            left: 32,
             width: 'calc(100% - 60px)',
             border: '1px solid #ccc',
-            borderRadius: '4px',
+            borderRadius: 4,
             padding: '2px 4px',
             fontSize: 'inherit',
             zIndex: 10,
