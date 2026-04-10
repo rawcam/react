@@ -12,6 +12,7 @@ import ReactFlow, {
   Edge,
   Node,
   MarkerType,
+  ConnectionLineType,
 } from 'reactflow';
 //import 'reactflow/dist/style.css';
 import DeviceNode from '../components/flow/DeviceNode';
