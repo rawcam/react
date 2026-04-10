@@ -81,6 +81,7 @@ const FlowEditor: React.FC = () => {
     visible: false, x: 0, y: 0, nodeId: null,
   });
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // <-- добавлено
 
   const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema } = useFlowSchemas();
 
@@ -304,6 +305,10 @@ const FlowEditor: React.FC = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(prev => !prev);
+  };
+
   return (
     <div className={`flow-editor ${theme}`} style={{ height: '100vh', display: 'flex', background: 'var(--bg-page)' }}>
       <Sidebar
@@ -323,6 +328,8 @@ const FlowEditor: React.FC = () => {
         onUpdateSnapToGrid={updateSnapToGrid}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
       />
 
       <div style={{ flex: 1, position: 'relative' }}>
