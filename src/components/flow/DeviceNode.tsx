@@ -112,22 +112,14 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       type="target"
                       position={Position.Left}
                       id={input.id}
-                      style={{
-                        background: 'red',
-                        width: '14px',
-                        height: '2px',
-                        borderRadius: 0,
-                        border: 'none',
-                        top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
-                        left: -8,
-                        transform: 'translateY(-50%)',
-                        zIndex: 10,
-                      } as any}
+                      className="custom-handle custom-handle-left"
+                      style={{ background: borderColor } as any}
+                      data-rowindex={rowIndex}
+                      data-maxrows={maxRows}
                     />
                   </>
                 )}
               </div>
-
               <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
                 {output && (
                   <>
@@ -135,17 +127,10 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       type="source"
                       position={Position.Right}
                       id={output.id}
-                      style={{
-                        background: borderColor,
-                        width: '14px',
-                        height: '2px',
-                        borderRadius: 0,
-                        border: 'none',
-                        top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
-                        right: -8,
-                        transform: 'translateY(-50%)',
-                        zIndex: 10,
-                      } as any}
+                      className="custom-handle custom-handle-right"
+                      style={{ background: borderColor } as any}
+                      data-rowindex={rowIndex}
+                      data-maxrows={maxRows}
                     />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {output.name}
