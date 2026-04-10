@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [react()],
   base: '/reactflow/',
   build: {
-    outDir: 'docs',   // вместо dist
+    outDir: 'dist',
   },
 });
