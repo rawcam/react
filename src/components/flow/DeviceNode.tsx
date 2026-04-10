@@ -24,8 +24,31 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
   };
 
   useEffect(() => {
-    if (isEditing && inputRef.current) inputRef.current.focus();
-  }, [isEditing]);
+          {isEditing && (
+        <input
+          ref={inputRef}
+          type="text"
+          value={editLabel}
+          onChange={(e) => setEditLabel(e.target.value)}
+          onBlur={handleLabelSubmit}
+          onKeyDown={handleKeyDown}
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'calc(100% - 24px)',
+            border: '1px solid #ccc',
+            borderRadius: 4,
+            padding: '2px 4px',
+            fontSize: 10,
+            fontFamily: 'Inter, sans-serif',
+            textAlign: 'center',
+            zIndex: 10,
+          }}
+          className="nodrag"
+        />
+      )}
 
   const handleResize = (_event: any, params: { width: number; height: number }) => {
     setNodes((nds) =>
@@ -45,18 +68,17 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
   return (
     <div
       style={{
-        background: 'white',
-        border: `1px solid ${borderColor}`,
-        borderRadius: 8,
-        padding: '8px 0 4px 0',
-        minWidth: 180,
-        boxShadow: selected ? '0 0 0 2px #2563eb' : 'none',
-        cursor: 'grab',
-        position: 'relative',
-        width: data.width || 'auto',
-        height: data.height || 'auto',
-        fontFamily: 'Inter, sans-serif',
-      }}
+  background: 'white',
+  border: `1px solid ${borderColor}`,
+  borderRadius: 8,
+  padding: '8px 0 4px 0',
+  width: 'fit-content',          // ← вместо minWidth и width: data.width
+  minWidth: 180,                 // ← оставляем, чтобы не сжималось слишком сильно
+  boxShadow: selected ? '0 0 0 2px #2563eb' : 'none',
+  cursor: 'grab',
+  position: 'relative',
+  fontFamily: 'Inter, sans-serif',
+}}
     >
       {/* ЗАГОЛОВОК */}
       <div
