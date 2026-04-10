@@ -10,6 +10,28 @@ body {
   color: #1e293b;
 }
 
+/* Хендлы — тонкие линии */
+.react-flow__handle {
+  width: 8px !important;
+  height: 1px !important;
+  min-width: 8px !important;
+  max-width: 8px !important;
+  min-height: 1px !important;
+  max-height: 1px !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: inherit !important;
+  transform: translateY(-50%) !important;
+}
+
+.react-flow__handle-left {
+  left: -27px !important;
+}
+
+.react-flow__handle-right {
+  right: -27px !important;
+}
+
 /* Ортогональные рёбра без анимации */
 .react-flow__edge-path {
   stroke: #2563eb;
