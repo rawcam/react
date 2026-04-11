@@ -1,7 +1,8 @@
 import React from 'react';
-import { Node } from 'reactflow';
+import { Node } from '@xyflow/react';
 import { DeviceNodeData, DeviceInterface, ConnectorType, ProtocolType, PowerSupply } from '../../types/flowTypes';
 
+// ... весь остальной код без изменений
 interface EditNodeModalProps {
   isOpen: boolean;
   node: Node<DeviceNodeData> | null;
