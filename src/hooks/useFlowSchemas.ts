@@ -1,60 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Node, Edge } from 'reactflow';
-import { SavedSchema, DeviceNodeData, CableEdgeData } from '../types/flowTypes';
+import { DeviceNodeData, CableEdgeData, SavedSchema } from '../types/flowTypes';
 
 export const useFlowSchemas = () => {
   const [schemas, setSchemas] = useState<SavedSchema[]>([]);
   const [currentSchemaId, setCurrentSchemaId] = useState<string | null>(null);
   const [schemaName, setSchemaName] = useState('Новая схема');
 
-  useEffect(() => {
-    const saved = localStorage.getItem('flow_schemas');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSchemas(parsed);
-      } catch (e) {}
-    }
-  }, []);
+  const saveCurrentSchema = useCallback((nodes: Node<DeviceNodeData>[], edges: Edge<CableEdgeData>[]) => {
+    if (!schemaName) return;
+    const newSchema: SavedSchema = {
+      id: currentSchemaId || Date.now().toString(),
+      name: schemaName,
+      nodes,
+      edges,
+    };
+    setSchemas(prev => {
+      const exists = prev.find(s => s.id === newSchema.id);
+      if (exists) {
+        return prev.map(s => s.id === newSchema.id ? newSchema : s);
+      }
+      return [...prev, newSchema];
+    });
+    setCurrentSchemaId(newSchema.id);
+  }, [schemaName, currentSchemaId]);
 
-  const saveSchemasList = (list: SavedSchema[]) => {
-    setSchemas(list);
-    localStorage.setItem('flow_schemas', JSON.stringify(list));
-  };
-
-  const saveCurrentSchema = (nodes: Node<DeviceNodeData>[], edges: Edge<CableEdgeData>[]) => {
-    if (!currentSchemaId) {
-      const newId = Date.now().toString();
-      const newSchema: SavedSchema = {
-        id: newId,
-        name: schemaName,
-        nodes,
-        edges,
-      };
-      saveSchemasList([...schemas, newSchema]);
-      setCurrentSchemaId(newId);
-    } else {
-      const updated = schemas.map(s => s.id === currentSchemaId ? { ...s, name: schemaName, nodes, edges } : s);
-      saveSchemasList(updated);
-    }
-    alert('Схема сохранена');
-  };
-
-  const loadSchema = (id: string): { nodes: Node<DeviceNodeData>[]; edges: Edge<CableEdgeData>[] } | null => {
+  const loadSchema = useCallback((id: string) => {
     const schema = schemas.find(s => s.id === id);
     if (schema) {
       setCurrentSchemaId(schema.id);
       setSchemaName(schema.name);
-      return { nodes: schema.nodes, edges: schema.edges };
+      return schema;
     }
     return null;
-  };
+  }, [schemas]);
 
-  const newSchema = () => {
+  const newSchema = useCallback(() => {
     setCurrentSchemaId(null);
     setSchemaName('Новая схема');
     return { nodes: [], edges: [] };
-  };
+  }, []);
+
+  const importSchema = useCallback((schema: SavedSchema) => {
+    setSchemas(prev => {
+      const exists = prev.find(s => s.id === schema.id);
+      if (exists) {
+        return prev.map(s => s.id === schema.id ? schema : s);
+      }
+      return [...prev, schema];
+    });
+    setCurrentSchemaId(schema.id);
+    setSchemaName(schema.name);
+    return schema;
+  }, []);
 
   return {
     schemas,
@@ -64,5 +62,6 @@ export const useFlowSchemas = () => {
     saveCurrentSchema,
     loadSchema,
     newSchema,
+    importSchema,
   };
 };
