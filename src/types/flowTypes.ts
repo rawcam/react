@@ -65,3 +65,17 @@ export interface SavedSchema {
   nodes: Node<DeviceNodeData>[];
   edges: Edge<CableEdgeData>[];
 }
+export interface CableEdgeData {
+  cableType: string;
+  sourceLabel: string;
+  targetLabel: string;
+  adapter?: string;
+  length?: number;
+  // стили бейджа
+  badgeFontSize?: number;
+  badgeTextColor?: string;
+  badgeBorderColor?: string;
+  badgeBorderWidth?: number;
+  badgeBorderRadius?: number;
+  badgeBackgroundColor?: string;
+}
