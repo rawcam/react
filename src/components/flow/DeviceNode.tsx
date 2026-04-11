@@ -59,25 +59,21 @@ const DeviceNode = ({ id, data, selected }: any) => {
   const handleRightOffset = 12 + borderWidth + 8;
   const powerSupply = d.powerSupply;
 
-  const renderPorts = () => {
+  // Рендер портов в компактном виде, в стиле обычной ноды
+  const renderSwitchPorts = () => {
     const ports: SwitchPort[] = [];
     const numPorts = switchConfig.numPorts;
     const poePorts = switchConfig.poePorts;
     const sfpPorts = switchConfig.sfpPorts;
-    const oddLeft = switchConfig.portLayout === 'odd_left';
 
-    // RJ45 порты
     for (let i = 1; i <= numPorts; i++) {
-      const isPoe = i <= poePorts;
-      const isUsed = false; // TODO: определять по соединениям
       ports.push({
         number: i,
         type: 'rj45',
-        poe: isPoe,
-        used: isUsed,
+        poe: i <= poePorts,
+        used: false,
       });
     }
-    // SFP порты
     for (let i = 1; i <= sfpPorts; i++) {
       ports.push({
         number: numPorts + i,
@@ -87,38 +83,39 @@ const DeviceNode = ({ id, data, selected }: any) => {
       });
     }
 
-    const leftPorts = ports.filter(p => oddLeft ? p.number % 2 === 1 : p.number % 2 === 0);
-    const rightPorts = ports.filter(p => oddLeft ? p.number % 2 === 0 : p.number % 2 === 1);
-
-    const portStyle = (port: SwitchPort): React.CSSProperties => ({
-      width: '36px',
-      height: '20px',
-      background: port.used ? '#2563eb' : (port.poe ? '#10b981' : '#334155'),
-      color: port.used || port.poe ? 'white' : '#94a3b8',
-      borderRadius: '4px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '9px',
-      fontWeight: 500,
-    });
+    // Группируем порты по 8 штук в ряд
+    const rows: SwitchPort[][] = [];
+    for (let i = 0; i < ports.length; i += 8) {
+      rows.push(ports.slice(i, i + 8));
+    }
 
     return (
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {leftPorts.map(p => (
-            <div key={p.number} style={portStyle(p)}>
-              {p.type === 'sfp' ? 'SFP' : `${p.number}${p.poe ? ' PoE' : ''}`}
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {rightPorts.map(p => (
-            <div key={p.number} style={portStyle(p)}>
-              {p.type === 'sfp' ? 'SFP' : `${p.number}${p.poe ? ' PoE' : ''}`}
-            </div>
-          ))}
-        </div>
+      <div style={{ padding: '8px 12px 4px 12px' }}>
+        {rows.map((row, idx) => (
+          <div key={idx} style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '4px' }}>
+            {row.map(port => (
+              <div
+                key={port.number}
+                style={{
+                  width: '22px',
+                  height: '16px',
+                  background: port.used ? borderColor : (port.poe ? '#10b981' : 'var(--border-light)'),
+                  color: port.used || port.poe ? 'white' : 'var(--text-secondary)',
+                  borderRadius: '3px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '8px',
+                  fontWeight: 500,
+                  border: port.used ? 'none' : `1px solid var(--border-light)`,
+                }}
+                title={`${port.type === 'sfp' ? 'SFP' : 'RJ45'} ${port.number}${port.poe ? ' PoE' : ''}`}
+              >
+                {port.type === 'sfp' ? 'S' : port.number}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     );
   };
@@ -130,7 +127,7 @@ const DeviceNode = ({ id, data, selected }: any) => {
         border: `${borderWidth}px solid ${borderColor}`,
         borderRadius: `${borderRadius}px`,
         padding: '8px 0 4px 0',
-        width: d.width || (isNetworkSwitch ? 220 : 'auto'),
+        width: d.width || 'auto',
         minWidth: 90,
         height: d.height || 'auto',
         boxShadow: selected ? '0 0 0 2px #2563eb' : 'none',
@@ -160,7 +157,7 @@ const DeviceNode = ({ id, data, selected }: any) => {
       </div>
 
       {isNetworkSwitch ? (
-        renderPorts()
+        renderSwitchPorts()
       ) : (
         <div style={{ fontSize: portFontSize, textTransform: 'uppercase', lineHeight: 1.4, padding: '0 12px' }}>
           {Array.from({ length: maxRows }).map((_, rowIndex) => {
