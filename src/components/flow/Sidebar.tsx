@@ -352,7 +352,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {selectedNode && !collapsed && (
         <div className="sidebar-section">
           <div className="section-header" onClick={() => setShowNodeStyle(!showNodeStyle)}>
-            <span><i className="fas fa-paint-brush"></i> Свойства ноды</span>
+            <span><i className="fas fa-paint-brush"></i> Свойства устройства</span>
             <i className={`fas fa-chevron-${showNodeStyle ? 'down' : 'right'}`}></i>
           </div>
           {showNodeStyle && (
@@ -430,7 +430,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {selectedEdge && !selectedNode && !collapsed && (
         <div className="sidebar-section">
           <div className="section-header" onClick={() => setShowEdgeStyle(!showEdgeStyle)}>
-            <span><i className="fas fa-paint-brush"></i> Свойства ребра</span>
+            <span><i className="fas fa-paint-brush"></i> Свойства кабеля</span>
             <i className={`fas fa-chevron-${showEdgeStyle ? 'down' : 'right'}`}></i>
           </div>
           {showEdgeStyle && (
@@ -489,7 +489,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 defaultColor="#2563eb"
               />
 
-              <label>Цвет обводки</label>
+              <label>Цвет обводки бейджа</label>
               <ColorPickerCompact
                 value={localEdgeSettings.badgeBorderColor}
                 onChange={(color) => handleEdgeSettingChange('badgeBorderColor', color)}
@@ -532,7 +532,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <span><i className="fas fa-sliders-h"></i> Свойства</span>
           </div>
           <div className="section-content">
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>Выберите ноду или ребро для настройки</p>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>Выберите устройство или кабель</p>
           </div>
         </div>
       )}
