@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Node, Edge } from 'reactflow';
+import { Node, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../../types/flowTypes';
+
+// ... остальной код без изменений, только импорт заменён
 
 interface SidebarProps {
   selectedNode: Node<DeviceNodeData> | null;
