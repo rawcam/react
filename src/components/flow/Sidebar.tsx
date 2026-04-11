@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Node } from 'reactflow';
-import { DeviceNodeData } from '../../types/flowTypes';
+import { Node, Edge } from 'reactflow';
+import { DeviceNodeData, CableEdgeData } from '../../types/flowTypes';
 
 interface SidebarProps {
   selectedNode: Node<DeviceNodeData> | null;
+  selectedEdge: Edge<CableEdgeData> | null;
   onUpdateNode: (nodeId: string, updates: Partial<DeviceNodeData>) => void;
+  onUpdateEdge: (edgeId: string, updates: Partial<CableEdgeData>) => void;
   schemas: any[];
   currentSchemaId: string | null;
   schemaName: string;
@@ -25,7 +27,9 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({
   selectedNode,
+  selectedEdge,
   onUpdateNode,
+  onUpdateEdge,
   schemas,
   currentSchemaId,
   schemaName,
@@ -43,7 +47,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
   onToggleCollapse,
 }) => {
-  const [localSettings, setLocalSettings] = useState({
+  // Настройки ноды
+  const [localNodeSettings, setLocalNodeSettings] = useState({
     borderWidth: 1,
     borderRadius: 8,
     handleLength: 8,
@@ -54,13 +59,25 @@ const Sidebar: React.FC<SidebarProps> = ({
     headerFontWeight: 'normal' as 'normal' | 'bold',
   });
 
+  // Настройки ребра
+  const [localEdgeSettings, setLocalEdgeSettings] = useState({
+    badgeFontSize: 10,
+    badgeTextColor: '#2563eb',
+    badgeBorderColor: '#2563eb',
+    badgeBorderWidth: 1,
+    badgeBorderRadius: 12,
+    badgeBackgroundColor: '#ffffff',
+  });
+
   const [showManage, setShowManage] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
-  const [showStyle, setShowStyle] = useState(true);
+  const [showNodeStyle, setShowNodeStyle] = useState(true);
+  const [showEdgeStyle, setShowEdgeStyle] = useState(true);
 
+  // Синхронизация с выбранной нодой
   useEffect(() => {
     if (selectedNode) {
-      setLocalSettings({
+      setLocalNodeSettings({
         borderWidth: selectedNode.data.borderWidth ?? 1,
         borderRadius: selectedNode.data.borderRadius ?? 8,
         handleLength: selectedNode.data.handleLength ?? 8,
@@ -73,11 +90,32 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [selectedNode]);
 
-  const handleSettingChange = (key: keyof typeof localSettings, value: any) => {
+  // Синхронизация с выбранным ребром
+  useEffect(() => {
+    if (selectedEdge && selectedEdge.data) {
+      setLocalEdgeSettings({
+        badgeFontSize: selectedEdge.data.badgeFontSize ?? 10,
+        badgeTextColor: selectedEdge.data.badgeTextColor ?? '#2563eb',
+        badgeBorderColor: selectedEdge.data.badgeBorderColor ?? '#2563eb',
+        badgeBorderWidth: selectedEdge.data.badgeBorderWidth ?? 1,
+        badgeBorderRadius: selectedEdge.data.badgeBorderRadius ?? 12,
+        badgeBackgroundColor: selectedEdge.data.badgeBackgroundColor ?? 'var(--bg-panel)',
+      });
+    }
+  }, [selectedEdge]);
+
+  const handleNodeSettingChange = (key: keyof typeof localNodeSettings, value: any) => {
     if (!selectedNode) return;
-    const newSettings = { ...localSettings, [key]: value };
-    setLocalSettings(newSettings);
+    const newSettings = { ...localNodeSettings, [key]: value };
+    setLocalNodeSettings(newSettings);
     onUpdateNode(selectedNode.id, newSettings);
+  };
+
+  const handleEdgeSettingChange = (key: keyof typeof localEdgeSettings, value: any) => {
+    if (!selectedEdge) return;
+    const newSettings = { ...localEdgeSettings, [key]: value };
+    setLocalEdgeSettings(newSettings);
+    onUpdateEdge(selectedEdge.id, newSettings);
   };
 
   return (
@@ -159,11 +197,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Оформление ноды */}
       {selectedNode && !collapsed && (
         <div className="sidebar-section">
-          <div className="section-header" onClick={() => setShowStyle(!showStyle)}>
-            <span><i className="fas fa-paint-brush"></i> Оформление</span>
-            <i className={`fas fa-chevron-${showStyle ? 'down' : 'right'}`}></i>
+          <div className="section-header" onClick={() => setShowNodeStyle(!showNodeStyle)}>
+            <span><i className="fas fa-paint-brush"></i> Оформление ноды</span>
+            <i className={`fas fa-chevron-${showNodeStyle ? 'down' : 'right'}`}></i>
           </div>
-          {showStyle && (
+          {showNodeStyle && (
             <div className="section-content">
               <label>Обводка (px)</label>
               <input
@@ -171,24 +209,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                 min="0"
                 max="10"
                 step="0.5"
-                value={localSettings.borderWidth}
-                onChange={(e) => handleSettingChange('borderWidth', Number(e.target.value))}
+                value={localNodeSettings.borderWidth}
+                onChange={(e) => handleNodeSettingChange('borderWidth', Number(e.target.value))}
               />
               <label>Скругление (px)</label>
               <input
                 type="number"
                 min="0"
                 max="20"
-                value={localSettings.borderRadius}
-                onChange={(e) => handleSettingChange('borderRadius', Number(e.target.value))}
+                value={localNodeSettings.borderRadius}
+                onChange={(e) => handleNodeSettingChange('borderRadius', Number(e.target.value))}
               />
               <label>Длина хендла (px)</label>
               <input
                 type="number"
                 min="4"
                 max="20"
-                value={localSettings.handleLength}
-                onChange={(e) => handleSettingChange('handleLength', Number(e.target.value))}
+                value={localNodeSettings.handleLength}
+                onChange={(e) => handleNodeSettingChange('handleLength', Number(e.target.value))}
               />
               <label>Толщина хендла (px)</label>
               <input
@@ -196,29 +234,29 @@ const Sidebar: React.FC<SidebarProps> = ({
                 min="1"
                 max="5"
                 step="0.5"
-                value={localSettings.handleThickness}
-                onChange={(e) => handleSettingChange('handleThickness', Number(e.target.value))}
+                value={localNodeSettings.handleThickness}
+                onChange={(e) => handleNodeSettingChange('handleThickness', Number(e.target.value))}
               />
               <label>Выступ хендла (px)</label>
               <input
                 type="number"
                 min="0"
                 max="40"
-                value={localSettings.handleOffset}
-                onChange={(e) => handleSettingChange('handleOffset', Number(e.target.value))}
+                value={localNodeSettings.handleOffset}
+                onChange={(e) => handleNodeSettingChange('handleOffset', Number(e.target.value))}
               />
               <label>Размер заголовка (px)</label>
               <input
                 type="number"
                 min="8"
                 max="20"
-                value={localSettings.headerFontSize}
-                onChange={(e) => handleSettingChange('headerFontSize', Number(e.target.value))}
+                value={localNodeSettings.headerFontSize}
+                onChange={(e) => handleNodeSettingChange('headerFontSize', Number(e.target.value))}
               />
               <label>Жирность заголовка</label>
               <select
-                value={localSettings.headerFontWeight}
-                onChange={(e) => handleSettingChange('headerFontWeight', e.target.value)}
+                value={localNodeSettings.headerFontWeight}
+                onChange={(e) => handleNodeSettingChange('headerFontWeight', e.target.value)}
               >
                 <option value="normal">Обычный</option>
                 <option value="bold">Жирный</option>
@@ -228,18 +266,74 @@ const Sidebar: React.FC<SidebarProps> = ({
                 type="number"
                 min="4"
                 max="12"
-                value={localSettings.portFontSize}
-                onChange={(e) => handleSettingChange('portFontSize', Number(e.target.value))}
+                value={localNodeSettings.portFontSize}
+                onChange={(e) => handleNodeSettingChange('portFontSize', Number(e.target.value))}
               />
             </div>
           )}
         </div>
       )}
 
-      {!selectedNode && !collapsed && (
+      {/* Оформление ребра */}
+      {selectedEdge && !selectedNode && !collapsed && (
+        <div className="sidebar-section">
+          <div className="section-header" onClick={() => setShowEdgeStyle(!showEdgeStyle)}>
+            <span><i className="fas fa-paint-brush"></i> Оформление ребра</span>
+            <i className={`fas fa-chevron-${showEdgeStyle ? 'down' : 'right'}`}></i>
+          </div>
+          {showEdgeStyle && (
+            <div className="section-content">
+              <label>Размер шрифта (px)</label>
+              <input
+                type="number"
+                min="8"
+                max="20"
+                value={localEdgeSettings.badgeFontSize}
+                onChange={(e) => handleEdgeSettingChange('badgeFontSize', Number(e.target.value))}
+              />
+              <label>Цвет текста</label>
+              <input
+                type="color"
+                value={localEdgeSettings.badgeTextColor}
+                onChange={(e) => handleEdgeSettingChange('badgeTextColor', e.target.value)}
+              />
+              <label>Цвет обводки</label>
+              <input
+                type="color"
+                value={localEdgeSettings.badgeBorderColor}
+                onChange={(e) => handleEdgeSettingChange('badgeBorderColor', e.target.value)}
+              />
+              <label>Толщина обводки (px)</label>
+              <input
+                type="number"
+                min="0"
+                max="5"
+                value={localEdgeSettings.badgeBorderWidth}
+                onChange={(e) => handleEdgeSettingChange('badgeBorderWidth', Number(e.target.value))}
+              />
+              <label>Скругление (px)</label>
+              <input
+                type="number"
+                min="0"
+                max="30"
+                value={localEdgeSettings.badgeBorderRadius}
+                onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))}
+              />
+              <label>Фон</label>
+              <input
+                type="color"
+                value={localEdgeSettings.badgeBackgroundColor}
+                onChange={(e) => handleEdgeSettingChange('badgeBackgroundColor', e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {!selectedNode && !selectedEdge && !collapsed && (
         <div className="sidebar-section">
           <div className="section-content">
-            <p>Выберите ноду для настройки</p>
+            <p>Выберите ноду или ребро для настройки</p>
           </div>
         </div>
       )}
