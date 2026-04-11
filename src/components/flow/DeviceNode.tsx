@@ -51,14 +51,12 @@ const DeviceNode = ({ id, data, selected }: any) => {
 
   const powerSupply = d.powerSupply;
 
-  // Иконка по умолчанию, если не задана
   const iconClass = d.icon || 'fas fa-microchip';
 
-  // Адаптация цвета обводки для тёмной темы (если выбран чёрный или тёмный)
   const isDarkTheme = document.documentElement.classList.contains('dark');
   let effectiveBorderColor = borderColor;
   if (isDarkTheme && (borderColor === '#000000' || borderColor === '#1e2b3c')) {
-    effectiveBorderColor = '#e0e0e0'; // светлая обводка для видимости
+    effectiveBorderColor = '#e0e0e0';
   }
 
   return (
@@ -91,8 +89,8 @@ const DeviceNode = ({ id, data, selected }: any) => {
           padding: '0 12px 4px 12px',
         }}
       >
-        <i className={iconClass} style={{ fontSize: 6, width: 10, textAlign: 'center' }}></i>
-        <span style={{ cursor: 'pointer' }} onClick={() => setIsEditing(true)}>
+        <i className={iconClass} style={{ fontSize: 6, lineHeight: 1, verticalAlign: 'middle' }} />
+        <span style={{ cursor: 'pointer', lineHeight: 1 }} onClick={() => setIsEditing(true)}>
           {d.label}
         </span>
       </div>
@@ -101,24 +99,12 @@ const DeviceNode = ({ id, data, selected }: any) => {
         {Array.from({ length: maxRows }).map((_, rowIndex) => {
           const input = d.inputs[rowIndex];
           const output = d.outputs[rowIndex];
-
           return (
-            <div
-              key={rowIndex}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                height: 22,
-                position: 'relative',
-              }}
-            >
+            <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 22, position: 'relative' }}>
               <div style={{ flex: 1, textAlign: 'left', position: 'relative' }}>
                 {input && (
                   <>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {input.name}
-                    </span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{input.name}</span>
                     <Handle
                       type="target"
                       position={Position.Left}
@@ -137,7 +123,6 @@ const DeviceNode = ({ id, data, selected }: any) => {
                   </>
                 )}
               </div>
-
               <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
                 {output && (
                   <>
@@ -156,9 +141,7 @@ const DeviceNode = ({ id, data, selected }: any) => {
                         border: 'none',
                       }}
                     />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {output.name}
-                    </span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{output.name}</span>
                   </>
                 )}
               </div>
