@@ -242,7 +242,6 @@ const FlowEditor: React.FC = () => {
   const onReconnect = useCallback(
     (oldEdge: Edge<CableEdgeData>, newConnection: Connection) => {
       setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
-      // Проверка совместимости будет в хуке, но можно добавить свою логику, если нужно
     },
     [setEdges]
   );
@@ -289,7 +288,6 @@ const FlowEditor: React.FC = () => {
     setNodes(nds => nds.concat(newNode));
   };
 
-  // Добавление новой ноды
   const addNewNode = () => {
     const newId = Date.now().toString();
     const newNode: Node<DeviceNodeData> = {
@@ -311,28 +309,24 @@ const FlowEditor: React.FC = () => {
     setNodes(nds => nds.concat(newNode));
   };
 
-  // Копирование / вставка через клавиатуру (с проверкой фокуса)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
       const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.getAttribute('contenteditable') === 'true');
       if (isInput) return;
 
-      // Ctrl+C копирование
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         if (selectedNode) {
           setCopiedNode(selectedNode);
           e.preventDefault();
         }
       }
-      // Ctrl+V вставка
       if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
         if (copiedNode) {
           duplicateNode(copiedNode);
           e.preventDefault();
         }
       }
-      // Delete
       if (e.key === 'Delete') {
         setNodes(nds => nds.filter(n => !n.selected));
         setEdges(eds => eds.filter(e => !e.selected));
@@ -347,7 +341,6 @@ const FlowEditor: React.FC = () => {
     return () => document.removeEventListener('click', closeContextMenu);
   }, []);
 
-  // Применить стили ко всем нодам
   const applyNodeStyleToAll = (styles: Partial<DeviceNodeData>) => {
     setNodes(nds =>
       nds.map(n => ({
@@ -357,7 +350,6 @@ const FlowEditor: React.FC = () => {
     );
   };
 
-  // Работа с файлами
   const saveSchemaToFile = () => {
     const schema: SavedSchema = {
       id: currentSchemaId || Date.now().toString(),
@@ -505,7 +497,6 @@ const FlowEditor: React.FC = () => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onReconnect={onReconnect}
-          edgesReconnectable={true}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
