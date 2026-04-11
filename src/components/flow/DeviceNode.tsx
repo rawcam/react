@@ -6,14 +6,14 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(data.label);
   const inputRef = useRef<HTMLInputElement>(null);
-  const borderColor = data.color || '#2563eb';
+  const borderColor = (data.color as string) || '#2563eb';
   const { setNodes } = useReactFlow();
 
-  const borderWidth = data.borderWidth ?? 1;
-  const borderRadius = data.borderRadius ?? 8;
-  const headerFontSize = data.headerFontSize ?? 10;
-  const portFontSize = data.portFontSize ?? 6;
-  const headerFontWeight = data.headerFontWeight ?? 'normal';
+  const borderWidth = (data.borderWidth as number) ?? 1;
+  const borderRadius = (data.borderRadius as number) ?? 8;
+  const headerFontSize = (data.headerFontSize as number) ?? 10;
+  const portFontSize = (data.portFontSize as number) ?? 6;
+  const headerFontWeight = (data.headerFontWeight as 'normal' | 'bold') ?? 'normal';
 
   const handleLabelSubmit = () => {
     if (editLabel.trim()) data.label = editLabel;
@@ -41,13 +41,13 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     );
   };
 
-  const totalPoE = data.totalPoEConsumption ?? 0;
+  const totalPoE = (data.totalPoEConsumption as number) ?? 0;
   const maxRows = Math.max(data.inputs.length, data.outputs.length);
 
   const handleLeftOffset = 12 + borderWidth + 8;
   const handleRightOffset = 12 + borderWidth + 8;
 
-  const powerSupply = data.powerSupply;
+  const powerSupply = data.powerSupply as DeviceNodeData['powerSupply'];
 
   return (
     <div
@@ -56,9 +56,9 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         border: `${borderWidth}px solid ${borderColor}`,
         borderRadius: `${borderRadius}px`,
         padding: '8px 0 4px 0',
-        width: data.width || 'auto',
+        width: (data.width as number) || 'auto',
         minWidth: 90,
-        height: data.height || 'auto',
+        height: (data.height as number) || 'auto',
         boxShadow: selected ? '0 0 0 2px #2563eb' : 'none',
         cursor: 'grab',
         position: 'relative',
@@ -79,7 +79,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
           padding: '0 12px 4px 12px',
         }}
       >
-        <i className={data.icon} style={{ fontSize: 14, width: 16 }}></i>
+        <i className={data.icon as string} style={{ fontSize: 14, width: 16 }}></i>
         <span style={{ cursor: 'pointer' }} onClick={() => setIsEditing(true)}>
           {data.label}
         </span>
