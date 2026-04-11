@@ -1,3 +1,4 @@
+// src/components/flow/CableEdge.tsx
 import { FC } from 'react';
 import {
   getSmoothStepPath,
@@ -54,7 +55,7 @@ const CableEdge: FC<any> = ({
     ...(style as React.CSSProperties),
   };
 
-  // Функция для получения координат на пути с заданным отступом от начала/конца
+  // Фиксированный отступ 15px от начала и конца пути
   const getPointAtDistanceFromStart = (path: string, distance: number) => {
     const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -75,11 +76,11 @@ const CableEdge: FC<any> = ({
     return { x: point.x, y: point.y };
   };
 
-  const markerOffset = 15; // фиксированные 15px от ноды
+  const markerOffset = 15;
   const sourcePos = getPointAtDistanceFromStart(edgePath, markerOffset);
   const targetPos = getPointAtDistanceFromEnd(edgePath, markerOffset);
 
-  // Стиль для маркировок (компактный)
+  // Стиль для маркировок (компактный, с центрированием текста)
   const markerStyle: React.CSSProperties = {
     fontSize: badgeFontSize * 0.85,
     padding: '1px 4px',
@@ -93,9 +94,12 @@ const CableEdge: FC<any> = ({
     pointerEvents: 'all',
     position: 'absolute',
     transform: 'translate(-50%, -50%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   };
 
-  // Стиль для основного бейджа (залитый цветом)
+  // Стиль для основного бейджа (залитый цветом, текст по центру)
   const mainBadgeStyle: React.CSSProperties = {
     fontSize: badgeFontSize,
     padding: '2px 6px',
@@ -109,6 +113,9 @@ const CableEdge: FC<any> = ({
     pointerEvents: 'all',
     position: 'absolute',
     transform: 'translate(-50%, -50%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   };
 
   return (
