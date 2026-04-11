@@ -23,9 +23,13 @@ export interface DeviceInterface {
   protocol: ProtocolType;
   poe?: boolean;
   poePower?: number;
-  power?: number;
-  voltage?: 'AC' | 'DC';
   pins?: number;
+}
+
+export interface PowerSupply {
+  voltage: 'AC' | 'DC';
+  power: number;            // в ваттах
+  connector?: 'IEC' | 'PowerCON' | 'USB' | 'Terminal'; // тип разъёма питания
 }
 
 export interface DeviceNodeData {
@@ -38,8 +42,8 @@ export interface DeviceNodeData {
   color?: string;
   width?: number;
   height?: number;
-  totalPowerConsumption?: number;
-  totalPoEConsumption?: number;
+  totalPoEConsumption?: number;      // суммарное PoE (вычисляется автоматически)
+  powerSupply?: PowerSupply;         // отдельно от входов/выходов
   // Визуальные настройки
   borderWidth?: number;
   borderRadius?: number;
@@ -52,12 +56,13 @@ export interface DeviceNodeData {
 }
 
 export interface CableEdgeData {
-  cableType: string;                     // обязательное, как и было
+  cableType: string;
   sourceLabel: string;
   targetLabel: string;
   adapter?: string;
   length?: number;
-  // Добавленные поля для стилей бейджа
+  labelText?: string;                // если задано, отображается вместо автоматического текста
+  // Стили бейджа
   badgeFontSize?: number;
   badgeTextColor?: string;
   badgeBorderColor?: string;
