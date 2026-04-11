@@ -434,8 +434,8 @@ const FlowEditor: React.FC = () => {
         if (e.id === edgeId) {
           return {
             ...e,
-            data: { ...e.data, ...updates } as CableEdgeData,
-          } as Edge<CableEdgeData>;
+            data: { ...e.data, ...updates },
+          };
         }
         return e;
       })
@@ -499,7 +499,7 @@ const FlowEditor: React.FC = () => {
           onReconnect={onReconnect}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
-          onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
+          onNodeDoubleClick={(_, node) => { setEditingNode(node as Node<DeviceNodeData>); setShowModal(true); }}
           onNodeContextMenu={onNodeContextMenu}
           fitView
           snapToGrid={gridSettings.snapToGrid}
