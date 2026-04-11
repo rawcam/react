@@ -2,15 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from '@xyflow/react';
 import { DeviceNodeData } from '../../types/flowTypes';
 
-const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
+const DeviceNode = ({ id, data, selected }: NodeProps<any>) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(data.label);
   const inputRef = useRef<HTMLInputElement>(null);
   const borderColor = data.color || '#2563eb';
   const { setNodes } = useReactFlow();
 
-  // Приводим data к нужному типу, обходя строгую проверку
-  const d = data as any as DeviceNodeData;
+  const d = data as DeviceNodeData;
 
   const borderWidth = d.borderWidth ?? 1;
   const borderRadius = d.borderRadius ?? 8;
@@ -36,7 +35,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     if (isEditing && inputRef.current) inputRef.current.focus();
   }, [isEditing]);
 
-  const handleResize = (_event: unknown, params: { width: number; height: number }) => {
+  const handleResize = (_event: any, params: { width: number; height: number }) => {
     setNodes((nds) =>
       nds.map((n) =>
         n.id === id ? { ...n, data: { ...n.data, width: params.width, height: params.height } } : n
