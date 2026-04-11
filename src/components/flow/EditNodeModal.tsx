@@ -1,8 +1,7 @@
 import React from 'react';
 import { Node } from '@xyflow/react';
-import { DeviceNodeData, DeviceInterface, ConnectorType, ProtocolType, PowerSupply } from '../../types/flowTypes';
+import { DeviceNodeData, DeviceInterface, ConnectorType, ProtocolType, PowerSupply, CONNECTOR_PROTOCOL_MAP } from '../../types/flowTypes';
 
-// ... весь остальной код без изменений
 interface EditNodeModalProps {
   isOpen: boolean;
   node: Node<DeviceNodeData> | null;
@@ -10,8 +9,7 @@ interface EditNodeModalProps {
   onSave: (updatedData: Partial<DeviceNodeData>) => void;
 }
 
-const connectorOptions: ConnectorType[] = ['HDMI', 'DVI', 'DisplayPort', 'RJ45', 'XLR', 'Phoenix3', 'Phoenix5', 'USB-C', 'IEC', 'PowerCON'];
-const protocolOptions: ProtocolType[] = ['HDMI', 'DVI', 'DisplayPort', 'Ethernet', 'Dante', 'AES67', 'AnalogAudio', 'Power', 'PoE'];
+const connectorOptions: ConnectorType[] = Object.keys(CONNECTOR_PROTOCOL_MAP) as ConnectorType[];
 
 const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, onSave }) => {
   const [editedData, setEditedData] = React.useState<DeviceNodeData | null>(null);
@@ -26,7 +24,18 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
 
   const updateInterface = (type: 'inputs' | 'outputs', index: number, field: keyof DeviceInterface, value: any) => {
     const newList = [...editedData[type]];
-    newList[index] = { ...newList[index], [field]: value };
+    const current = newList[index];
+    
+    if (field === 'connector') {
+      // При смене разъёма сбрасываем протокол на первый доступный
+      const allowedProtocols = CONNECTOR_PROTOCOL_MAP[value as ConnectorType];
+      current.connector = value;
+      current.protocol = allowedProtocols[0];
+    } else {
+      current[field] = value;
+    }
+    
+    newList[index] = current;
     setEditedData({ ...editedData, [type]: newList });
   };
 
@@ -59,6 +68,120 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
     onClose();
   };
 
+  const renderTable = (type: 'inputs' | 'outputs') => {
+    const list = editedData[type];
+    const title = type === 'inputs' ? 'Входы' : 'Выходы';
+    return (
+      <div style={{ flex: 1, background: 'var(--card-bg, #f9fcff)', borderRadius: '16px', padding: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)' }}>{title}</h4>
+          <button
+            onClick={() => addInterface(type)}
+            style={{
+              background: 'var(--accent)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '4px 12px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: 500,
+            }}
+          >
+            + Добавить
+          </button>
+        </div>
+        <div style={{ overflow: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 400, color: 'var(--text-secondary)' }}>Название</th>
+                <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 400, color: 'var(--text-secondary)' }}>Разъём</th>
+                <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 400, color: 'var(--text-secondary)' }}>Протокол</th>
+                <th style={{ padding: '8px 4px', width: '30px' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((iface: DeviceInterface, idx: number) => {
+                const allowedProtocols = CONNECTOR_PROTOCOL_MAP[iface.connector] || [];
+                return (
+                  <tr key={iface.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                    <td style={{ padding: '4px' }}>
+                      <input
+                        value={iface.name}
+                        onChange={e => updateInterface(type, idx, 'name', e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '6px',
+                          fontSize: '13px',
+                          border: '1px solid var(--border-light)',
+                          borderRadius: '8px',
+                          background: 'var(--bg-panel)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                    </td>
+                    <td style={{ padding: '4px' }}>
+                      <select
+                        value={iface.connector}
+                        onChange={e => updateInterface(type, idx, 'connector', e.target.value as ConnectorType)}
+                        style={{
+                          width: '100%',
+                          padding: '6px',
+                          fontSize: '13px',
+                          border: '1px solid var(--border-light)',
+                          borderRadius: '8px',
+                          background: 'var(--bg-panel)',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        {connectorOptions.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </td>
+                    <td style={{ padding: '4px' }}>
+                      <select
+                        value={iface.protocol}
+                        onChange={e => updateInterface(type, idx, 'protocol', e.target.value as ProtocolType)}
+                        style={{
+                          width: '100%',
+                          padding: '6px',
+                          fontSize: '13px',
+                          border: '1px solid var(--border-light)',
+                          borderRadius: '8px',
+                          background: 'var(--bg-panel)',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        {allowedProtocols.map(p => <option key={p}>{p}</option>)}
+                      </select>
+                    </td>
+                    <td style={{ padding: '4px', textAlign: 'center' }}>
+                      <button
+                        onClick={() => removeInterface(type, idx)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--danger)',
+                          fontSize: '16px',
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {list.length === 0 && (
+                <tr><td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>Нет {type === 'inputs' ? 'входов' : 'выходов'}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
@@ -66,160 +189,56 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
         onClick={e => e.stopPropagation()}
         style={{
           width: '95%',
-          maxWidth: '1200px',
-          minWidth: '800px',
+          maxWidth: '1000px',
           maxHeight: '85vh',
           overflow: 'auto',
-          background: 'white',
+          background: 'var(--bg-panel)',
           borderRadius: '24px',
           padding: '24px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+          boxShadow: 'var(--shadow)',
+          color: 'var(--text-primary)',
         }}
       >
-        <h3 style={{ marginTop: 0 }}>Редактировать устройство</h3>
+        <h3 style={{ marginTop: 0, marginBottom: '20px', fontWeight: 600 }}>Редактировать устройство</h3>
 
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
           <label style={{ flex: 2 }}>
-            <span style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Название устройства</span>
+            <span style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: 'var(--text-secondary)' }}>Название устройства</span>
             <input
               value={editedData.label}
               onChange={e => setEditedData({ ...editedData, label: e.target.value })}
-              style={{ width: '100%', padding: '6px 10px', fontSize: '13px' }}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                fontSize: '14px',
+                border: '1px solid var(--border-light)',
+                borderRadius: '12px',
+                background: 'var(--bg-panel)',
+                color: 'var(--text-primary)',
+              }}
             />
           </label>
           <label style={{ flex: 1 }}>
-            <span style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Цвет</span>
+            <span style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: 'var(--text-secondary)' }}>Цвет</span>
             <input
               type="color"
               value={editedData.color || '#2563eb'}
               onChange={e => setEditedData({ ...editedData, color: e.target.value })}
-              style={{ width: '100%', height: '34px', padding: '2px' }}
+              style={{ width: '100%', height: '44px', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-light)', background: 'var(--bg-panel)' }}
             />
           </label>
         </div>
 
-        <div style={{ display: 'flex', gap: '16px' }}>
-          {/* Входы */}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <h4 style={{ margin: 0 }}>Входы</h4>
-              <button onClick={() => addInterface('inputs')} style={{ padding: '4px 10px' }}>+ Добавить</button>
-            </div>
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '500px' }}>
-                <thead style={{ background: '#f1f5f9' }}>
-                  <tr>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Название</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Разъём</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Протокол</th>
-                    <th style={{ padding: '6px', width: '30px' }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {editedData.inputs.map((iface, idx) => (
-                    <tr key={iface.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '4px' }}>
-                        <input
-                          value={iface.name}
-                          onChange={e => updateInterface('inputs', idx, 'name', e.target.value)}
-                          style={{ width: '100%', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                        />
-                      </td>
-                      <td style={{ padding: '4px' }}>
-                        <select
-                          value={iface.connector}
-                          onChange={e => updateInterface('inputs', idx, 'connector', e.target.value)}
-                          style={{ width: '100%', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                        >
-                          {connectorOptions.map(c => <option key={c}>{c}</option>)}
-                        </select>
-                      </td>
-                      <td style={{ padding: '4px' }}>
-                        <select
-                          value={iface.protocol}
-                          onChange={e => updateInterface('inputs', idx, 'protocol', e.target.value)}
-                          style={{ width: '100%', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                        >
-                          {protocolOptions.map(p => <option key={p}>{p}</option>)}
-                        </select>
-                      </td>
-                      <td style={{ padding: '4px', textAlign: 'center' }}>
-                        <button onClick={() => removeInterface('inputs', idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>✕</button>
-                      </td>
-                    </tr>
-                  ))}
-                  {editedData.inputs.length === 0 && (
-                    <tr><td colSpan={4} style={{ padding: '12px', textAlign: 'center', color: '#94a3b8' }}>Нет входов</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Выходы */}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <h4 style={{ margin: 0 }}>Выходы</h4>
-              <button onClick={() => addInterface('outputs')} style={{ padding: '4px 10px' }}>+ Добавить</button>
-            </div>
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '500px' }}>
-                <thead style={{ background: '#f1f5f9' }}>
-                  <tr>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Название</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Разъём</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Протокол</th>
-                    <th style={{ padding: '6px', width: '30px' }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {editedData.outputs.map((iface, idx) => (
-                    <tr key={iface.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '4px' }}>
-                        <input
-                          value={iface.name}
-                          onChange={e => updateInterface('outputs', idx, 'name', e.target.value)}
-                          style={{ width: '100%', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                        />
-                      </td>
-                      <td style={{ padding: '4px' }}>
-                        <select
-                          value={iface.connector}
-                          onChange={e => updateInterface('outputs', idx, 'connector', e.target.value)}
-                          style={{ width: '100%', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                        >
-                          {connectorOptions.map(c => <option key={c}>{c}</option>)}
-                        </select>
-                      </td>
-                      <td style={{ padding: '4px' }}>
-                        <select
-                          value={iface.protocol}
-                          onChange={e => updateInterface('outputs', idx, 'protocol', e.target.value)}
-                          style={{ width: '100%', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                        >
-                          {protocolOptions.map(p => <option key={p}>{p}</option>)}
-                        </select>
-                      </td>
-                      <td style={{ padding: '4px', textAlign: 'center' }}>
-                        <button onClick={() => removeInterface('outputs', idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>✕</button>
-                      </td>
-                    </tr>
-                  ))}
-                  {editedData.outputs.length === 0 && (
-                    <tr><td colSpan={4} style={{ padding: '12px', textAlign: 'center', color: '#94a3b8' }}>Нет выходов</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+          {renderTable('inputs')}
+          {renderTable('outputs')}
         </div>
 
-        {/* Секция питания */}
-        <div style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
-          <h4 style={{ marginTop: 0 }}>Питание устройства</h4>
+        <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '20px' }}>
+          <h4 style={{ marginTop: 0, marginBottom: '16px', fontWeight: 500 }}>Питание устройства</h4>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
             <label style={{ flex: 1 }}>
-              <span style={{ fontSize: '12px' }}>Тип питания</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Тип питания</span>
               <select
                 value={editedData.powerSupply ? 'external' : 'none'}
                 onChange={(e) => {
@@ -229,7 +248,14 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
                     updatePowerSupply('voltage', 'AC');
                   }
                 }}
-                style={{ width: '100%', padding: '6px' }}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-light)',
+                  background: 'var(--bg-panel)',
+                  color: 'var(--text-primary)',
+                }}
               >
                 <option value="none">Нет (PoE или не требуется)</option>
                 <option value="external">Внешнее питание</option>
@@ -238,32 +264,53 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
             {editedData.powerSupply && (
               <>
                 <label style={{ width: '100px' }}>
-                  <span style={{ fontSize: '12px' }}>Напряжение</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Напряжение</span>
                   <select
                     value={editedData.powerSupply.voltage}
                     onChange={e => updatePowerSupply('voltage', e.target.value)}
-                    style={{ width: '100%', padding: '6px' }}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-light)',
+                      background: 'var(--bg-panel)',
+                      color: 'var(--text-primary)',
+                    }}
                   >
                     <option value="AC">AC</option>
                     <option value="DC">DC</option>
                   </select>
                 </label>
                 <label style={{ width: '120px' }}>
-                  <span style={{ fontSize: '12px' }}>Мощность (Вт)</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Мощность (Вт)</span>
                   <input
                     type="number"
                     min="0"
                     value={editedData.powerSupply.power}
                     onChange={e => updatePowerSupply('power', Number(e.target.value))}
-                    style={{ width: '100%', padding: '6px' }}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-light)',
+                      background: 'var(--bg-panel)',
+                      color: 'var(--text-primary)',
+                    }}
                   />
                 </label>
                 <label style={{ width: '150px' }}>
-                  <span style={{ fontSize: '12px' }}>Разъём</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Разъём</span>
                   <select
                     value={editedData.powerSupply.connector || ''}
                     onChange={e => updatePowerSupply('connector', e.target.value || undefined)}
-                    style={{ width: '100%', padding: '6px' }}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-light)',
+                      background: 'var(--bg-panel)',
+                      color: 'var(--text-primary)',
+                    }}
                   >
                     <option value="">Не указан</option>
                     <option value="IEC">IEC</option>
@@ -277,9 +324,34 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
           </div>
         </div>
 
-        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          <button onClick={onClose} style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px' }}>Отмена</button>
-          <button onClick={handleSave} style={{ padding: '8px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '6px' }}>Сохранить</button>
+        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--border-light)',
+              borderRadius: '12px',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+            }}
+          >
+            Отмена
+          </button>
+          <button
+            onClick={handleSave}
+            style={{
+              padding: '10px 24px',
+              background: 'var(--accent)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 500,
+            }}
+          >
+            Сохранить
+          </button>
         </div>
       </div>
     </div>
