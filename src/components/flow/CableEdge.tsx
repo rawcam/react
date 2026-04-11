@@ -31,25 +31,23 @@ const CableEdge: FC<EdgeProps<CableEdgeData>> = ({
     borderRadius: 8,
   });
 
-  const edgeData = data as CableEdgeData | undefined;
+  const badgeFontSize = data?.badgeFontSize ?? 10;
+  const badgeTextColor = data?.badgeTextColor ?? '#2563eb';
+  const badgeBorderColor = data?.badgeBorderColor ?? '#2563eb';
+  const badgeBorderWidth = data?.badgeBorderWidth ?? 1;
+  const badgeBorderRadius = data?.badgeBorderRadius ?? 12;
+  const badgeBackgroundColor = data?.badgeBackgroundColor ?? 'var(--bg-panel, white)';
 
-  const badgeFontSize = edgeData?.badgeFontSize ?? 10;
-  const badgeTextColor = edgeData?.badgeTextColor ?? '#2563eb';
-  const badgeBorderColor = edgeData?.badgeBorderColor ?? '#2563eb';
-  const badgeBorderWidth = edgeData?.badgeBorderWidth ?? 1;
-  const badgeBorderRadius = edgeData?.badgeBorderRadius ?? 12;
-  const badgeBackgroundColor = edgeData?.badgeBackgroundColor ?? 'var(--bg-panel, white)';
-
-  const displayLabel = edgeData?.labelText?.trim()
-    ? edgeData.labelText
-    : edgeData?.adapter
-      ? `${edgeData.cableType} (${edgeData.adapter})`
-      : edgeData?.cableType || 'Cable';
+  const displayLabel = data?.labelText?.trim()
+    ? data.labelText
+    : data?.adapter
+      ? `${data.cableType} (${data.adapter})`
+      : data?.cableType || 'Cable';
 
   const edgeStyle = {
     stroke: selected ? '#ef4444' : '#2563eb',
     strokeWidth: 2,
-    ...style,
+    ...(style as React.CSSProperties),
   };
 
   return (
