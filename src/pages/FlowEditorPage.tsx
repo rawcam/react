@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import ReactFlowOriginal, {
+import {
+  ReactFlow,
   Background,
   BackgroundVariant,
   Controls,
@@ -23,8 +24,7 @@ import { useFlowSchemas } from '../hooks/useFlowSchemas';
 import { DeviceNodeData, CableEdgeData, DeviceInterface, SavedSchema } from '../types/flowTypes';
 import './FlowEditorPage.css';
 
-// Обход ошибки типов JSX
-const ReactFlow = ReactFlowOriginal as any;
+const Flow = ReactFlow as any;
 
 const nodeTypes = { deviceNode: DeviceNode };
 const edgeTypes = { cableEdge: CableEdge };
@@ -493,7 +493,7 @@ const FlowEditor: React.FC = () => {
       />
 
       <div style={{ flex: 1, position: 'relative' }}>
-        <ReactFlow
+        <Flow
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
@@ -521,7 +521,7 @@ const FlowEditor: React.FC = () => {
           )}
           <Controls />
           <MiniMap />
-        </ReactFlow>
+        </Flow>
       </div>
 
       {contextMenu.visible && (
