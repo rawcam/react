@@ -12,6 +12,7 @@ import ReactFlow, {
   Node,
   ConnectionLineType,
   useOnSelectionChange,
+  reconnectEdge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import DeviceNode from '../components/flow/DeviceNode';
@@ -32,7 +33,6 @@ const createDemoInterfaces = (): { inputs: DeviceInterface[]; outputs: DeviceInt
     inputs: [
       { id: inputId('hdmi1'), name: 'HDMI IN 1', direction: 'input', connector: 'HDMI', protocol: 'HDMI' },
       { id: inputId('dante1'), name: 'Dante IN', direction: 'input', connector: 'RJ45', protocol: 'Dante', poe: false },
-      { id: inputId('power'), name: 'Power IN', direction: 'input', connector: 'IEC', protocol: 'Power', power: 100, voltage: 'AC' },
     ],
     outputs: [
       { id: outputId('hdmi1'), name: 'HDMI OUT 1', direction: 'output', connector: 'HDMI', protocol: 'HDMI' },
@@ -133,6 +133,7 @@ const FlowEditor: React.FC = () => {
             icon: 'fa-camera',
             ...createDemoInterfaces(),
             color: '#2563eb',
+            powerSupply: { voltage: 'AC', power: 50, connector: 'IEC' },
           },
         },
         {
@@ -150,6 +151,7 @@ const FlowEditor: React.FC = () => {
               { id: 'sw-out-2', name: 'Port 2 PoE', direction: 'output', connector: 'RJ45', protocol: 'Ethernet', poe: true, poePower: 30 },
             ],
             color: '#10b981',
+            powerSupply: { voltage: 'AC', power: 150, connector: 'IEC' },
           },
         },
         {
@@ -237,6 +239,14 @@ const FlowEditor: React.FC = () => {
     [nodes, setEdges]
   );
 
+  const onReconnect = useCallback(
+    (oldEdge: Edge<CableEdgeData>, newConnection: Connection) => {
+      setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
+      // Проверка совместимости будет в хуке, но можно добавить свою логику, если нужно
+    },
+    [setEdges]
+  );
+
   const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
     event.preventDefault();
     setContextMenu({ visible: true, x: event.clientX, y: event.clientY, nodeId: node.id });
@@ -301,9 +311,13 @@ const FlowEditor: React.FC = () => {
     setNodes(nds => nds.concat(newNode));
   };
 
-  // Копирование / вставка через клавиатуру
+  // Копирование / вставка через клавиатуру (с проверкой фокуса)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.getAttribute('contenteditable') === 'true');
+      if (isInput) return;
+
       // Ctrl+C копирование
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         if (selectedNode) {
@@ -333,6 +347,16 @@ const FlowEditor: React.FC = () => {
     return () => document.removeEventListener('click', closeContextMenu);
   }, []);
 
+  // Применить стили ко всем нодам
+  const applyNodeStyleToAll = (styles: Partial<DeviceNodeData>) => {
+    setNodes(nds =>
+      nds.map(n => ({
+        ...n,
+        data: { ...n.data, ...styles },
+      }))
+    );
+  };
+
   // Работа с файлами
   const saveSchemaToFile = () => {
     const schema: SavedSchema = {
@@ -359,7 +383,6 @@ const FlowEditor: React.FC = () => {
       try {
         const content = e.target?.result as string;
         const schema = JSON.parse(content) as SavedSchema;
-        // Простая валидация
         if (schema.nodes && schema.edges) {
           importSchema(schema);
           setNodes(schema.nodes);
@@ -372,7 +395,6 @@ const FlowEditor: React.FC = () => {
       }
     };
     reader.readAsText(file);
-    // Сброс input для повторной загрузки того же файла
     event.target.value = '';
   };
 
@@ -438,7 +460,6 @@ const FlowEditor: React.FC = () => {
 
   return (
     <div className={`flow-editor ${theme}`} style={{ height: '100vh', display: 'flex', background: 'var(--bg-page)' }}>
-      {/* Скрытый input для загрузки файла */}
       <input
         type="file"
         accept=".json"
@@ -451,6 +472,7 @@ const FlowEditor: React.FC = () => {
         selectedEdge={selectedEdge}
         onUpdateNode={handleUpdateNode}
         onUpdateEdge={handleUpdateEdge}
+        onApplyNodeStyleToAll={applyNodeStyleToAll}
         schemas={schemas}
         currentSchemaId={currentSchemaId}
         schemaName={schemaName}
@@ -482,6 +504,8 @@ const FlowEditor: React.FC = () => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onReconnect={onReconnect}
+          edgesReconnectable={true}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
