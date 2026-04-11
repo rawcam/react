@@ -214,29 +214,6 @@ body {
   border-color: var(--accent);
 }
 
-/* Хендлы — принудительно переопределяем */
-.react-flow__node .react-flow__handle {
-  all: unset !important;
-  position: absolute !important;
-  width: var(--handle-length, 8px) !important;
-  height: var(--handle-thickness, 2px) !important;
-  background: red !important;
-  border: none !important;
-  border-radius: 0 !important;
-  transform: translateY(-50%) !important;
-  z-index: 100 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.react-flow__node .react-flow__handle-left {
-  left: calc(-1 * var(--handle-offset, 27px)) !important;
-}
-
-.react-flow__node .react-flow__handle-right {
-  right: calc(-1 * var(--handle-offset, 27px)) !important;
-}
-
 /* Рёбра */
 .react-flow__edge-path {
   stroke: #2563eb !important;
@@ -252,11 +229,4 @@ body {
 
 .react-flow__edge marker {
   display: none !important;
-}
-
-/* Контрол ресайза */
-.react-flow__resize-control {
-  opacity: 0.8 !important;
-  border: 1px solid var(--accent) !important;
-  background: var(--bg-panel) !important;
 }
