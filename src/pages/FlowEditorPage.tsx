@@ -499,7 +499,7 @@ const FlowEditor: React.FC = () => {
           onReconnect={onReconnect}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
-          onNodeDoubleClick={(_event, node) => { setEditingNode(node as Node<DeviceNodeData>); setShowModal(true); }}
+          onNodeDoubleClick={(_event: any, node: any) => { setEditingNode(node); setShowModal(true); }}
           onNodeContextMenu={onNodeContextMenu}
           fitView
           snapToGrid={gridSettings.snapToGrid}
