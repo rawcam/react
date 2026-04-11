@@ -1,6 +1,6 @@
 import React from 'react';
 import { Node } from 'reactflow';
-import { DeviceNodeData, DeviceInterface, ConnectorType, ProtocolType } from '../../types/flowTypes';
+import { DeviceNodeData, DeviceInterface, ConnectorType, ProtocolType, PowerSupply } from '../../types/flowTypes';
 
 interface EditNodeModalProps {
   isOpen: boolean;
@@ -46,10 +46,15 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
     setEditedData({ ...editedData, [type]: newList });
   };
 
+  const updatePowerSupply = (field: keyof PowerSupply, value: any) => {
+    const current = editedData.powerSupply || { voltage: 'AC', power: 0 };
+    const updated = { ...current, [field]: value };
+    setEditedData({ ...editedData, powerSupply: updated });
+  };
+
   const handleSave = () => {
-    const totalPower = [...editedData.inputs, ...editedData.outputs].reduce((sum, iface) => sum + (iface.power || 0), 0);
     const totalPoE = [...editedData.inputs, ...editedData.outputs].reduce((sum, iface) => sum + (iface.poePower || 0), 0);
-    onSave({ ...editedData, totalPowerConsumption: totalPower, totalPoEConsumption: totalPoE });
+    onSave({ ...editedData, totalPoEConsumption: totalPoE });
     onClose();
   };
 
@@ -106,9 +111,6 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
                     <th style={{ padding: '6px', textAlign: 'left' }}>Название</th>
                     <th style={{ padding: '6px', textAlign: 'left' }}>Разъём</th>
                     <th style={{ padding: '6px', textAlign: 'left' }}>Протокол</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>PoE</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Мощн. (Вт)</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>AC/DC</th>
                     <th style={{ padding: '6px', width: '30px' }}></th>
                   </tr>
                 </thead>
@@ -141,48 +143,12 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
                         </select>
                       </td>
                       <td style={{ padding: '4px', textAlign: 'center' }}>
-                        {iface.connector === 'RJ45' && (
-                          <input
-                            type="checkbox"
-                            checked={iface.poe || false}
-                            onChange={e => updateInterface('inputs', idx, 'poe', e.target.checked)}
-                          />
-                        )}
-                      </td>
-                      <td style={{ padding: '4px' }}>
-                        {(iface.connector === 'RJ45' && iface.poe) || iface.connector === 'IEC' || iface.connector === 'PowerCON' || iface.protocol === 'Power' ? (
-                          <input
-                            type="number"
-                            value={iface.poe ? iface.poePower || '' : iface.power || ''}
-                            onChange={e => {
-                              const val = Number(e.target.value);
-                              if (iface.poe) updateInterface('inputs', idx, 'poePower', val);
-                              else updateInterface('inputs', idx, 'power', val);
-                            }}
-                            style={{ width: '70px', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                            placeholder="Вт"
-                          />
-                        ) : null}
-                      </td>
-                      <td style={{ padding: '4px' }}>
-                        {(iface.connector === 'IEC' || iface.connector === 'PowerCON' || iface.protocol === 'Power') && !iface.poe && (
-                          <select
-                            value={iface.voltage || 'AC'}
-                            onChange={e => updateInterface('inputs', idx, 'voltage', e.target.value)}
-                            style={{ width: '70px', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                          >
-                            <option value="AC">AC</option>
-                            <option value="DC">DC</option>
-                          </select>
-                        )}
-                      </td>
-                      <td style={{ padding: '4px', textAlign: 'center' }}>
                         <button onClick={() => removeInterface('inputs', idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>✕</button>
                       </td>
                     </tr>
                   ))}
                   {editedData.inputs.length === 0 && (
-                    <tr><td colSpan={7} style={{ padding: '12px', textAlign: 'center', color: '#94a3b8' }}>Нет входов</td></tr>
+                    <tr><td colSpan={4} style={{ padding: '12px', textAlign: 'center', color: '#94a3b8' }}>Нет входов</td></tr>
                   )}
                 </tbody>
               </table>
@@ -202,9 +168,6 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
                     <th style={{ padding: '6px', textAlign: 'left' }}>Название</th>
                     <th style={{ padding: '6px', textAlign: 'left' }}>Разъём</th>
                     <th style={{ padding: '6px', textAlign: 'left' }}>Протокол</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>PoE</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>Мощн. (Вт)</th>
-                    <th style={{ padding: '6px', textAlign: 'left' }}>AC/DC</th>
                     <th style={{ padding: '6px', width: '30px' }}></th>
                   </tr>
                 </thead>
@@ -237,52 +200,79 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
                         </select>
                       </td>
                       <td style={{ padding: '4px', textAlign: 'center' }}>
-                        {iface.connector === 'RJ45' && (
-                          <input
-                            type="checkbox"
-                            checked={iface.poe || false}
-                            onChange={e => updateInterface('outputs', idx, 'poe', e.target.checked)}
-                          />
-                        )}
-                      </td>
-                      <td style={{ padding: '4px' }}>
-                        {(iface.connector === 'RJ45' && iface.poe) || iface.connector === 'IEC' || iface.connector === 'PowerCON' || iface.protocol === 'Power' ? (
-                          <input
-                            type="number"
-                            value={iface.poe ? iface.poePower || '' : iface.power || ''}
-                            onChange={e => {
-                              const val = Number(e.target.value);
-                              if (iface.poe) updateInterface('outputs', idx, 'poePower', val);
-                              else updateInterface('outputs', idx, 'power', val);
-                            }}
-                            style={{ width: '70px', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                            placeholder="Вт"
-                          />
-                        ) : null}
-                      </td>
-                      <td style={{ padding: '4px' }}>
-                        {(iface.connector === 'IEC' || iface.connector === 'PowerCON' || iface.protocol === 'Power') && !iface.poe && (
-                          <select
-                            value={iface.voltage || 'AC'}
-                            onChange={e => updateInterface('outputs', idx, 'voltage', e.target.value)}
-                            style={{ width: '70px', padding: '4px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                          >
-                            <option value="AC">AC</option>
-                            <option value="DC">DC</option>
-                          </select>
-                        )}
-                      </td>
-                      <td style={{ padding: '4px', textAlign: 'center' }}>
                         <button onClick={() => removeInterface('outputs', idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>✕</button>
                       </td>
                     </tr>
                   ))}
                   {editedData.outputs.length === 0 && (
-                    <tr><td colSpan={7} style={{ padding: '12px', textAlign: 'center', color: '#94a3b8' }}>Нет выходов</td></tr>
+                    <tr><td colSpan={4} style={{ padding: '12px', textAlign: 'center', color: '#94a3b8' }}>Нет выходов</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        {/* Секция питания */}
+        <div style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+          <h4 style={{ marginTop: 0 }}>Питание устройства</h4>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
+            <label style={{ flex: 1 }}>
+              <span style={{ fontSize: '12px' }}>Тип питания</span>
+              <select
+                value={editedData.powerSupply ? 'external' : 'none'}
+                onChange={(e) => {
+                  if (e.target.value === 'none') {
+                    setEditedData({ ...editedData, powerSupply: undefined });
+                  } else {
+                    updatePowerSupply('voltage', 'AC');
+                  }
+                }}
+                style={{ width: '100%', padding: '6px' }}
+              >
+                <option value="none">Нет (PoE или не требуется)</option>
+                <option value="external">Внешнее питание</option>
+              </select>
+            </label>
+            {editedData.powerSupply && (
+              <>
+                <label style={{ width: '100px' }}>
+                  <span style={{ fontSize: '12px' }}>Напряжение</span>
+                  <select
+                    value={editedData.powerSupply.voltage}
+                    onChange={e => updatePowerSupply('voltage', e.target.value)}
+                    style={{ width: '100%', padding: '6px' }}
+                  >
+                    <option value="AC">AC</option>
+                    <option value="DC">DC</option>
+                  </select>
+                </label>
+                <label style={{ width: '120px' }}>
+                  <span style={{ fontSize: '12px' }}>Мощность (Вт)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editedData.powerSupply.power}
+                    onChange={e => updatePowerSupply('power', Number(e.target.value))}
+                    style={{ width: '100%', padding: '6px' }}
+                  />
+                </label>
+                <label style={{ width: '150px' }}>
+                  <span style={{ fontSize: '12px' }}>Разъём</span>
+                  <select
+                    value={editedData.powerSupply.connector || ''}
+                    onChange={e => updatePowerSupply('connector', e.target.value || undefined)}
+                    style={{ width: '100%', padding: '6px' }}
+                  >
+                    <option value="">Не указан</option>
+                    <option value="IEC">IEC</option>
+                    <option value="PowerCON">PowerCON</option>
+                    <option value="USB">USB</option>
+                    <option value="Terminal">Клемма</option>
+                  </select>
+                </label>
+              </>
+            )}
           </div>
         </div>
 
