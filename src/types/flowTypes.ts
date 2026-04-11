@@ -1,7 +1,19 @@
-import { Node, Edge } from '@xyflow/react';
+import type { Node, Edge } from '@xyflow/react';
 
-export type ConnectorType = ... // без изменений
-export type ProtocolType = ... // без изменений
+export type ConnectorType =
+  | 'HDMI' | 'DVI' | 'DisplayPort' | 'VGA'
+  | 'RJ45' | 'XLR' | 'TRS' | 'RCA'
+  | 'USB-C' | 'USB-A' | 'USB-B'
+  | 'Phoenix3' | 'Phoenix5'
+  | 'PowerCON' | 'IEC'
+  | 'Optical' | 'BNC';
+
+export type ProtocolType =
+  | 'HDMI' | 'DVI' | 'DisplayPort' | 'VGA'
+  | 'Ethernet' | 'Dante' | 'AES67' | 'AVB'
+  | 'AnalogAudio' | 'AES3'
+  | 'USB2' | 'USB3' | 'USB-C-AltDP'
+  | 'Power' | 'PoE';
 
 export interface DeviceInterface {
   id: string;
