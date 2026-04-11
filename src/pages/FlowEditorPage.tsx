@@ -15,6 +15,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import DeviceNode from '../components/flow/DeviceNode';
+import CableEdge from '../components/flow/CableEdge';
 import EditNodeModal from '../components/flow/EditNodeModal';
 import Sidebar from '../components/flow/Sidebar';
 import { useFlowSchemas } from '../hooks/useFlowSchemas';
@@ -22,6 +23,7 @@ import { DeviceNodeData, CableEdgeData, DeviceInterface } from '../types/flowTyp
 import './FlowEditorPage.css';
 
 const nodeTypes = { deviceNode: DeviceNode };
+const edgeTypes = { cableEdge: CableEdge };
 
 const createDemoInterfaces = (): { inputs: DeviceInterface[]; outputs: DeviceInterface[] } => {
   const inputId = (name: string) => `in-${Date.now()}-${name}`;
@@ -73,6 +75,7 @@ const FlowEditor: React.FC = () => {
   const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node<DeviceNodeData> | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge<CableEdgeData> | null>(null);
   const [gridSettings, setGridSettings] = useState(() => {
     const saved = localStorage.getItem('flow_grid_settings');
     return saved ? JSON.parse(saved) : { variant: BackgroundVariant.Dots, gap: 15, snapToGrid: true, snapGrid: [15, 15] };
@@ -86,8 +89,9 @@ const FlowEditor: React.FC = () => {
   const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema } = useFlowSchemas();
 
   useOnSelectionChange({
-    onChange: ({ nodes: selectedNodes }) => {
+    onChange: ({ nodes: selectedNodes, edges: selectedEdges }) => {
       setSelectedNode(selectedNodes.length === 1 ? (selectedNodes[0] as Node<DeviceNodeData>) : null);
+      setSelectedEdge(selectedEdges.length === 1 ? (selectedEdges[0] as Edge<CableEdgeData>) : null);
     },
   });
 
@@ -193,6 +197,13 @@ const FlowEditor: React.FC = () => {
         sourceLabel,
         targetLabel,
         adapter: compat.adapter,
+        // Значения по умолчанию
+        badgeFontSize: 10,
+        badgeTextColor: '#2563eb',
+        badgeBorderColor: '#2563eb',
+        badgeBorderWidth: 1,
+        badgeBorderRadius: 12,
+        badgeBackgroundColor: 'var(--bg-panel)',
       };
 
       const newEdge: Edge<CableEdgeData> = {
@@ -201,12 +212,8 @@ const FlowEditor: React.FC = () => {
         target: params.target,
         sourceHandle: params.sourceHandle,
         targetHandle: params.targetHandle,
-        type: 'step', // ортогональное ребро
+        type: 'cableEdge',
         animated: false,
-        markerEnd: undefined,
-        markerStart: undefined,
-        label: compat.adapter ? `${compat.cableType} (${compat.adapter})` : compat.cableType,
-        labelStyle: { fill: '#2563eb', fontWeight: 500, fontSize: 10 },
         style: { stroke: '#2563eb', strokeWidth: 2 },
         data: cableData,
       };
@@ -302,6 +309,12 @@ const FlowEditor: React.FC = () => {
     );
   };
 
+  const handleUpdateEdge = (edgeId: string, updates: Partial<CableEdgeData>) => {
+    setEdges((eds) =>
+      eds.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, ...updates } } : e))
+    );
+  };
+
   const handleToggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
@@ -314,7 +327,9 @@ const FlowEditor: React.FC = () => {
     <div className={`flow-editor ${theme}`} style={{ height: '100vh', display: 'flex', background: 'var(--bg-page)' }}>
       <Sidebar
         selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
         onUpdateNode={handleUpdateNode}
+        onUpdateEdge={handleUpdateEdge}
         schemas={schemas}
         currentSchemaId={currentSchemaId}
         schemaName={schemaName}
@@ -341,13 +356,14 @@ const FlowEditor: React.FC = () => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
           onNodeContextMenu={onNodeContextMenu}
           fitView
           snapToGrid={gridSettings.snapToGrid}
           snapGrid={gridSettings.snapGrid}
           connectionLineType={ConnectionLineType.Step}
-          defaultEdgeOptions={{ type: 'step', animated: false, markerEnd: undefined, markerStart: undefined }}
+          defaultEdgeOptions={{ type: 'cableEdge', animated: false }}
         >
           <Background variant={gridSettings.variant} gap={gridSettings.gap} color="#cbd5e1" />
           <Controls />
