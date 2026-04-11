@@ -1,3 +1,4 @@
+// src/components/flow/EditNodeModal.tsx
 import React from 'react';
 import { Node } from '@xyflow/react';
 import { DeviceNodeData, DeviceInterface, ConnectorType, ProtocolType, PowerSupply, CONNECTOR_PROTOCOL_MAP, DeviceType, NetworkSwitchConfig } from '../../types/flowTypes';
@@ -10,6 +11,14 @@ interface EditNodeModalProps {
 }
 
 const connectorOptions: ConnectorType[] = Object.keys(CONNECTOR_PROTOCOL_MAP) as ConnectorType[];
+
+// Палитра цветов: чёрный, белый, 5 оттенков серого, 7 цветов радуги + базовые оттенки
+const COLOR_PALETTE = [
+  '#000000', '#ffffff',
+  '#9ca3af', '#6b7280', '#4b5563', '#374151', '#1f2937',
+  '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6',
+  '#ec4899', '#f43f5e', '#14b8a6', '#6366f1'
+];
 
 const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, onSave }) => {
   const [editedData, setEditedData] = React.useState<DeviceNodeData | null>(null);
@@ -230,12 +239,28 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
           </label>
           <label style={{ flex: 1 }}>
             <span style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: 'var(--text-secondary)' }}>Цвет</span>
-            <input
-              type="color"
-              value={editedData.color || '#2563eb'}
-              onChange={e => setEditedData({ ...editedData, color: e.target.value })}
-              style={{ width: '100%', height: '44px', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-light)', background: 'var(--bg-panel)' }}
-            />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginTop: '4px' }}>
+              {COLOR_PALETTE.map(c => (
+                <div
+                  key={c}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    background: c,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    border: (editedData.color || '#2563eb') === c ? '3px solid var(--text-primary)' : '1px solid var(--border-light)',
+                  }}
+                  onClick={() => setEditedData({ ...editedData, color: c })}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => setEditedData({ ...editedData, color: '#2563eb' })}
+              style={{ marginTop: '8px', fontSize: '12px', padding: '4px 8px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '6px', cursor: 'pointer' }}
+            >
+              Сбросить цвет
+            </button>
           </label>
         </div>
 
