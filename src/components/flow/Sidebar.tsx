@@ -1,6 +1,14 @@
+// src/components/flow/Sidebar.tsx
 import React, { useState, useEffect } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../../types/flowTypes';
+
+const COLOR_PALETTE = [
+  '#2563eb', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899',
+  '#06b6d4', '#84cc16', '#f97316', '#6366f1', '#14b8a6', '#d946ef',
+  '#0ea5e9', '#f43f5e', '#a3e635', '#ff6900', '#00d084', '#8c78f0',
+  '#fcb900', '#7bdcb5', '#abb8c3', '#ff858d', '#6c4b3e', '#4b5563'
+];
 
 interface SidebarProps {
   selectedNode: Node<DeviceNodeData> | null;
@@ -141,6 +149,15 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (selectedNode) {
       onApplyNodeStyleToAll(localNodeSettings);
     }
+  };
+
+  const resetNodeColor = () => {
+    if (!selectedNode) return;
+    onUpdateNode(selectedNode.id, { color: '#2563eb' });
+  };
+
+  const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => {
+    handleEdgeSettingChange(key, defaultColor);
   };
 
   return (
@@ -340,6 +357,31 @@ const Sidebar: React.FC<SidebarProps> = ({
                 value={localNodeSettings.portFontSize}
                 onChange={(e) => handleNodeSettingChange('portFontSize', Number(e.target.value))}
               />
+
+              <label>Цвет обводки</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginTop: '4px' }}>
+                {COLOR_PALETTE.map(c => (
+                  <div
+                    key={c}
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      background: c,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      border: selectedNode?.data.color === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)',
+                    }}
+                    onClick={() => onUpdateNode(selectedNode!.id, { color: c })}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={resetNodeColor}
+                style={{ marginTop: '8px', fontSize: '11px', padding: '4px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Сбросить цвет
+              </button>
+
               <button
                 onClick={handleApplyToAll}
                 style={{
@@ -406,26 +448,79 @@ const Sidebar: React.FC<SidebarProps> = ({
                 value={localEdgeSettings.badgeFontSize}
                 onChange={(e) => handleEdgeSettingChange('badgeFontSize', Number(e.target.value))}
               />
+
               <label>Цвет текста / заливки</label>
-              <input
-                type="color"
-                value={localEdgeSettings.badgeTextColor}
-                onChange={(e) => handleEdgeSettingChange('badgeTextColor', e.target.value)}
-              />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginTop: '4px' }}>
+                {COLOR_PALETTE.map(c => (
+                  <div
+                    key={c}
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      background: c,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      border: localEdgeSettings.badgeTextColor === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)',
+                    }}
+                    onClick={() => handleEdgeSettingChange('badgeTextColor', c)}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={() => resetEdgeColor('badgeTextColor', '#2563eb')}
+                style={{ marginTop: '4px', marginBottom: '8px', fontSize: '11px', padding: '4px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Сбросить
+              </button>
+
               <label>Цвет обводки</label>
-              <input
-                type="color"
-                value={localEdgeSettings.badgeBorderColor}
-                onChange={(e) => handleEdgeSettingChange('badgeBorderColor', e.target.value)}
-              />
-              <label>Толщина обводки (px)</label>
-              <input
-                type="number"
-                min="0"
-                max="5"
-                value={localEdgeSettings.badgeBorderWidth}
-                onChange={(e) => handleEdgeSettingChange('badgeBorderWidth', Number(e.target.value))}
-              />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginTop: '4px' }}>
+                {COLOR_PALETTE.map(c => (
+                  <div
+                    key={c}
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      background: c,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      border: localEdgeSettings.badgeBorderColor === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)',
+                    }}
+                    onClick={() => handleEdgeSettingChange('badgeBorderColor', c)}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={() => resetEdgeColor('badgeBorderColor', '#2563eb')}
+                style={{ marginTop: '4px', marginBottom: '8px', fontSize: '11px', padding: '4px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Сбросить
+              </button>
+
+              <label>Фон маркировок</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginTop: '4px' }}>
+                {COLOR_PALETTE.map(c => (
+                  <div
+                    key={c}
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      background: c,
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      border: localEdgeSettings.badgeBackgroundColor === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)',
+                    }}
+                    onClick={() => handleEdgeSettingChange('badgeBackgroundColor', c)}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={() => resetEdgeColor('badgeBackgroundColor', '#ffffff')}
+                style={{ marginTop: '4px', fontSize: '11px', padding: '4px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Сбросить
+              </button>
+
               <label>Скругление (px)</label>
               <input
                 type="number"
@@ -434,11 +529,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 value={localEdgeSettings.badgeBorderRadius}
                 onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))}
               />
-              <label>Фон маркировок</label>
+              <label>Толщина обводки (px)</label>
               <input
-                type="color"
-                value={localEdgeSettings.badgeBackgroundColor}
-                onChange={(e) => handleEdgeSettingChange('badgeBackgroundColor', e.target.value)}
+                type="number"
+                min="0"
+                max="5"
+                value={localEdgeSettings.badgeBorderWidth}
+                onChange={(e) => handleEdgeSettingChange('badgeBorderWidth', Number(e.target.value))}
               />
             </div>
           )}
