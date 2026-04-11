@@ -2,6 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeResizeControl, useReactFlow } from '@xyflow/react';
 import { DeviceNodeData } from '../../types/flowTypes';
 
+interface SwitchPort {
+  number: number;
+  type: 'rj45' | 'sfp';
+  poe: boolean;
+  used: boolean;
+}
+
 const DeviceNode = ({ id, data, selected }: any) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(data.label);
@@ -53,7 +60,7 @@ const DeviceNode = ({ id, data, selected }: any) => {
   const powerSupply = d.powerSupply;
 
   const renderPorts = () => {
-    const ports = [];
+    const ports: SwitchPort[] = [];
     const numPorts = switchConfig.numPorts;
     const poePorts = switchConfig.poePorts;
     const sfpPorts = switchConfig.sfpPorts;
@@ -83,7 +90,7 @@ const DeviceNode = ({ id, data, selected }: any) => {
     const leftPorts = ports.filter(p => oddLeft ? p.number % 2 === 1 : p.number % 2 === 0);
     const rightPorts = ports.filter(p => oddLeft ? p.number % 2 === 0 : p.number % 2 === 1);
 
-    const portStyle = (port: typeof ports[0]) => ({
+    const portStyle = (port: SwitchPort): React.CSSProperties => ({
       width: '36px',
       height: '20px',
       background: port.used ? '#2563eb' : (port.poe ? '#10b981' : '#334155'),
