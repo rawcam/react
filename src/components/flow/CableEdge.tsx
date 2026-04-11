@@ -20,7 +20,6 @@ const CableEdge: FC<any> = ({
   markerEnd,
   markerStart,
 }) => {
-  // Получаем путь и точки для позиционирования
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -55,54 +54,30 @@ const CableEdge: FC<any> = ({
     ...(style as React.CSSProperties),
   };
 
-  // Вычисляем позиции для маркировок, основываясь на реальном пути.
-  // Получаем массив точек пути (в виде строки SVG path) и парсим первую/последнюю координаты.
-  const pathCommands = edgePath.match(/[MLC]\s*[\d.]+\s*[\d.]+/g) || [];
-  const firstPointMatch = pathCommands[0]?.match(/[\d.]+/g);
-  const lastPointMatch = pathCommands[pathCommands.length - 1]?.match(/[\d.]+/g);
-  
-  let sourceMarkerX = sourceX;
-  let sourceMarkerY = sourceY;
-  let targetMarkerX = targetX;
-  let targetMarkerY = targetY;
+  // Функция для получения координат на пути с заданным отступом от начала/конца
+  const getPointAtDistanceFromStart = (path: string, distance: number) => {
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pathEl.setAttribute('d', path);
+    tempSvg.appendChild(pathEl);
+    const totalLength = pathEl.getTotalLength();
+    const point = pathEl.getPointAtLength(Math.min(distance, totalLength));
+    return { x: point.x, y: point.y };
+  };
 
-  if (firstPointMatch && firstPointMatch.length >= 2) {
-    // Первая точка после начального смещения (отступ от source)
-    const x = parseFloat(firstPointMatch[0]);
-    const y = parseFloat(firstPointMatch[1]);
-    // Если точка близка к source, берём вторую точку для отступа
-    if (Math.hypot(x - sourceX, y - sourceY) < 5 && pathCommands.length > 1) {
-      const secondMatch = pathCommands[1]?.match(/[\d.]+/g);
-      if (secondMatch && secondMatch.length >= 2) {
-        sourceMarkerX = parseFloat(secondMatch[0]);
-        sourceMarkerY = parseFloat(secondMatch[1]);
-      } else {
-        sourceMarkerX = x;
-        sourceMarkerY = y;
-      }
-    } else {
-      sourceMarkerX = x;
-      sourceMarkerY = y;
-    }
-  }
+  const getPointAtDistanceFromEnd = (path: string, distance: number) => {
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pathEl.setAttribute('d', path);
+    tempSvg.appendChild(pathEl);
+    const totalLength = pathEl.getTotalLength();
+    const point = pathEl.getPointAtLength(Math.max(0, totalLength - distance));
+    return { x: point.x, y: point.y };
+  };
 
-  if (lastPointMatch && lastPointMatch.length >= 2) {
-    const x = parseFloat(lastPointMatch[0]);
-    const y = parseFloat(lastPointMatch[1]);
-    if (Math.hypot(x - targetX, y - targetY) < 5 && pathCommands.length > 1) {
-      const prevMatch = pathCommands[pathCommands.length - 2]?.match(/[\d.]+/g);
-      if (prevMatch && prevMatch.length >= 2) {
-        targetMarkerX = parseFloat(prevMatch[0]);
-        targetMarkerY = parseFloat(prevMatch[1]);
-      } else {
-        targetMarkerX = x;
-        targetMarkerY = y;
-      }
-    } else {
-      targetMarkerX = x;
-      targetMarkerY = y;
-    }
-  }
+  const markerOffset = 15; // фиксированные 15px от ноды
+  const sourcePos = getPointAtDistanceFromStart(edgePath, markerOffset);
+  const targetPos = getPointAtDistanceFromEnd(edgePath, markerOffset);
 
   // Стиль для маркировок (компактный)
   const markerStyle: React.CSSProperties = {
@@ -144,8 +119,8 @@ const CableEdge: FC<any> = ({
           <div
             style={{
               ...markerStyle,
-              left: sourceMarkerX,
-              top: sourceMarkerY,
+              left: sourcePos.x,
+              top: sourcePos.y,
             }}
             className="nodrag nopan"
           >
@@ -156,8 +131,8 @@ const CableEdge: FC<any> = ({
           <div
             style={{
               ...markerStyle,
-              left: targetMarkerX,
-              top: targetMarkerY,
+              left: targetPos.x,
+              top: targetPos.y,
             }}
             className="nodrag nopan"
           >
