@@ -112,13 +112,9 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       id={input.id}
                       style={{
                         background: borderColor,
-                        width: 8,
-                        height: 2,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
-                        left: -27,
+                        left: -20,
                         transform: 'translateY(-50%)',
-                        border: 'none',
-                        borderRadius: 0,
                       }}
                     />
                   </>
@@ -134,13 +130,9 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       id={output.id}
                       style={{
                         background: borderColor,
-                        width: 8,
-                        height: 2,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
-                        right: -27,
+                        right: -20,
                         transform: 'translateY(-50%)',
-                        border: 'none',
-                        borderRadius: 0,
                       }}
                     />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
