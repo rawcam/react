@@ -231,12 +231,7 @@ body {
   display: none !important;
 }
 
-/* Гарантируем, что нода не обрезает выступающие хендлы */
-.react-flow__node {
-  overflow: visible !important;
-}
-
-/* Глобальные стили для хендлов: тонкая полоска 8x1 пикселей, выступ за границу на 8px */
+/* Глобальные стили для хендлов: тонкая полоска 8x1 пикселей */
 .react-flow__handle {
   width: 8px !important;
   height: 1px !important;
@@ -246,15 +241,18 @@ body {
   max-height: 1px !important;
   border-radius: 0 !important;
   border: none !important;
-  /* Убираем background: inherit, чтобы работал инлайн-стиль */
   transform: translateY(-50%) !important;
-  z-index: 10 !important; /* чтобы быть поверх текста и других элементов */
+  z-index: 10 !important;
+  /* background наследуется из инлайн-стиля компонента */
 }
 
-.react-flow__handle-left {
-  left: -8px !important;
-}
-
+/* Убираем глобальные позиции — теперь они задаются инлайн-стилями в DeviceNode */
+.react-flow__handle-left,
 .react-flow__handle-right {
-  right: -8px !important;
+  /* намеренно пусто */
+}
+
+/* Чтобы нода не обрезала хендлы */
+.react-flow__node {
+  overflow: visible !important;
 }
