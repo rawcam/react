@@ -31,18 +31,20 @@ const CableEdge: FC<EdgeProps<CableEdgeData>> = ({
     borderRadius: 8,
   });
 
-  const badgeFontSize = data?.badgeFontSize ?? 10;
-  const badgeTextColor = data?.badgeTextColor ?? '#2563eb';
-  const badgeBorderColor = data?.badgeBorderColor ?? '#2563eb';
-  const badgeBorderWidth = data?.badgeBorderWidth ?? 1;
-  const badgeBorderRadius = data?.badgeBorderRadius ?? 12;
-  const badgeBackgroundColor = data?.badgeBackgroundColor ?? 'var(--bg-panel, white)';
+  const d = (data || {}) as any as CableEdgeData;
 
-  const displayLabel = data?.labelText?.trim()
-    ? data.labelText
-    : data?.adapter
-      ? `${data.cableType} (${data.adapter})`
-      : data?.cableType || 'Cable';
+  const badgeFontSize = d.badgeFontSize ?? 10;
+  const badgeTextColor = d.badgeTextColor ?? '#2563eb';
+  const badgeBorderColor = d.badgeBorderColor ?? '#2563eb';
+  const badgeBorderWidth = d.badgeBorderWidth ?? 1;
+  const badgeBorderRadius = d.badgeBorderRadius ?? 12;
+  const badgeBackgroundColor = d.badgeBackgroundColor ?? 'var(--bg-panel, white)';
+
+  const displayLabel = d.labelText?.trim()
+    ? d.labelText
+    : d.adapter
+      ? `${d.cableType} (${d.adapter})`
+      : d.cableType || 'Cable';
 
   const edgeStyle = {
     stroke: selected ? '#ef4444' : '#2563eb',
