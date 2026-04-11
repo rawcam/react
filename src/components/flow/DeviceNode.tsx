@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from '@xyflow/react';
+import { Handle, Position, NodeResizeControl, useReactFlow } from '@xyflow/react';
 import { DeviceNodeData } from '../../types/flowTypes';
 
-const DeviceNode = ({ id, data, selected }: NodeProps<any>) => {
+const DeviceNode = ({ id, data, selected }: any) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(data.label);
   const inputRef = useRef<HTMLInputElement>(null);
