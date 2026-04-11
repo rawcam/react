@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import ReactFlowOriginal, {
+import {
+  ReactFlow,
   Background,
   BackgroundVariant,
   Controls,
@@ -22,9 +23,6 @@ import Sidebar from '../components/flow/Sidebar';
 import { useFlowSchemas } from '../hooks/useFlowSchemas';
 import { DeviceNodeData, CableEdgeData, DeviceInterface, SavedSchema } from '../types/flowTypes';
 import './FlowEditorPage.css';
-
-// Обход ошибки типов JSX
-const ReactFlow = ReactFlowOriginal as any;
 
 const nodeTypes = { deviceNode: DeviceNode };
 const edgeTypes = { cableEdge: CableEdge };
@@ -217,8 +215,8 @@ const FlowEditor: React.FC = () => {
         sourceLabel,
         targetLabel,
         adapter: compat.adapter,
-        badgeFontSize: 6,          // ← добавлено
-        edgeStrokeWidth: 2,         // ← добавлено
+        badgeFontSize: 6,
+        edgeStrokeWidth: 2,
         badgeTextColor: '#2563eb',
         badgeBorderColor: '#2563eb',
         badgeBorderWidth: 1,
