@@ -3,10 +3,8 @@ import { Node, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../types/flowTypes';
 import { getSmoothStepPath } from '@xyflow/react';
 
-// Преобразование координаты Y (инверсия для DXF)
 const toDxfY = (y: number, maxY: number) => maxY - y;
 
-// Генерация ортогонального пути
 const generateOrthoPath = (
   sourceX: number, sourceY: number,
   targetX: number, targetY: number,
@@ -21,7 +19,6 @@ const generateOrthoPath = (
   return path;
 };
 
-// Разбор SVG-пути на массив точек
 const parseSvgPathToSegments = (path: string): { x: number; y: number }[] => {
   const points: { x: number; y: number }[] = [];
   const commands = path.match(/[MLC]\s*[\d.]+\s*[\d.]+/g) || [];
@@ -34,21 +31,19 @@ const parseSvgPathToSegments = (path: string): { x: number; y: number }[] => {
   return points;
 };
 
-// Маппинг HEX → AutoCAD Color Index (ACI)
 const mapColorToAci = (hex: string): number => {
   const r = parseInt(hex.slice(1,3), 16);
   const g = parseInt(hex.slice(3,5), 16);
   const b = parseInt(hex.slice(5,7), 16);
-  if (r === 37 && g === 99 && b === 235) return 5;   // #2563eb → синий
-  if (r === 239 && g === 68 && b === 68) return 1;   // #ef4444 → красный
-  if (r === 16 && g === 185 && b === 129) return 3;  // #10b981 → зелёный
-  if (r === 0 && g === 0 && b === 0) return 7;       // чёрный
-  if (r === 255 && g === 255 && b === 255) return 7; // белый
+  if (r === 37 && g === 99 && b === 235) return 5;
+  if (r === 239 && g === 68 && b === 68) return 1;
+  if (r === 16 && g === 185 && b === 129) return 3;
+  if (r === 0 && g === 0 && b === 0) return 7;
+  if (r === 255 && g === 255 && b === 255) return 7;
   const brightness = r * 0.299 + g * 0.587 + b * 0.114;
   return brightness > 128 ? 7 : 0;
 };
 
-// Основная функция генерации DXF
 const generateDxfString = (
   nodes: Node<DeviceNodeData>[],
   edges: Edge<CableEdgeData>[]
@@ -61,13 +56,37 @@ const generateDxfString = (
   });
   maxY += 100;
 
-  // Секция TABLES (обязательна для корректного отображения текста)
-  lines.push('0', 'SECTION', '2', 'TABLES');
-  lines.push('0', 'TABLE', '2', 'STYLE', '70', '0');
-  lines.push('0', 'STYLE', '2', 'STANDARD', '70', '0', '40', '0.0', '41', '1.0', '50', '0.0', '71', '0', '42', '2.5', '3', 'txt', '4', '');
-  lines.push('0', 'ENDTAB');
+  // HEADER (минимальный)
+  lines.push('0', 'SECTION', '2', 'HEADER');
+  lines.push('9', '$ACADVER', '1', 'AC1021');
+  lines.push('9', '$INSUNITS', '70', '4');
   lines.push('0', 'ENDSEC');
 
+  // CLASSES
+  lines.push('0', 'SECTION', '2', 'CLASSES', '0', 'ENDSEC');
+
+  // TABLES
+  lines.push('0', 'SECTION', '2', 'TABLES');
+  lines.push('0', 'TABLE', '2', 'VPORT', '70', '1');
+  lines.push('0', 'VPORT', '2', '*ACTIVE', '70', '0', '10', '0.0', '20', '0.0', '11', '1.0', '21', '1.0');
+  lines.push('0', 'ENDTAB');
+  lines.push('0', 'TABLE', '2', 'LTYPE', '70', '1');
+  lines.push('0', 'LTYPE', '2', 'CONTINUOUS', '70', '0', '3', 'Solid line', '72', '65', '73', '0', '40', '0.0');
+  lines.push('0', 'ENDTAB');
+  lines.push('0', 'TABLE', '2', 'LAYER', '70', '1');
+  lines.push('0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS');
+  lines.push('0', 'ENDTAB');
+  lines.push('0', 'TABLE', '2', 'STYLE', '70', '1');
+  lines.push('0', 'STYLE', '2', 'STANDARD', '70', '0', '40', '0.0', '41', '1.0', '50', '0.0', '71', '0', '42', '2.5', '3', 'txt', '4', '');
+  lines.push('0', 'ENDTAB');
+  lines.push('0', 'TABLE', '2', 'APPID', '70', '0', '0', 'ENDTAB');
+  lines.push('0', 'TABLE', '2', 'DIMSTYLE', '70', '0', '0', 'ENDTAB');
+  lines.push('0', 'ENDSEC');
+
+  // BLOCKS
+  lines.push('0', 'SECTION', '2', 'BLOCKS', '0', 'ENDSEC');
+
+  // ENTITIES
   lines.push('0', 'SECTION', '2', 'ENTITIES');
 
   // --- Рёбра ---
@@ -122,15 +141,16 @@ const generateDxfString = (
     );
     const segments = parseSvgPathToSegments(path);
 
+    const colorAci = mapColorToAci(edge.data?.edgeStrokeColor || '#2563eb');
+    const width = edge.data?.edgeStrokeWidth || 2;
+
     for (let i = 0; i < segments.length - 1; i++) {
       const p1 = segments[i];
       const p2 = segments[i+1];
       lines.push('0', 'LINE', '8', '0');
       lines.push('10', p1.x.toFixed(4), '20', toDxfY(p1.y, maxY).toFixed(4), '30', '0.0');
       lines.push('11', p2.x.toFixed(4), '21', toDxfY(p2.y, maxY).toFixed(4), '31', '0.0');
-      const color = edge.data?.edgeStrokeColor || '#2563eb';
-      const width = edge.data?.edgeStrokeWidth || 2;
-      lines.push('62', mapColorToAci(color).toString());
+      lines.push('62', colorAci.toString());
       lines.push('370', (width / 10).toFixed(1));
     }
 
@@ -152,7 +172,7 @@ const generateDxfString = (
     const x = node.position.x;
     const y = node.position.y;
 
-    // Замкнутая полилиния: 4 вершины + SEQEND
+    // Полилиния
     const pts = [[x,y], [x+w,y], [x+w,y+h], [x,y+h]];
     lines.push('0', 'POLYLINE', '8', '0', '66', '1', '70', '1');
     pts.forEach(([px, py]) => {
@@ -163,14 +183,14 @@ const generateDxfString = (
     lines.push('62', mapColorToAci(node.data.color || '#2563eb').toString());
     lines.push('370', ((node.data.borderWidth || 1) / 10).toFixed(1));
 
-    // Текст метки
+    // Текст
     lines.push('0', 'TEXT', '8', '0');
     lines.push('10', (x + 5).toFixed(4), '20', toDxfY(y + 15, maxY).toFixed(4), '30', '0.0');
     lines.push('40', '10.0');
     lines.push('1', node.data.label);
     lines.push('62', '7');
 
-    // Хендлы (кружочки)
+    // Хендлы
     const rowHeight = 22;
     const maxRows = Math.max(node.data.inputs.length, node.data.outputs.length);
     node.data.inputs.forEach((_, idx) => {
@@ -189,7 +209,12 @@ const generateDxfString = (
     });
   });
 
-  lines.push('0', 'ENDSEC', '0', 'EOF');
+  lines.push('0', 'ENDSEC');
+
+  // OBJECTS
+  lines.push('0', 'SECTION', '2', 'OBJECTS', '0', 'ENDSEC');
+  lines.push('0', 'EOF');
+
   return lines.join('\n');
 };
 
