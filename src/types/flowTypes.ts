@@ -95,14 +95,23 @@ export interface CableEdgeData {
   adapter?: string;
   length?: number;
   labelText?: string;
+  // Основной бейдж
   badgeFontSize?: number;
   badgeTextColor?: string;
   badgeBorderColor?: string;
   badgeBorderWidth?: number;
   badgeBorderRadius?: number;
   badgeBackgroundColor?: string;
+  // Маркировки
+  markerFontSize?: number;
+  markerTextColor?: string;
+  markerBorderColor?: string;
+  markerBorderWidth?: number;
+  markerBorderRadius?: number;
+  markerBackgroundColor?: string;
+  // Линия
   edgeStrokeWidth?: number;
-  edgeStrokeColor?: string;   // ← добавлено
+  edgeStrokeColor?: string;
   sourceLabelText?: string;
   targetLabelText?: string;
 }
