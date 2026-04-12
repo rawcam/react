@@ -3,6 +3,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeResizeControl, useReactFlow } from '@xyflow/react';
 import { DeviceNodeData } from '../../types/flowTypes';
 
+interface SwitchPort {
+  number: number;
+  type: 'rj45' | 'sfp';
+  poe: boolean;
+  used: boolean;
+}
+
 const DeviceNode = ({ id, data, selected }: any) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(data.label);
@@ -43,14 +50,14 @@ const DeviceNode = ({ id, data, selected }: any) => {
     );
   };
 
+  const isNetworkSwitch = d.deviceType === 'network_switch';
+  const switchConfig = d.networkSwitchConfig || { numPorts: 24, poePorts: 0, sfpPorts: 0, speed: '1G', portLayout: 'odd_left' };
   const totalPoE = d.totalPoEConsumption ?? 0;
-  const maxRows = Math.max(d.inputs.length, d.outputs.length);
+  const maxRows = isNetworkSwitch ? 0 : Math.max(d.inputs.length, d.outputs.length);
 
   const handleLeftOffset = 12 + borderWidth + 8;
   const handleRightOffset = 12 + borderWidth + 8;
-
   const powerSupply = d.powerSupply;
-
   const iconClass = d.icon || 'fas fa-microchip';
 
   const isDarkTheme = document.documentElement.classList.contains('dark');
@@ -59,6 +66,67 @@ const DeviceNode = ({ id, data, selected }: any) => {
     effectiveBorderColor = '#e0e0e0';
   }
 
+  // Рендер портов коммутатора
+  const renderSwitchPorts = () => {
+    const ports: SwitchPort[] = [];
+    const numPorts = switchConfig.numPorts;
+    const poePorts = switchConfig.poePorts;
+    const sfpPorts = switchConfig.sfpPorts;
+    const oddLeft = switchConfig.portLayout === 'odd_left';
+
+    for (let i = 1; i <= numPorts; i++) {
+      ports.push({
+        number: i,
+        type: 'rj45',
+        poe: i <= poePorts,
+        used: false, // TODO: определять по соединениям
+      });
+    }
+    for (let i = 1; i <= sfpPorts; i++) {
+      ports.push({
+        number: numPorts + i,
+        type: 'sfp',
+        poe: false,
+        used: false,
+      });
+    }
+
+    const leftPorts = ports.filter(p => oddLeft ? p.number % 2 === 1 : p.number % 2 === 0);
+    const rightPorts = ports.filter(p => oddLeft ? p.number % 2 === 0 : p.number % 2 === 1);
+
+    const portStyle = (port: SwitchPort): React.CSSProperties => ({
+      width: '36px',
+      height: '20px',
+      background: port.used ? '#2563eb' : (port.poe ? '#10b981' : '#334155'),
+      color: port.used || port.poe ? 'white' : '#94a3b8',
+      borderRadius: '4px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '9px',
+      fontWeight: 500,
+    });
+
+    return (
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {leftPorts.map(p => (
+            <div key={p.number} style={portStyle(p)}>
+              {p.type === 'sfp' ? 'SFP' : `${p.number}${p.poe ? ' PoE' : ''}`}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {rightPorts.map(p => (
+            <div key={p.number} style={portStyle(p)}>
+              {p.type === 'sfp' ? 'SFP' : `${p.number}${p.poe ? ' PoE' : ''}`}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div
       style={{
@@ -66,7 +134,7 @@ const DeviceNode = ({ id, data, selected }: any) => {
         border: `${borderWidth}px solid ${effectiveBorderColor}`,
         borderRadius: `${borderRadius}px`,
         padding: '8px 0 4px 0',
-        width: d.width || 'auto',
+        width: d.width || (isNetworkSwitch ? 220 : 'auto'),
         minWidth: 90,
         height: d.height || 'auto',
         boxShadow: selected ? '0 0 0 2px #2563eb' : 'none',
@@ -95,60 +163,64 @@ const DeviceNode = ({ id, data, selected }: any) => {
         </span>
       </div>
 
-      <div style={{ fontSize: portFontSize, textTransform: 'uppercase', lineHeight: 1.4, padding: '0 12px' }}>
-        {Array.from({ length: maxRows }).map((_, rowIndex) => {
-          const input = d.inputs[rowIndex];
-          const output = d.outputs[rowIndex];
-          return (
-            <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 22, position: 'relative' }}>
-              <div style={{ flex: 1, textAlign: 'left', position: 'relative' }}>
-                {input && (
-                  <>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{input.name}</span>
-                    <Handle
-                      type="target"
-                      position={Position.Left}
-                      id={input.id}
-                      style={{
-                        background: effectiveBorderColor,
-                        top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
-                        left: -handleLeftOffset,
-                        transform: 'translateY(-50%)',
-                        width: 8,
-                        height: 1,
-                        borderRadius: 0,
-                        border: 'none',
-                      }}
-                    />
-                  </>
-                )}
+      {isNetworkSwitch ? (
+        renderSwitchPorts()
+      ) : (
+        <div style={{ fontSize: portFontSize, textTransform: 'uppercase', lineHeight: 1.4, padding: '0 12px' }}>
+          {Array.from({ length: maxRows }).map((_, rowIndex) => {
+            const input = d.inputs[rowIndex];
+            const output = d.outputs[rowIndex];
+            return (
+              <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 22, position: 'relative' }}>
+                <div style={{ flex: 1, textAlign: 'left', position: 'relative' }}>
+                  {input && (
+                    <>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{input.name}</span>
+                      <Handle
+                        type="target"
+                        position={Position.Left}
+                        id={input.id}
+                        style={{
+                          background: effectiveBorderColor,
+                          top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
+                          left: -handleLeftOffset,
+                          transform: 'translateY(-50%)',
+                          width: 8,
+                          height: 1,
+                          borderRadius: 0,
+                          border: 'none',
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
+                <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
+                  {output && (
+                    <>
+                      <Handle
+                        type="source"
+                        position={Position.Right}
+                        id={output.id}
+                        style={{
+                          background: effectiveBorderColor,
+                          top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
+                          right: -handleRightOffset,
+                          transform: 'translateY(-50%)',
+                          width: 8,
+                          height: 1,
+                          borderRadius: 0,
+                          border: 'none',
+                        }}
+                      />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{output.name}</span>
+                    </>
+                  )}
+                </div>
               </div>
-              <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
-                {output && (
-                  <>
-                    <Handle
-                      type="source"
-                      position={Position.Right}
-                      id={output.id}
-                      style={{
-                        background: effectiveBorderColor,
-                        top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
-                        right: -handleRightOffset,
-                        transform: 'translateY(-50%)',
-                        width: 8,
-                        height: 1,
-                        borderRadius: 0,
-                        border: 'none',
-                      }}
-                    />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{output.name}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {powerSupply && (
         <div
@@ -169,7 +241,7 @@ const DeviceNode = ({ id, data, selected }: any) => {
         </div>
       )}
 
-      {totalPoE > 0 && !powerSupply && (
+      {totalPoE > 0 && !powerSupply && !isNetworkSwitch && (
         <div
           style={{
             marginTop: 6,
