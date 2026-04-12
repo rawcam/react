@@ -37,6 +37,7 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
+/* Сайдбар */
 .sidebar {
   width: 280px;
   background: var(--bg-panel);
@@ -216,8 +217,8 @@ body {
 
 /* Рёбра */
 .react-flow__edge-path {
-  stroke: #2563eb;
-  stroke-width: 2;
+  stroke: #2563eb;          /* убран !important */
+  stroke-width: 2;           /* убран !important */
   animation: none !important;
   marker-end: none !important;
   marker-start: none !important;
@@ -231,7 +232,7 @@ body {
   display: none !important;
 }
 
-/* Хендлы */
+/* Глобальные стили для хендлов: тонкая полоска 8x1 пикселей */
 .react-flow__handle {
   width: 8px !important;
   height: 1px !important;
@@ -243,13 +244,16 @@ body {
   border: none !important;
   transform: translateY(-50%) !important;
   z-index: 10 !important;
+  /* background наследуется из инлайн-стиля компонента */
 }
 
+/* Убираем глобальные позиции — теперь они задаются инлайн-стилями в DeviceNode */
 .react-flow__handle-left,
 .react-flow__handle-right {
-  /* пусто */
+  /* намеренно пусто */
 }
 
+/* Чтобы нода не обрезала хендлы */
 .react-flow__node {
   overflow: visible !important;
 }
