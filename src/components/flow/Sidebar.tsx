@@ -23,6 +23,7 @@ interface SidebarProps {
   onNewSchema: () => void;
   onSaveSchema: () => void;
   onExportSVG: () => void;
+  onExportDXF: () => void;
   onSaveToFile: () => void;
   onLoadFromFile: () => void;
   onAddNode: () => void;
@@ -53,6 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onNewSchema,
   onSaveSchema,
   onExportSVG,
+  onExportDXF,
   onSaveToFile,
   onLoadFromFile,
   onAddNode,
@@ -84,14 +86,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     targetLabelText: '',
     edgeStrokeWidth: 2,
     edgeStrokeColor: '#2563eb',
-    // Основной бейдж
     badgeFontSize: 6,
     badgeTextColor: '#2563eb',
     badgeBorderColor: '#2563eb',
     badgeBorderWidth: 1,
     badgeBorderRadius: 12,
     badgeBackgroundColor: '#ffffff',
-    // Маркировки
     markerFontSize: 5,
     markerTextColor: '#2563eb',
     markerBorderColor: '#2563eb',
@@ -101,7 +101,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   });
 
   const [applyingAll, setApplyingAll] = useState(false);
-
   const [showManage, setShowManage] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
   const [showNodeStyle, setShowNodeStyle] = useState(true);
@@ -176,82 +175,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const resetNodeColor = () => {
-    handleNodeColorChange('#2563eb');
-  };
+  const resetNodeColor = () => handleNodeColorChange('#2563eb');
+  const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => handleEdgeSettingChange(key, defaultColor);
 
-  const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => {
-    handleEdgeSettingChange(key, defaultColor);
-  };
-
-  const ColorPickerCompact = ({
-    value,
-    onChange,
-    onReset,
-    defaultColor,
-  }: {
-    value: string;
-    onChange: (color: string) => void;
-    onReset: () => void;
-    defaultColor: string;
-  }) => {
+  const ColorPickerCompact = ({ value, onChange, onReset, defaultColor }: { value: string; onChange: (c: string) => void; onReset: () => void; defaultColor: string }) => {
     const [expanded, setExpanded] = useState(false);
-
-    const handleToggle = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setExpanded(!expanded);
-    };
-
     return (
       <div style={{ position: 'relative', marginBottom: '8px' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <div
-            onClick={handleToggle}
-            style={{
-              width: '32px',
-              height: '32px',
-              background: value,
-              borderRadius: '8px',
-              border: '1px solid var(--border-light)',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-          />
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            style={{ flex: 1, padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-light)', background: 'var(--bg-panel)', color: 'var(--text-primary)' }}
-          />
-          <button
-            onClick={(e) => { e.stopPropagation(); onReset(); }}
-            style={{ padding: '4px 8px', fontSize: '11px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '6px', cursor: 'pointer' }}
-          >
-            Сброс
-          </button>
+          <div onClick={() => setExpanded(!expanded)} style={{ width: '32px', height: '32px', background: value, borderRadius: '8px', border: '1px solid var(--border-light)', cursor: 'pointer', flexShrink: 0 }} />
+          <input type="text" value={value} onChange={(e) => onChange(e.target.value)} style={{ flex: 1, padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-light)', background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+          <button onClick={onReset} style={{ padding: '4px 8px', fontSize: '11px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '6px', cursor: 'pointer' }}>Сброс</button>
         </div>
         {expanded && (
           <div style={{ marginTop: '8px', padding: '8px', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-            <input
-              type="color"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              style={{ width: '100%', height: '40px', marginBottom: '8px' }}
-            />
+            <input type="color" value={value} onChange={(e) => onChange(e.target.value)} style={{ width: '100%', height: '40px', marginBottom: '8px' }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
               {COLOR_PALETTE.map(c => (
-                <div
-                  key={c}
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    background: c,
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    border: value === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)',
-                  }}
-                  onClick={() => onChange(c)}
-                />
+                <div key={c} style={{ width: '24px', height: '24px', background: c, borderRadius: '6px', cursor: 'pointer', border: value === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)' }} onClick={() => onChange(c)} />
               ))}
             </div>
           </div>
@@ -265,40 +206,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar-header">
         {!collapsed && <h2>Sputnik Studio</h2>}
         <div className="header-actions">
-          <button className="theme-switch" onClick={onToggleTheme}>
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
-          <button className="collapse-btn" onClick={onToggleCollapse}>
-            {collapsed ? '→' : '←'}
-          </button>
+          <button className="theme-switch" onClick={onToggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
+          <button className="collapse-btn" onClick={onToggleCollapse}>{collapsed ? '→' : '←'}</button>
         </div>
       </div>
 
       {!collapsed && (
         <div style={{ padding: '12px 16px' }}>
-          <button
-            onClick={onAddNode}
-            style={{
-              width: '100%',
-              padding: '10px',
-              background: 'var(--accent)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-          >
+          <button onClick={onAddNode} style={{ width: '100%', padding: '10px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <i className="fas fa-plus"></i> Добавить устройство
           </button>
         </div>
       )}
 
-      {/* Управление схемой */}
       <div className="sidebar-section">
         <div className="section-header" onClick={() => setShowManage(!showManage)}>
           <span><i className="fas fa-folder-open"></i> {!collapsed && 'Управление'}</span>
@@ -308,28 +228,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="section-content">
             <select value={currentSchemaId || ''} onChange={(e) => onLoadSchema(e.target.value)}>
               <option value="">-- Выберите схему --</option>
-              {schemas.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
+              {schemas.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
-            <input
-              type="text"
-              value={schemaName}
-              onChange={(e) => onSchemaNameChange(e.target.value)}
-              placeholder="Название схемы"
-            />
+            <input type="text" value={schemaName} onChange={(e) => onSchemaNameChange(e.target.value)} placeholder="Название схемы" />
             <div className="sidebar-actions">
               <button onClick={onSaveSchema}><i className="fas fa-save"></i> Сохранить</button>
               <button onClick={onNewSchema}><i className="fas fa-file"></i> Новая</button>
               <button onClick={onExportSVG}><i className="fas fa-camera"></i> Экспорт</button>
               <button onClick={onSaveToFile}><i className="fas fa-download"></i> В файл</button>
               <button onClick={onLoadFromFile}><i className="fas fa-upload"></i> Из файла</button>
+              <button onClick={onExportDXF}><i className="fas fa-cube"></i> В DXF</button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Сетка */}
       <div className="sidebar-section">
         <div className="section-header" onClick={() => setShowGrid(!showGrid)}>
           <span><i className="fas fa-th"></i> {!collapsed && 'Сетка'}</span>
@@ -343,49 +256,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               <option value="lines">Линии</option>
             </select>
             <label>Размер ячейки (px)</label>
-            <input
-              type="number"
-              min="5"
-              max="50"
-              value={gridSettings.gap}
-              onChange={(e) => onUpdateGridGap(Number(e.target.value))}
-            />
-            <label>
-              <input
-                type="checkbox"
-                checked={gridSettings.snapToGrid}
-                onChange={(e) => onUpdateSnapToGrid(e.target.checked)}
-              />
-              Прилипание
-            </label>
+            <input type="number" min="5" max="50" value={gridSettings.gap} onChange={(e) => onUpdateGridGap(Number(e.target.value))} />
+            <label><input type="checkbox" checked={gridSettings.snapToGrid} onChange={(e) => onUpdateSnapToGrid(e.target.checked)} /> Прилипание</label>
             <label>Цвет сетки</label>
-            <input
-              type="color"
-              value={gridSettings.color || '#cbd5e1'}
-              onChange={(e) => onUpdateGridColor(e.target.value)}
-            />
+            <input type="color" value={gridSettings.color || '#cbd5e1'} onChange={(e) => onUpdateGridColor(e.target.value)} />
             <label>Прозрачность</label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={gridSettings.opacity ?? 0.5}
-              onChange={(e) => onUpdateGridOpacity(Number(e.target.value))}
-            />
-            <label>
-              <input
-                type="checkbox"
-                checked={gridSettings.visible ?? true}
-                onChange={(e) => onUpdateGridVisible(e.target.checked)}
-              />
-              Показывать сетку
-            </label>
+            <input type="range" min="0" max="1" step="0.05" value={gridSettings.opacity ?? 0.5} onChange={(e) => onUpdateGridOpacity(Number(e.target.value))} />
+            <label><input type="checkbox" checked={gridSettings.visible ?? true} onChange={(e) => onUpdateGridVisible(e.target.checked)} /> Показывать сетку</label>
           </div>
         )}
       </div>
 
-      {/* Свойства устройства */}
       {selectedNode && !collapsed && (
         <div className="sidebar-section">
           <div className="section-header" onClick={() => setShowNodeStyle(!showNodeStyle)}>
@@ -395,68 +276,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           {showNodeStyle && (
             <div className="section-content">
               <label>Обводка (px)</label>
-              <input
-                type="number"
-                min="0"
-                max="10"
-                step="0.5"
-                value={localNodeSettings.borderWidth}
-                onChange={(e) => handleNodeSettingChange('borderWidth', Number(e.target.value))}
-              />
+              <input type="number" min="0" max="10" step="0.5" value={localNodeSettings.borderWidth} onChange={(e) => handleNodeSettingChange('borderWidth', Number(e.target.value))} />
               <label>Скругление (px)</label>
-              <input
-                type="number"
-                min="0"
-                max="20"
-                value={localNodeSettings.borderRadius}
-                onChange={(e) => handleNodeSettingChange('borderRadius', Number(e.target.value))}
-              />
+              <input type="number" min="0" max="20" value={localNodeSettings.borderRadius} onChange={(e) => handleNodeSettingChange('borderRadius', Number(e.target.value))} />
               <label>Размер заголовка (px)</label>
-              <input
-                type="number"
-                min="8"
-                max="20"
-                value={localNodeSettings.headerFontSize}
-                onChange={(e) => handleNodeSettingChange('headerFontSize', Number(e.target.value))}
-              />
+              <input type="number" min="8" max="20" value={localNodeSettings.headerFontSize} onChange={(e) => handleNodeSettingChange('headerFontSize', Number(e.target.value))} />
               <label>Жирность заголовка</label>
-              <select
-                value={localNodeSettings.headerFontWeight}
-                onChange={(e) => handleNodeSettingChange('headerFontWeight', e.target.value)}
-              >
+              <select value={localNodeSettings.headerFontWeight} onChange={(e) => handleNodeSettingChange('headerFontWeight', e.target.value)}>
                 <option value="normal">Обычный</option>
                 <option value="bold">Жирный</option>
               </select>
               <label>Размер портов (px)</label>
-              <input
-                type="number"
-                min="4"
-                max="12"
-                value={localNodeSettings.portFontSize}
-                onChange={(e) => handleNodeSettingChange('portFontSize', Number(e.target.value))}
-              />
-
+              <input type="number" min="4" max="12" value={localNodeSettings.portFontSize} onChange={(e) => handleNodeSettingChange('portFontSize', Number(e.target.value))} />
               <label>Цвет обводки</label>
-              <ColorPickerCompact
-                value={localNodeColor}
-                onChange={handleNodeColorChange}
-                onReset={resetNodeColor}
-                defaultColor="#2563eb"
-              />
-
-              <button
-                onClick={handleApplyToAll}
-                style={{
-                  marginTop: '12px',
-                  padding: '6px',
-                  background: 'var(--accent)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  width: '100%',
-                }}
-              >
+              <ColorPickerCompact value={localNodeColor} onChange={handleNodeColorChange} onReset={resetNodeColor} defaultColor="#2563eb" />
+              <button onClick={handleApplyToAll} style={{ marginTop: '12px', padding: '6px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', width: '100%' }}>
                 {applyingAll ? '✓ Применено!' : 'Применить ко всем нодам'}
               </button>
             </div>
@@ -464,7 +298,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Свойства кабеля */}
       {selectedEdge && !selectedNode && !collapsed && (
         <div className="sidebar-section">
           <div className="section-header" onClick={() => setShowEdgeStyle(!showEdgeStyle)}>
@@ -474,115 +307,35 @@ const Sidebar: React.FC<SidebarProps> = ({
           {showEdgeStyle && (
             <div className="section-content">
               <label>Толщина линии (px)</label>
-              <input
-                type="number"
-                min="1"
-                max="5"
-                step="0.5"
-                value={localEdgeSettings.edgeStrokeWidth}
-                onChange={(e) => handleEdgeSettingChange('edgeStrokeWidth', Number(e.target.value))}
-              />
+              <input type="number" min="1" max="5" step="0.5" value={localEdgeSettings.edgeStrokeWidth} onChange={(e) => handleEdgeSettingChange('edgeStrokeWidth', Number(e.target.value))} />
               <label>Цвет линии</label>
-              <ColorPickerCompact
-                value={localEdgeSettings.edgeStrokeColor}
-                onChange={(color) => handleEdgeSettingChange('edgeStrokeColor', color)}
-                onReset={() => resetEdgeColor('edgeStrokeColor', '#2563eb')}
-                defaultColor="#2563eb"
-              />
-
+              <ColorPickerCompact value={localEdgeSettings.edgeStrokeColor} onChange={(c) => handleEdgeSettingChange('edgeStrokeColor', c)} onReset={() => resetEdgeColor('edgeStrokeColor', '#2563eb')} defaultColor="#2563eb" />
               <label>Метка у источника</label>
-              <input
-                type="text"
-                value={localEdgeSettings.sourceLabelText}
-                onChange={(e) => handleEdgeSettingChange('sourceLabelText', e.target.value)}
-                placeholder="Начало"
-              />
+              <input type="text" value={localEdgeSettings.sourceLabelText} onChange={(e) => handleEdgeSettingChange('sourceLabelText', e.target.value)} placeholder="Начало" />
               <label>Метка у приёмника</label>
-              <input
-                type="text"
-                value={localEdgeSettings.targetLabelText}
-                onChange={(e) => handleEdgeSettingChange('targetLabelText', e.target.value)}
-                placeholder="Конец"
-              />
+              <input type="text" value={localEdgeSettings.targetLabelText} onChange={(e) => handleEdgeSettingChange('targetLabelText', e.target.value)} placeholder="Конец" />
               <label>Общий текст бейджа</label>
-              <input
-                type="text"
-                value={localEdgeSettings.labelText}
-                onChange={(e) => handleEdgeSettingChange('labelText', e.target.value)}
-                placeholder="Автоматически"
-              />
-
+              <input type="text" value={localEdgeSettings.labelText} onChange={(e) => handleEdgeSettingChange('labelText', e.target.value)} placeholder="Автоматически" />
               <h4 style={{ fontSize: '12px', margin: '16px 0 8px', color: 'var(--text-secondary)' }}>Основной бейдж</h4>
               <label>Размер шрифта (px)</label>
-              <input
-                type="number"
-                min="4"
-                max="20"
-                value={localEdgeSettings.badgeFontSize}
-                onChange={(e) => handleEdgeSettingChange('badgeFontSize', Number(e.target.value))}
-              />
+              <input type="number" min="4" max="20" value={localEdgeSettings.badgeFontSize} onChange={(e) => handleEdgeSettingChange('badgeFontSize', Number(e.target.value))} />
               <label>Цвет текста / заливки</label>
-              <ColorPickerCompact
-                value={localEdgeSettings.badgeTextColor}
-                onChange={(color) => handleEdgeSettingChange('badgeTextColor', color)}
-                onReset={() => resetEdgeColor('badgeTextColor', '#2563eb')}
-                defaultColor="#2563eb"
-              />
+              <ColorPickerCompact value={localEdgeSettings.badgeTextColor} onChange={(c) => handleEdgeSettingChange('badgeTextColor', c)} onReset={() => resetEdgeColor('badgeTextColor', '#2563eb')} defaultColor="#2563eb" />
               <label>Скругление (px)</label>
-              <input
-                type="number"
-                min="0"
-                max="30"
-                value={localEdgeSettings.badgeBorderRadius}
-                onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))}
-              />
-
+              <input type="number" min="0" max="30" value={localEdgeSettings.badgeBorderRadius} onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))} />
               <h4 style={{ fontSize: '12px', margin: '16px 0 8px', color: 'var(--text-secondary)' }}>Маркировки</h4>
               <label>Размер шрифта (px)</label>
-              <input
-                type="number"
-                min="4"
-                max="20"
-                value={localEdgeSettings.markerFontSize}
-                onChange={(e) => handleEdgeSettingChange('markerFontSize', Number(e.target.value))}
-              />
+              <input type="number" min="4" max="20" value={localEdgeSettings.markerFontSize} onChange={(e) => handleEdgeSettingChange('markerFontSize', Number(e.target.value))} />
               <label>Цвет текста</label>
-              <ColorPickerCompact
-                value={localEdgeSettings.markerTextColor}
-                onChange={(color) => handleEdgeSettingChange('markerTextColor', color)}
-                onReset={() => resetEdgeColor('markerTextColor', '#2563eb')}
-                defaultColor="#2563eb"
-              />
+              <ColorPickerCompact value={localEdgeSettings.markerTextColor} onChange={(c) => handleEdgeSettingChange('markerTextColor', c)} onReset={() => resetEdgeColor('markerTextColor', '#2563eb')} defaultColor="#2563eb" />
               <label>Цвет обводки</label>
-              <ColorPickerCompact
-                value={localEdgeSettings.markerBorderColor}
-                onChange={(color) => handleEdgeSettingChange('markerBorderColor', color)}
-                onReset={() => resetEdgeColor('markerBorderColor', '#2563eb')}
-                defaultColor="#2563eb"
-              />
+              <ColorPickerCompact value={localEdgeSettings.markerBorderColor} onChange={(c) => handleEdgeSettingChange('markerBorderColor', c)} onReset={() => resetEdgeColor('markerBorderColor', '#2563eb')} defaultColor="#2563eb" />
               <label>Толщина обводки (px)</label>
-              <input
-                type="number"
-                min="0"
-                max="5"
-                value={localEdgeSettings.markerBorderWidth}
-                onChange={(e) => handleEdgeSettingChange('markerBorderWidth', Number(e.target.value))}
-              />
+              <input type="number" min="0" max="5" value={localEdgeSettings.markerBorderWidth} onChange={(e) => handleEdgeSettingChange('markerBorderWidth', Number(e.target.value))} />
               <label>Скругление (px)</label>
-              <input
-                type="number"
-                min="0"
-                max="30"
-                value={localEdgeSettings.markerBorderRadius}
-                onChange={(e) => handleEdgeSettingChange('markerBorderRadius', Number(e.target.value))}
-              />
+              <input type="number" min="0" max="30" value={localEdgeSettings.markerBorderRadius} onChange={(e) => handleEdgeSettingChange('markerBorderRadius', Number(e.target.value))} />
               <label>Фон</label>
-              <ColorPickerCompact
-                value={localEdgeSettings.markerBackgroundColor}
-                onChange={(color) => handleEdgeSettingChange('markerBackgroundColor', color)}
-                onReset={() => resetEdgeColor('markerBackgroundColor', '#ffffff')}
-                defaultColor="#ffffff"
-              />
+              <ColorPickerCompact value={localEdgeSettings.markerBackgroundColor} onChange={(c) => handleEdgeSettingChange('markerBackgroundColor', c)} onReset={() => resetEdgeColor('markerBackgroundColor', '#ffffff')} defaultColor="#ffffff" />
             </div>
           )}
         </div>
@@ -590,12 +343,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {!selectedNode && !selectedEdge && !collapsed && (
         <div className="sidebar-section">
-          <div className="section-header">
-            <span><i className="fas fa-sliders-h"></i> Свойства</span>
-          </div>
-          <div className="section-content">
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>Выберите устройство или кабель</p>
-          </div>
+          <div className="section-header"><span><i className="fas fa-sliders-h"></i> Свойства</span></div>
+          <div className="section-content"><p style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>Выберите устройство или кабель</p></div>
         </div>
       )}
     </div>
