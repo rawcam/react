@@ -1,7 +1,8 @@
 // src/utils/exportToDxf.ts
 import { Node, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../types/flowTypes';
-import { Drawing, Line, Text, Polyline, Layer } from 'js-dxf';
+// @ts-ignore
+import Drawing from 'dxf-writer';
 
 interface Point {
   x: number;
@@ -33,16 +34,12 @@ export const exportToDxf = (
   edges: Edge<CableEdgeData>[],
   filename: string = 'sputnik-scheme'
 ) => {
-  const drawing = new Drawing();
-  const layer = new Layer('main', 0, 'CONTINUOUS');
-  drawing.addLayer(layer);
-
+  const d = new Drawing();
   const bounds = getBounds(nodes);
   const maxY = bounds.maxY + 100;
 
   // Рисуем рёбра
   edges.forEach(edge => {
-    // В DXF координаты для ребра нужны в виде отрезков (прямая линия между центрами нод)
     const sourceNode = nodes.find(n => n.id === edge.source);
     const targetNode = nodes.find(n => n.id === edge.target);
     if (!sourceNode || !targetNode) return;
@@ -58,13 +55,8 @@ export const exportToDxf = (
       maxY
     );
 
-    const strokeColor = edge.data?.edgeStrokeColor || '#2563eb';
-    const strokeWidth = edge.data?.edgeStrokeWidth || 2;
-    // DXF цвет: индекс или RGB
-    const line = new Line(start.x, start.y, end.x, end.y);
-    line.setColor(strokeColor);
-    line.setLineweight(strokeWidth / 10); // в мм
-    drawing.addEntity(line);
+    // Цвета в DXF задаются через индекс или RGB. Используем простой индекс.
+    d.drawLine(start.x, start.y, end.x, end.y);
   });
 
   // Рисуем ноды
@@ -76,24 +68,13 @@ export const exportToDxf = (
     const p3 = toDxfCoord(node.position.x + w, node.position.y + h, maxY);
     const p4 = toDxfCoord(node.position.x, node.position.y + h, maxY);
 
-    // Рамка ноды (прямоугольник)
-    const poly = new Polyline([p1, p2, p3, p4], true);
-    poly.setColor(node.data.color || '#2563eb');
-    poly.setLineweight((node.data.borderWidth || 1) / 10);
-    drawing.addEntity(poly);
+    d.drawPolyline([p1, p2, p3, p4], true);
 
     // Текст метки
-    const text = new Text(
-      node.data.label,
-      p1.x + 5,
-      p1.y + 15,
-      10 // высота текста
-    );
-    text.setColor('#000000');
-    drawing.addEntity(text);
+    d.drawText(node.data.label, p1.x + 5, p1.y + 15, 10);
   });
 
-  const dxfString = drawing.toDxfString();
+  const dxfString = d.toDxfString();
   const blob = new Blob([dxfString], { type: 'application/dxf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
