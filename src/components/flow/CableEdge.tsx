@@ -58,7 +58,7 @@ const CableEdge: FC<any> = ({
       ? `${d.cableType} (${d.adapter})`
       : d.cableType || 'Cable';
 
-  // Применяем CSS-переменные React Flow для гарантированного управления стилями
+  // Используем CSS-переменные XY Flow для гарантированного применения стилей
   const edgeStyle = {
     ...(style as React.CSSProperties),
     '--xy-edge-stroke': selected ? '#ef4444' : edgeStrokeColor,
