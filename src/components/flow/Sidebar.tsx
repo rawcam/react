@@ -330,19 +330,33 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
         {showGrid && !collapsed && (
           <div className="section-content">
-            <label>Вид сетки</label>
-            <select value={gridSettings.variant} onChange={(e) => onUpdateGridVariant(e.target.value)}>
-              <option value="dots">Точки</option>
-              <option value="lines">Линии</option>
-            </select>
-            <label>Размер ячейки (px)</label>
-            <input type="number" min="5" max="50" value={gridSettings.gap} onChange={(e) => onUpdateGridGap(Number(e.target.value))} />
-            <label><input type="checkbox" checked={gridSettings.snapToGrid} onChange={(e) => onUpdateSnapToGrid(e.target.checked)} /> Прилипание</label>
-            <label>Цвет сетки</label>
-            <input type="color" value={gridSettings.color || '#cbd5e1'} onChange={(e) => onUpdateGridColor(e.target.value)} />
-            <label>Прозрачность</label>
-            <input type="range" min="0" max="1" step="0.05" value={gridSettings.opacity ?? 0.5} onChange={(e) => onUpdateGridOpacity(Number(e.target.value))} />
-            <label><input type="checkbox" checked={gridSettings.visible ?? true} onChange={(e) => onUpdateGridVisible(e.target.checked)} /> Показывать сетку</label>
+            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <label style={{ fontSize: 13, color: '#334155' }}>Вид</label>
+              <select value={gridSettings.variant} onChange={(e) => onUpdateGridVariant(e.target.value)} style={{ width: 110, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }}>
+                <option value="dots">Точки</option>
+                <option value="lines">Линии</option>
+              </select>
+            </div>
+            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <label style={{ fontSize: 13, color: '#334155' }}>Ячейка (px)</label>
+              <input type="number" min="5" max="50" value={gridSettings.gap} onChange={(e) => onUpdateGridGap(Number(e.target.value))} style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }} />
+            </div>
+            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <label style={{ fontSize: 13, color: '#334155' }}>Прилипание</label>
+              <input type="checkbox" checked={gridSettings.snapToGrid} onChange={(e) => onUpdateSnapToGrid(e.target.checked)} />
+            </div>
+            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <label style={{ fontSize: 13, color: '#334155' }}>Цвет</label>
+              <input type="color" value={gridSettings.color || '#cbd5e1'} onChange={(e) => onUpdateGridColor(e.target.value)} style={{ width: 100, padding: '2px', height: 32, borderRadius: 8, border: '1px solid var(--border-light)' }} />
+            </div>
+            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <label style={{ fontSize: 13, color: '#334155' }}>Прозрачность</label>
+              <input type="range" min="0" max="1" step="0.05" value={gridSettings.opacity ?? 0.5} onChange={(e) => onUpdateGridOpacity(Number(e.target.value))} style={{ width: 100 }} />
+            </div>
+            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <label style={{ fontSize: 13, color: '#334155' }}>Показывать</label>
+              <input type="checkbox" checked={gridSettings.visible ?? true} onChange={(e) => onUpdateGridVisible(e.target.checked)} />
+            </div>
           </div>
         )}
       </div>
@@ -350,7 +364,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {selectedNode && !collapsed && (
         <div className="sidebar-section">
           <div className="section-header" onClick={() => setShowNodeStyle(!showNodeStyle)}>
-            <span><i className="fas fa-sliders-h"></i> Свойства</span>
+            <span><i className="fas fa-sliders-h"></i> Свойства устройства</span>
             <i className={`fas fa-chevron-${showNodeStyle ? 'down' : 'right'}`}></i>
           </div>
           {showNodeStyle && (
@@ -437,7 +451,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   gap: 6,
                 }}
               >
-                <i className="fas fa-paint-brush"></i> {applyingAll ? '✓ Применено!' : 'Применить стиль ко всем'}
+                <i className="fas fa-paint-brush"></i> {applyingAll ? '✓ Применено!' : 'Применить ко всем'}
               </button>
             </div>
           )}
@@ -452,36 +466,79 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
           {showEdgeStyle && (
             <div className="section-content">
-              <label>Толщина линии (px)</label>
-              <input type="number" min="1" max="5" step="0.5" value={localEdgeSettings.edgeStrokeWidth} onChange={(e) => handleEdgeSettingChange('edgeStrokeWidth', Number(e.target.value))} />
-              <label>Цвет линии</label>
-              <ColorPickerCompact value={localEdgeSettings.edgeStrokeColor} onChange={(c) => handleEdgeSettingChange('edgeStrokeColor', c)} onReset={() => resetEdgeColor('edgeStrokeColor', '#2563eb')} defaultColor="#2563eb" />
-              <label>Метка у источника</label>
-              <input type="text" value={localEdgeSettings.sourceLabelText} onChange={(e) => handleEdgeSettingChange('sourceLabelText', e.target.value)} placeholder="Начало" />
-              <label>Метка у приёмника</label>
-              <input type="text" value={localEdgeSettings.targetLabelText} onChange={(e) => handleEdgeSettingChange('targetLabelText', e.target.value)} placeholder="Конец" />
-              <label>Общий текст бейджа</label>
-              <input type="text" value={localEdgeSettings.labelText} onChange={(e) => handleEdgeSettingChange('labelText', e.target.value)} placeholder="Автоматически" />
-              <h4 style={{ fontSize: '12px', margin: '16px 0 8px', color: 'var(--text-secondary)' }}>Основной бейдж</h4>
-              <label>Размер шрифта (px)</label>
-              <input type="number" min="4" max="20" value={localEdgeSettings.badgeFontSize} onChange={(e) => handleEdgeSettingChange('badgeFontSize', Number(e.target.value))} />
-              <label>Цвет текста / заливки</label>
-              <ColorPickerCompact value={localEdgeSettings.badgeTextColor} onChange={(c) => handleEdgeSettingChange('badgeTextColor', c)} onReset={() => resetEdgeColor('badgeTextColor', '#2563eb')} defaultColor="#2563eb" />
-              <label>Скругление (px)</label>
-              <input type="number" min="0" max="30" value={localEdgeSettings.badgeBorderRadius} onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))} />
-              <h4 style={{ fontSize: '12px', margin: '16px 0 8px', color: 'var(--text-secondary)' }}>Маркировки</h4>
-              <label>Размер шрифта (px)</label>
-              <input type="number" min="4" max="20" value={localEdgeSettings.markerFontSize} onChange={(e) => handleEdgeSettingChange('markerFontSize', Number(e.target.value))} />
-              <label>Цвет текста</label>
-              <ColorPickerCompact value={localEdgeSettings.markerTextColor} onChange={(c) => handleEdgeSettingChange('markerTextColor', c)} onReset={() => resetEdgeColor('markerTextColor', '#2563eb')} defaultColor="#2563eb" />
-              <label>Цвет обводки</label>
-              <ColorPickerCompact value={localEdgeSettings.markerBorderColor} onChange={(c) => handleEdgeSettingChange('markerBorderColor', c)} onReset={() => resetEdgeColor('markerBorderColor', '#2563eb')} defaultColor="#2563eb" />
-              <label>Толщина обводки (px)</label>
-              <input type="number" min="0" max="5" value={localEdgeSettings.markerBorderWidth} onChange={(e) => handleEdgeSettingChange('markerBorderWidth', Number(e.target.value))} />
-              <label>Скругление (px)</label>
-              <input type="number" min="0" max="30" value={localEdgeSettings.markerBorderRadius} onChange={(e) => handleEdgeSettingChange('markerBorderRadius', Number(e.target.value))} />
-              <label>Фон</label>
-              <ColorPickerCompact value={localEdgeSettings.markerBackgroundColor} onChange={(c) => handleEdgeSettingChange('markerBackgroundColor', c)} onReset={() => resetEdgeColor('markerBackgroundColor', '#ffffff')} defaultColor="#ffffff" />
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Толщина (px)</label>
+                <input type="number" min="1" max="5" step="0.5" value={localEdgeSettings.edgeStrokeWidth} onChange={(e) => handleEdgeSettingChange('edgeStrokeWidth', Number(e.target.value))} style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }} />
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Цвет линии</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ColorPickerCompact value={localEdgeSettings.edgeStrokeColor} onChange={(c) => handleEdgeSettingChange('edgeStrokeColor', c)} onReset={() => resetEdgeColor('edgeStrokeColor', '#2563eb')} defaultColor="#2563eb" />
+                  <input type="text" value={localEdgeSettings.edgeStrokeColor} onChange={(e) => handleEdgeSettingChange('edgeStrokeColor', e.target.value)} style={{ width: 90, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+                </div>
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Метка начала</label>
+                <input type="text" value={localEdgeSettings.sourceLabelText} onChange={(e) => handleEdgeSettingChange('sourceLabelText', e.target.value)} placeholder="Источник" style={{ width: 120, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Метка конца</label>
+                <input type="text" value={localEdgeSettings.targetLabelText} onChange={(e) => handleEdgeSettingChange('targetLabelText', e.target.value)} placeholder="Приёмник" style={{ width: 120, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Текст бейджа</label>
+                <input type="text" value={localEdgeSettings.labelText} onChange={(e) => handleEdgeSettingChange('labelText', e.target.value)} placeholder="Авто" style={{ width: 120, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+              </div>
+              <h4 style={{ fontSize: '13px', margin: '16px 0 8px', color: 'var(--text-secondary)', fontWeight: 500 }}>Основной бейдж</h4>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Размер (px)</label>
+                <input type="number" min="4" max="20" value={localEdgeSettings.badgeFontSize} onChange={(e) => handleEdgeSettingChange('badgeFontSize', Number(e.target.value))} style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }} />
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Цвет</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ColorPickerCompact value={localEdgeSettings.badgeTextColor} onChange={(c) => handleEdgeSettingChange('badgeTextColor', c)} onReset={() => resetEdgeColor('badgeTextColor', '#2563eb')} defaultColor="#2563eb" />
+                  <input type="text" value={localEdgeSettings.badgeTextColor} onChange={(e) => handleEdgeSettingChange('badgeTextColor', e.target.value)} style={{ width: 90, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+                </div>
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Скругление (px)</label>
+                <input type="number" min="0" max="30" value={localEdgeSettings.badgeBorderRadius} onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))} style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }} />
+              </div>
+              <h4 style={{ fontSize: '13px', margin: '16px 0 8px', color: 'var(--text-secondary)', fontWeight: 500 }}>Маркировки</h4>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Размер (px)</label>
+                <input type="number" min="4" max="20" value={localEdgeSettings.markerFontSize} onChange={(e) => handleEdgeSettingChange('markerFontSize', Number(e.target.value))} style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }} />
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Цвет текста</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ColorPickerCompact value={localEdgeSettings.markerTextColor} onChange={(c) => handleEdgeSettingChange('markerTextColor', c)} onReset={() => resetEdgeColor('markerTextColor', '#2563eb')} defaultColor="#2563eb" />
+                  <input type="text" value={localEdgeSettings.markerTextColor} onChange={(e) => handleEdgeSettingChange('markerTextColor', e.target.value)} style={{ width: 90, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+                </div>
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Цвет обводки</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ColorPickerCompact value={localEdgeSettings.markerBorderColor} onChange={(c) => handleEdgeSettingChange('markerBorderColor', c)} onReset={() => resetEdgeColor('markerBorderColor', '#2563eb')} defaultColor="#2563eb" />
+                  <input type="text" value={localEdgeSettings.markerBorderColor} onChange={(e) => handleEdgeSettingChange('markerBorderColor', e.target.value)} style={{ width: 90, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+                </div>
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Толщина (px)</label>
+                <input type="number" min="0" max="5" value={localEdgeSettings.markerBorderWidth} onChange={(e) => handleEdgeSettingChange('markerBorderWidth', Number(e.target.value))} style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }} />
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Скругление (px)</label>
+                <input type="number" min="0" max="30" value={localEdgeSettings.markerBorderRadius} onChange={(e) => handleEdgeSettingChange('markerBorderRadius', Number(e.target.value))} style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }} />
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Фон</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ColorPickerCompact value={localEdgeSettings.markerBackgroundColor} onChange={(c) => handleEdgeSettingChange('markerBackgroundColor', c)} onReset={() => resetEdgeColor('markerBackgroundColor', '#ffffff')} defaultColor="#ffffff" />
+                  <input type="text" value={localEdgeSettings.markerBackgroundColor} onChange={(e) => handleEdgeSettingChange('markerBackgroundColor', e.target.value)} style={{ width: 90, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }} />
+                </div>
+              </div>
             </div>
           )}
         </div>
