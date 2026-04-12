@@ -1,4 +1,4 @@
-// src/components/flow/Sidebar.tsx (исправленная версия)
+// src/components/flow/Sidebar.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { Node, Edge } from '@xyflow/react';
@@ -71,7 +71,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
   onToggleCollapse,
 }) => {
-  // ... все состояния и эффекты без изменений (копируем из предыдущей версии) ...
   const [localNodeSettings, setLocalNodeSettings] = useState({
     borderWidth: 1,
     borderRadius: 8,
@@ -205,11 +204,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       setExpanded(prev => !prev);
     };
 
-    // Закрытие по клику вне (исправлено приведение типа)
     useEffect(() => {
       if (!expanded) return;
       const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target as Node; // DOM Node
+        const target = event.target;
+        if (!(target instanceof Node)) return;
         if (buttonRef.current?.contains(target)) return;
         if (pickerRef.current?.contains(target)) return;
         setExpanded(false);
@@ -218,7 +217,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [expanded]);
 
-    // Обновление позиции при скролле сайдбара
     useEffect(() => {
       if (!expanded || !sidebarRef.current) return;
       const handleScroll = () => updatePosition();
