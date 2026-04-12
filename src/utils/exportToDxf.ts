@@ -6,7 +6,7 @@ import { getSmoothStepPath } from '@xyflow/react';
 // Преобразование координаты Y (инверсия для DXF)
 const toDxfY = (y: number, maxY: number) => maxY - y;
 
-// Генерация ортогонального пути (как в React Flow)
+// Генерация ортогонального пути
 const generateOrthoPath = (
   sourceX: number, sourceY: number,
   targetX: number, targetY: number,
@@ -60,6 +60,13 @@ const generateDxfString = (
     maxY = Math.max(maxY, n.position.y + h);
   });
   maxY += 100;
+
+  // Секция TABLES (обязательна для корректного отображения текста)
+  lines.push('0', 'SECTION', '2', 'TABLES');
+  lines.push('0', 'TABLE', '2', 'STYLE', '70', '0');
+  lines.push('0', 'STYLE', '2', 'STANDARD', '70', '0', '40', '0.0', '41', '1.0', '50', '0.0', '71', '0', '42', '2.5', '3', 'txt', '4', '');
+  lines.push('0', 'ENDTAB');
+  lines.push('0', 'ENDSEC');
 
   lines.push('0', 'SECTION', '2', 'ENTITIES');
 
@@ -145,31 +152,35 @@ const generateDxfString = (
     const x = node.position.x;
     const y = node.position.y;
 
+    // Замкнутая полилиния: 4 вершины + SEQEND
     const pts = [[x,y], [x+w,y], [x+w,y+h], [x,y+h]];
     lines.push('0', 'POLYLINE', '8', '0', '66', '1', '70', '1');
     pts.forEach(([px, py]) => {
-      lines.push('0', 'VERTEX', '8', '0', '10', px.toFixed(4), '20', toDxfY(py, maxY).toFixed(4), '30', '0.0');
+      lines.push('0', 'VERTEX', '8', '0');
+      lines.push('10', px.toFixed(4), '20', toDxfY(py, maxY).toFixed(4), '30', '0.0');
     });
     lines.push('0', 'SEQEND', '8', '0');
     lines.push('62', mapColorToAci(node.data.color || '#2563eb').toString());
     lines.push('370', ((node.data.borderWidth || 1) / 10).toFixed(1));
 
+    // Текст метки
     lines.push('0', 'TEXT', '8', '0');
     lines.push('10', (x + 5).toFixed(4), '20', toDxfY(y + 15, maxY).toFixed(4), '30', '0.0');
     lines.push('40', '10.0');
     lines.push('1', node.data.label);
     lines.push('62', '7');
 
+    // Хендлы (кружочки)
     const rowHeight = 22;
     const maxRows = Math.max(node.data.inputs.length, node.data.outputs.length);
-    node.data.inputs.forEach((input, idx) => {
+    node.data.inputs.forEach((_, idx) => {
       const offsetY = y + 40 + (idx + 0.5) * rowHeight;
       lines.push('0', 'CIRCLE', '8', '0');
       lines.push('10', (x - 8).toFixed(4), '20', toDxfY(offsetY, maxY).toFixed(4), '30', '0.0');
       lines.push('40', '3.0');
       lines.push('62', mapColorToAci(node.data.color || '#2563eb').toString());
     });
-    node.data.outputs.forEach((output, idx) => {
+    node.data.outputs.forEach((_, idx) => {
       const offsetY = y + 40 + (idx + 0.5) * rowHeight;
       lines.push('0', 'CIRCLE', '8', '0');
       lines.push('10', (x + w + 8).toFixed(4), '20', toDxfY(offsetY, maxY).toFixed(4), '30', '0.0');
