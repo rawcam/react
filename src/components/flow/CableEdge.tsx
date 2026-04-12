@@ -33,12 +33,20 @@ const CableEdge: FC<any> = ({
 
   const d = (data || {}) as CableEdgeData;
 
+  // Основной бейдж
   const badgeFontSize = d.badgeFontSize ?? 6;
   const badgeTextColor = d.badgeTextColor ?? '#2563eb';
-  const badgeBorderColor = d.badgeBorderColor ?? '#2563eb';
-  const badgeBorderWidth = d.badgeBorderWidth ?? 1;
   const badgeBorderRadius = d.badgeBorderRadius ?? 12;
-  const badgeBackgroundColor = d.badgeBackgroundColor ?? 'var(--bg-panel, white)';
+
+  // Маркировки
+  const markerFontSize = d.markerFontSize ?? 5;
+  const markerTextColor = d.markerTextColor ?? '#2563eb';
+  const markerBorderColor = d.markerBorderColor ?? '#2563eb';
+  const markerBorderWidth = d.markerBorderWidth ?? 1;
+  const markerBorderRadius = d.markerBorderRadius ?? 8;
+  const markerBackgroundColor = d.markerBackgroundColor ?? '#ffffff';
+
+  // Линия
   const edgeStrokeWidth = d.edgeStrokeWidth ?? 2;
   const edgeStrokeColor = d.edgeStrokeColor ?? '#2563eb';
   const sourceLabel = d.sourceLabelText || d.sourceLabel?.split(':')[1]?.trim() || '';
@@ -50,10 +58,17 @@ const CableEdge: FC<any> = ({
       ? `${d.cableType} (${d.adapter})`
       : d.cableType || 'Cable';
 
-  const edgeStyle = {
+  // Принудительно применяем стили к линии
+  const edgeStyle: React.CSSProperties = {
     stroke: selected ? '#ef4444' : edgeStrokeColor,
     strokeWidth: edgeStrokeWidth,
     ...(style as React.CSSProperties),
+  };
+
+  // Если стиль не применился из-за глобального CSS, добавим !important
+  const importantEdgeStyle: React.CSSProperties = {
+    stroke: edgeStyle.stroke,
+    strokeWidth: edgeStyle.strokeWidth,
   };
 
   const getPointAtDistanceFromStart = (path: string, distance: number) => {
@@ -81,12 +96,12 @@ const CableEdge: FC<any> = ({
   const targetPos = getPointAtDistanceFromEnd(edgePath, markerOffset);
 
   const markerStyle: React.CSSProperties = {
-    fontSize: badgeFontSize * 0.85,
+    fontSize: markerFontSize,
     padding: '1px 4px',
-    background: badgeBackgroundColor,
-    border: `${badgeBorderWidth}px solid ${badgeBorderColor}`,
-    borderRadius: badgeBorderRadius,
-    color: badgeTextColor,
+    background: markerBackgroundColor,
+    border: `${markerBorderWidth}px solid ${markerBorderColor}`,
+    borderRadius: markerBorderRadius,
+    color: markerTextColor,
     fontWeight: 500,
     whiteSpace: 'nowrap',
     boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
@@ -118,7 +133,13 @@ const CableEdge: FC<any> = ({
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={edgeStyle} markerEnd={markerEnd} markerStart={markerStart} />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={importantEdgeStyle}
+        markerEnd={markerEnd}
+        markerStart={markerStart}
+      />
       <EdgeLabelRenderer>
         {sourceLabel && (
           <div style={{ ...markerStyle, left: sourcePos.x, top: sourcePos.y }} className="nodrag nopan">
