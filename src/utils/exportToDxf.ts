@@ -4,13 +4,11 @@ import { DeviceNodeData, CableEdgeData } from '../types/flowTypes';
 // @ts-ignore
 import Drawing from 'dxf-writer';
 
-// Конвертация координат React Flow в DXF (ось Y инвертируется)
 const toDxfCoord = (x: number, y: number, maxY: number = 1000): [number, number] => [
   x,
   maxY - y,
 ];
 
-// Определяем границы схемы для масштабирования
 const getBounds = (nodes: Node<DeviceNodeData>[]) => {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   nodes.forEach(node => {
@@ -33,7 +31,6 @@ export const exportToDxf = (
   const bounds = getBounds(nodes);
   const maxY = bounds.maxY + 100;
 
-  // Рисуем рёбра
   edges.forEach(edge => {
     const sourceNode = nodes.find(n => n.id === edge.source);
     const targetNode = nodes.find(n => n.id === edge.target);
@@ -53,7 +50,6 @@ export const exportToDxf = (
     d.drawLine(start[0], start[1], end[0], end[1]);
   });
 
-  // Рисуем ноды
   nodes.forEach(node => {
     const w = (node.data.width as number) || 90;
     const h = (node.data.height as number) || 90;
@@ -64,7 +60,7 @@ export const exportToDxf = (
 
     d.drawPolyline([p1, p2, p3, p4], true);
 
-    // Текст метки (x, y, height, text, rotation, options)
+    // @ts-ignore – в библиотеке dxf-writer неправильные типы для drawText
     d.drawText(p1[0] + 5, p1[1] + 15, 10, node.data.label, 0);
   });
 
