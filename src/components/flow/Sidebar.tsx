@@ -76,6 +76,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     headerFontWeight: 'normal' as 'normal' | 'bold',
   });
 
+  const [localNodeColor, setLocalNodeColor] = useState('#2563eb');
+
   const [localEdgeSettings, setLocalEdgeSettings] = useState({
     labelText: '',
     sourceLabelText: '',
@@ -104,6 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         portFontSize: (selectedNode.data.portFontSize as number) ?? 6,
         headerFontWeight: (selectedNode.data.headerFontWeight as 'normal' | 'bold') ?? 'normal',
       });
+      setLocalNodeColor((selectedNode.data.color as string) || '#2563eb');
     }
   }, [selectedNode]);
 
@@ -133,6 +136,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     onUpdateNode(selectedNode.id, newSettings);
   };
 
+  const handleNodeColorChange = (color: string) => {
+    if (!selectedNode) return;
+    setLocalNodeColor(color);
+    onUpdateNode(selectedNode.id, { color });
+  };
+
   const handleEdgeSettingChange = (key: keyof typeof localEdgeSettings, value: any) => {
     if (!selectedEdge) return;
     const newSettings = { ...localEdgeSettings, [key]: value };
@@ -142,13 +151,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleApplyToAll = () => {
     if (selectedNode) {
-      onApplyNodeStyleToAll(localNodeSettings);
+      onApplyNodeStyleToAll({
+        ...localNodeSettings,
+        color: localNodeColor,
+      });
     }
   };
 
   const resetNodeColor = () => {
-    if (!selectedNode) return;
-    onUpdateNode(selectedNode.id, { color: '#2563eb' });
+    handleNodeColorChange('#2563eb');
   };
 
   const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => {
@@ -401,8 +412,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               <label>Цвет обводки</label>
               <ColorPickerCompact
-                value={selectedNode.data.color || '#2563eb'}
-                onChange={(color) => onUpdateNode(selectedNode.id, { color })}
+                value={localNodeColor}
+                onChange={handleNodeColorChange}
                 onReset={resetNodeColor}
                 defaultColor="#2563eb"
               />
