@@ -78,8 +78,38 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
   };
 
   const handleSave = () => {
-    const totalPoE = [...editedData.inputs, ...editedData.outputs].reduce((sum, iface) => sum + (iface.poePower || 0), 0);
-    onSave({ ...editedData, totalPoEConsumption: totalPoE });
+    let updated: DeviceNodeData = { ...editedData };
+
+    // Для сетевого коммутатора генерируем inputs на основе конфигурации
+    if (updated.deviceType === 'network_switch') {
+      const cfg = updated.networkSwitchConfig || { numPorts: 24, poePorts: 0, sfpPorts: 0, speed: '1G', portLayout: 'odd_left' };
+      const inputs: DeviceInterface[] = [];
+      for (let i = 1; i <= cfg.numPorts; i++) {
+        const poe = i <= cfg.poePorts;
+        inputs.push({
+          id: `sw-in-${i}-${Date.now()}`,
+          name: `Порт ${i}${poe ? ' PoE' : ''}`,
+          direction: 'input',
+          connector: 'RJ45',
+          protocol: 'Ethernet',
+          poe,
+          poePower: poe ? 30 : undefined,
+        });
+      }
+      for (let i = 1; i <= cfg.sfpPorts; i++) {
+        inputs.push({
+          id: `sw-sfp-${i}-${Date.now()}`,
+          name: `SFP ${i}`,
+          direction: 'input',
+          connector: 'RJ45',
+          protocol: 'Ethernet',
+        });
+      }
+      updated = { ...updated, inputs, outputs: [] };
+    }
+
+    const totalPoE = [...updated.inputs, ...updated.outputs].reduce((sum, iface) => sum + (iface.poePower || 0), 0);
+    onSave({ ...updated, totalPoEConsumption: totalPoE });
     onClose();
   };
 
