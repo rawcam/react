@@ -1,5 +1,5 @@
 // src/components/flow/Sidebar.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Node, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../../types/flowTypes';
@@ -71,6 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
   onToggleCollapse,
 }) => {
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const [localNodeSettings, setLocalNodeSettings] = useState({
     borderWidth: 1,
     borderRadius: 8,
@@ -182,19 +183,48 @@ const Sidebar: React.FC<SidebarProps> = ({
   const ColorPickerCompact = ({ value, onChange, onReset, defaultColor }: { value: string; onChange: (c: string) => void; onReset: () => void; defaultColor: string }) => {
     const [expanded, setExpanded] = useState(false);
     const [coords, setCoords] = useState({ top: 0, left: 0 });
-    const buttonRef = React.useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLDivElement>(null);
+    const pickerRef = useRef<HTMLDivElement>(null);
 
-    const handleToggle = (e: React.MouseEvent) => {
-      e.stopPropagation();
+    const updateCoords = useCallback(() => {
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect();
         setCoords({ top: rect.bottom + 4, left: rect.left });
       }
-      setExpanded(!expanded);
+    }, []);
+
+    const handleToggle = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      updateCoords();
+      setExpanded(prev => !prev);
     };
+
+    // Закрытие по клику вне
+    useEffect(() => {
+      if (!expanded) return;
+      const handleClickOutside = (e: MouseEvent) => {
+        if (pickerRef.current && !pickerRef.current.contains(e.target as Node) &&
+            buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
+          setExpanded(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [expanded]);
+
+    // Обновление координат при скролле сайдбара
+    useEffect(() => {
+      if (!expanded) return;
+      const sidebar = sidebarRef.current;
+      if (!sidebar) return;
+      const handleScroll = () => updateCoords();
+      sidebar.addEventListener('scroll', handleScroll, { passive: true });
+      return () => sidebar.removeEventListener('scroll', handleScroll);
+    }, [expanded, updateCoords]);
 
     const pickerContent = expanded && (
       <div
+        ref={pickerRef}
         style={{
           position: 'fixed',
           top: coords.top,
@@ -228,11 +258,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                 width: '24px', height: '24px', background: c, borderRadius: '6px', cursor: 'pointer',
                 border: value === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)'
               }}
-              onClick={() => onChange(c)}
+              onClick={() => { onChange(c); setExpanded(false); }}
             />
           ))}
         </div>
-        <button onClick={onReset} style={{ marginTop: '8px', width: '100%', padding: '4px', cursor: 'pointer' }}>Сбросить</button>
+        <button onClick={() => { onReset(); setExpanded(false); }} style={{ marginTop: '8px', width: '100%', padding: '4px', cursor: 'pointer' }}>Сбросить</button>
       </div>
     );
 
@@ -248,7 +278,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`sidebar ${collapsed ? 'collapsed' : ''} ${theme}`}>
+    <div ref={sidebarRef} className={`sidebar ${collapsed ? 'collapsed' : ''} ${theme}`}>
       <div className="sidebar-header">
         {!collapsed && <h2>Sputnik Studio</h2>}
         <div className="header-actions">
