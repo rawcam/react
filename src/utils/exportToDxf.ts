@@ -35,11 +35,11 @@ const mapColorToAci = (hex: string): number => {
   const r = parseInt(hex.slice(1,3), 16);
   const g = parseInt(hex.slice(3,5), 16);
   const b = parseInt(hex.slice(5,7), 16);
-  if (r === 37 && g === 99 && b === 235) return 5;
-  if (r === 239 && g === 68 && b === 68) return 1;
-  if (r === 16 && g === 185 && b === 129) return 3;
-  if (r === 0 && g === 0 && b === 0) return 7;
-  if (r === 255 && g === 255 && b === 255) return 7;
+  if (r === 37 && g === 99 && b === 235) return 5;   // #2563eb → синий
+  if (r === 239 && g === 68 && b === 68) return 1;   // #ef4444 → красный
+  if (r === 16 && g === 185 && b === 129) return 3;  // #10b981 → зелёный
+  if (r === 0 && g === 0 && b === 0) return 7;       // чёрный
+  if (r === 255 && g === 255 && b === 255) return 7; // белый
   const brightness = r * 0.299 + g * 0.587 + b * 0.114;
   return brightness > 128 ? 7 : 0;
 };
@@ -56,34 +56,33 @@ const generateDxfString = (
   });
   maxY += 100;
 
-  // HEADER (минимальный)
+  // HEADER
   lines.push('0', 'SECTION', '2', 'HEADER');
   lines.push('9', '$ACADVER', '1', 'AC1021');
   lines.push('9', '$INSUNITS', '70', '4');
   lines.push('0', 'ENDSEC');
 
-  // CLASSES
-  lines.push('0', 'SECTION', '2', 'CLASSES', '0', 'ENDSEC');
-
   // TABLES
   lines.push('0', 'SECTION', '2', 'TABLES');
+  // VPORT
   lines.push('0', 'TABLE', '2', 'VPORT', '70', '1');
   lines.push('0', 'VPORT', '2', '*ACTIVE', '70', '0', '10', '0.0', '20', '0.0', '11', '1.0', '21', '1.0');
   lines.push('0', 'ENDTAB');
+  // LTYPE
   lines.push('0', 'TABLE', '2', 'LTYPE', '70', '1');
   lines.push('0', 'LTYPE', '2', 'CONTINUOUS', '70', '0', '3', 'Solid line', '72', '65', '73', '0', '40', '0.0');
   lines.push('0', 'ENDTAB');
+  // LAYER
   lines.push('0', 'TABLE', '2', 'LAYER', '70', '1');
   lines.push('0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS');
   lines.push('0', 'ENDTAB');
+  // STYLE
   lines.push('0', 'TABLE', '2', 'STYLE', '70', '1');
   lines.push('0', 'STYLE', '2', 'STANDARD', '70', '0', '40', '0.0', '41', '1.0', '50', '0.0', '71', '0', '42', '2.5', '3', 'txt', '4', '');
   lines.push('0', 'ENDTAB');
-  lines.push('0', 'TABLE', '2', 'APPID', '70', '0', '0', 'ENDTAB');
-  lines.push('0', 'TABLE', '2', 'DIMSTYLE', '70', '0', '0', 'ENDTAB');
   lines.push('0', 'ENDSEC');
 
-  // BLOCKS
+  // BLOCKS (пустая секция)
   lines.push('0', 'SECTION', '2', 'BLOCKS', '0', 'ENDSEC');
 
   // ENTITIES
@@ -172,7 +171,6 @@ const generateDxfString = (
     const x = node.position.x;
     const y = node.position.y;
 
-    // Полилиния
     const pts = [[x,y], [x+w,y], [x+w,y+h], [x,y+h]];
     lines.push('0', 'POLYLINE', '8', '0', '66', '1', '70', '1');
     pts.forEach(([px, py]) => {
@@ -210,9 +208,6 @@ const generateDxfString = (
   });
 
   lines.push('0', 'ENDSEC');
-
-  // OBJECTS
-  lines.push('0', 'SECTION', '2', 'OBJECTS', '0', 'ENDSEC');
   lines.push('0', 'EOF');
 
   return lines.join('\n');
