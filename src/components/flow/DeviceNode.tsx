@@ -57,6 +57,20 @@ const DeviceNode = ({ id, data, selected }: any) => {
     effectiveBorderColor = '#e0e0e0';
   }
 
+  const isNetworkSwitch = d.deviceType === 'network_switch';
+  const highlightPorts = isNetworkSwitch && (d.networkSwitchConfig?.highlightPorts ?? true);
+
+  const getPortStyle = (iface: any) => {
+    if (!highlightPorts) return {};
+    if (iface.poe) {
+      return { background: '#10b981', color: 'white', padding: '0 4px', borderRadius: '4px' };
+    }
+    if (iface.name?.includes('SFP')) {
+      return { background: '#475569', color: 'white', padding: '0 4px', borderRadius: '4px' };
+    }
+    return {};
+  };
+
   return (
     <div
       style={{
@@ -102,7 +116,9 @@ const DeviceNode = ({ id, data, selected }: any) => {
               <div style={{ flex: 1, textAlign: 'left', position: 'relative' }}>
                 {input && (
                   <>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{input.name}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...getPortStyle(input) }}>
+                      {input.name}
+                    </span>
                     <Handle
                       type="target"
                       position={Position.Left}
@@ -124,6 +140,9 @@ const DeviceNode = ({ id, data, selected }: any) => {
               <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
                 {output && (
                   <>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...getPortStyle(output) }}>
+                      {output.name}
+                    </span>
                     <Handle
                       type="source"
                       position={Position.Right}
@@ -139,7 +158,6 @@ const DeviceNode = ({ id, data, selected }: any) => {
                         border: 'none',
                       }}
                     />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{output.name}</span>
                   </>
                 )}
               </div>
