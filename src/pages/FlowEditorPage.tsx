@@ -1,5 +1,4 @@
 // src/pages/FlowEditorPage.tsx
-import { exportToDxf } from '../utils/exportToDxf';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
@@ -24,6 +23,7 @@ import EditNodeModal from '../components/flow/EditNodeModal';
 import Sidebar from '../components/flow/Sidebar';
 import { useFlowSchemas } from '../hooks/useFlowSchemas';
 import { DeviceNodeData, CableEdgeData, DeviceInterface, SavedSchema } from '../types/flowTypes';
+import { exportToDxf } from '../utils/exportToDxf';
 import './FlowEditorPage.css';
 
 const nodeTypes = { deviceNode: DeviceNode };
@@ -169,7 +169,7 @@ const FlowEditor: React.FC = () => {
             ],
             outputs: [],
             color: '#ef4444',
-            totalPoEConsumption: 15,   // ← чтобы информер показался
+            totalPoEConsumption: 15,
           },
         },
       ];
@@ -220,12 +220,18 @@ const FlowEditor: React.FC = () => {
         adapter: compat.adapter,
         badgeFontSize: 6,
         edgeStrokeWidth: 2,
-        edgeStrokeColor: '#2563eb',   // ← добавлено
+        edgeStrokeColor: '#2563eb',
         badgeTextColor: '#2563eb',
         badgeBorderColor: '#2563eb',
         badgeBorderWidth: 1,
         badgeBorderRadius: 12,
         badgeBackgroundColor: 'var(--bg-panel)',
+        markerFontSize: 5,
+        markerTextColor: '#2563eb',
+        markerBorderColor: '#2563eb',
+        markerBorderWidth: 1,
+        markerBorderRadius: 8,
+        markerBackgroundColor: '#ffffff',
       };
 
       const newEdge: Edge<CableEdgeData> = {
@@ -412,6 +418,10 @@ const FlowEditor: React.FC = () => {
     }
   };
 
+  const exportDXF = () => {
+    exportToDxf(nodes, edges, schemaName || 'scheme');
+  };
+
   const handleLoadSchema = (id: string) => {
     const schema = loadSchema(id);
     if (schema) {
@@ -479,6 +489,7 @@ const FlowEditor: React.FC = () => {
         onNewSchema={handleNewSchema}
         onSaveSchema={handleSaveSchema}
         onExportSVG={exportSVG}
+        onExportDXF={exportDXF}
         onSaveToFile={saveSchemaToFile}
         onLoadFromFile={() => fileInputRef.current?.click()}
         onAddNode={addNewNode}
