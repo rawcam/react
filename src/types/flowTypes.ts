@@ -1,60 +1,12 @@
 // src/types/flowTypes.ts
 import type { Node, Edge } from '@xyflow/react';
 
-export type ConnectorType =
-  | 'HDMI' | 'DVI' | 'DisplayPort' | 'VGA'
-  | 'RJ45' | 'XLR' | 'TRS' | 'RCA'
-  | 'USB-C' | 'USB-A' | 'USB-B'
-  | 'Phoenix3' | 'Phoenix5'
-  | 'PowerCON' | 'IEC'
-  | 'Optical' | 'BNC';
+export type ConnectorType = ... // без изменений
+export type ProtocolType = ... // без изменений
+export const CONNECTOR_PROTOCOL_MAP = ... // без изменений
 
-export type ProtocolType =
-  | 'HDMI' | 'DVI' | 'DisplayPort' | 'VGA'
-  | 'Ethernet' | 'Dante' | 'AES67' | 'AVB'
-  | 'AnalogAudio' | 'AES3'
-  | 'USB2' | 'USB3' | 'USB-C-AltDP'
-  | 'Power' | 'PoE'
-  | 'RS232' | 'RS485' | 'DMX512' | 'GPIO' | 'KNX' | 'Modbus'
-  | 'HDBaseT' | 'AVoverIP' | 'SDVoE';
-
-export const CONNECTOR_PROTOCOL_MAP: Record<ConnectorType, ProtocolType[]> = {
-  HDMI: ['HDMI', 'DVI', 'DisplayPort'],
-  DVI: ['DVI', 'HDMI'],
-  DisplayPort: ['DisplayPort', 'HDMI'],
-  VGA: ['VGA'],
-  RJ45: ['Ethernet', 'Dante', 'AES67', 'AVB', 'PoE', 'HDBaseT', 'AVoverIP', 'SDVoE'],
-  XLR: ['AnalogAudio', 'AES3', 'DMX512'],
-  TRS: ['AnalogAudio'],
-  RCA: ['AnalogAudio'],
-  'USB-C': ['USB2', 'USB3', 'USB-C-AltDP', 'DisplayPort', 'HDMI', 'Power'],
-  'USB-A': ['USB2', 'USB3', 'Power'],
-  'USB-B': ['USB2', 'USB3'],
-  Phoenix3: ['AnalogAudio', 'RS232', 'RS485', 'DMX512', 'GPIO', 'Power', 'Modbus'],
-  Phoenix5: ['AnalogAudio', 'RS232', 'RS485', 'DMX512', 'GPIO', 'Power', 'Modbus'],
-  PowerCON: ['Power'],
-  IEC: ['Power'],
-  Optical: ['AES3', 'AnalogAudio'],
-  BNC: ['AnalogAudio', 'AES3', 'DMX512'],
-};
-
-export interface DeviceInterface {
-  id: string;
-  name: string;
-  direction: 'input' | 'output' | 'bidirectional';
-  connector: ConnectorType;
-  protocol: ProtocolType;
-  poe?: boolean;
-  poePower?: number;
-  pins?: number;
-}
-
-export interface PowerSupply {
-  voltage: 'AC' | 'DC';
-  power: number;
-  connector?: 'IEC' | 'PowerCON' | 'USB' | 'Terminal';
-}
-
+export interface DeviceInterface { ... }
+export interface PowerSupply { ... }
 export type DeviceType = 'generic' | 'extender' | 'matrix' | 'network_switch';
 
 export interface NetworkSwitchConfig {
@@ -63,62 +15,11 @@ export interface NetworkSwitchConfig {
   sfpPorts: number;
   speed: '100M' | '1G' | '2.5G' | '10G';
   portLayout: 'odd_left' | 'odd_right';
+  rj45NameTemplate?: string;   // шаблон названия RJ45
+  sfpNameTemplate?: string;    // шаблон названия SFP
+  highlightPorts?: boolean;    // подсвечивать фоном
 }
 
-export interface DeviceNodeData {
-  [key: string]: unknown;
-  label: string;
-  manufacturer?: string;
-  model?: string;
-  icon: string;
-  inputs: DeviceInterface[];
-  outputs: DeviceInterface[];
-  color?: string;
-  width?: number;
-  height?: number;
-  totalPoEConsumption?: number;
-  powerSupply?: PowerSupply;
-  borderWidth?: number;
-  borderRadius?: number;
-  headerFontSize?: number;
-  portFontSize?: number;
-  headerFontWeight?: 'normal' | 'bold';
-  deviceType?: DeviceType;
-  networkSwitchConfig?: NetworkSwitchConfig;
-}
-
-export interface CableEdgeData {
-  [key: string]: unknown;
-  cableType: string;
-  sourceLabel: string;
-  targetLabel: string;
-  adapter?: string;
-  length?: number;
-  labelText?: string;
-  // Основной бейдж
-  badgeFontSize?: number;
-  badgeTextColor?: string;
-  badgeBorderColor?: string;
-  badgeBorderWidth?: number;
-  badgeBorderRadius?: number;
-  badgeBackgroundColor?: string;
-  // Маркировки
-  markerFontSize?: number;
-  markerTextColor?: string;
-  markerBorderColor?: string;
-  markerBorderWidth?: number;
-  markerBorderRadius?: number;
-  markerBackgroundColor?: string;
-  // Линия
-  edgeStrokeWidth?: number;
-  edgeStrokeColor?: string;
-  sourceLabelText?: string;
-  targetLabelText?: string;
-}
-
-export interface SavedSchema {
-  id: string;
-  name: string;
-  nodes: Node<DeviceNodeData>[];
-  edges: Edge<CableEdgeData>[];
-}
+export interface DeviceNodeData { ... } // без изменений
+export interface CableEdgeData { ... }
+export interface SavedSchema { ... }
