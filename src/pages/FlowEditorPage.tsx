@@ -168,6 +168,7 @@ const FlowEditor: React.FC = () => {
             ],
             outputs: [],
             color: '#ef4444',
+            totalPoEConsumption: 15,   // ← чтобы информер показался
           },
         },
       ];
@@ -218,6 +219,7 @@ const FlowEditor: React.FC = () => {
         adapter: compat.adapter,
         badgeFontSize: 6,
         edgeStrokeWidth: 2,
+        edgeStrokeColor: '#2563eb',   // ← добавлено
         badgeTextColor: '#2563eb',
         badgeBorderColor: '#2563eb',
         badgeBorderWidth: 1,
