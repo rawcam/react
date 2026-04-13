@@ -452,7 +452,7 @@ const FlowEditor: React.FC = () => {
             (updates.edgeStrokeColor !== undefined && updates.edgeStrokeColor !== e.data?.edgeStrokeColor) ||
             (updates.edgeStrokeWidth !== undefined && updates.edgeStrokeWidth !== e.data?.edgeStrokeWidth);
 
-          const updatedData = { ...e.data, ...updates };
+          const updatedData = { ...e.data, ...updates } as CableEdgeData;
 
           if (needsRecreate) {
             return {
@@ -461,7 +461,7 @@ const FlowEditor: React.FC = () => {
               data: updatedData,
             } as Edge<CableEdgeData>;
           } else {
-            return { ...e, data: updatedData };
+            return { ...e, data: updatedData } as Edge<CableEdgeData>;
           }
         }
         return e;
