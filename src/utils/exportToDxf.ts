@@ -2,7 +2,7 @@
 import { Node, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../types/flowTypes';
 import { getSmoothStepPath, Position } from '@xyflow/react';
-import Drawing from 'dxf-writer'; // <-- Правильный импорт
+import Drawing from 'dxf-writer';
 
 // Преобразование координат (инверсия Y)
 const toDxfY = (y: number, maxY: number) => maxY - y;
@@ -65,10 +65,10 @@ export const exportToDxf = (
 
     const d = new Drawing();
     
-    // Устанавливаем единицы и кодировку
+    // Устанавливаем единицы измерения
     d.setUnits('Millimeters');
     
-    // Добавляем слой по умолчанию
+    // Добавляем слой по умолчанию и делаем его активным
     d.addLayer('0', 7, 'CONTINUOUS');
     d.setActiveLayer('0');
 
@@ -125,7 +125,7 @@ export const exportToDxf = (
       const width = edge.data?.edgeStrokeWidth || 2;
 
       if (points.length >= 2) {
-        // Рисуем полилинию для рёбер
+        // Формируем массив точек в формате [x, y] и инвертируем Y
         const dxfPoints = points.map(p => [p[0], toDxfY(p[1], maxY)]);
         d.drawPolyline(dxfPoints);
       } else {
@@ -148,20 +148,20 @@ export const exportToDxf = (
       const x = node.position.x;
       const y = node.position.y;
 
-      // Рамка ноды
+      // Рамка ноды (замкнутая полилиния)
       const pts = [
         [x, toDxfY(y, maxY)],
         [x + w, toDxfY(y, maxY)],
         [x + w, toDxfY(y + h, maxY)],
         [x, toDxfY(y + h, maxY)],
-        [x, toDxfY(y, maxY)], // Замыкаем контур
+        [x, toDxfY(y, maxY)], // замыкаем
       ];
       d.drawPolyline(pts);
 
       // Текст метки ноды
       d.drawText(x + 5, toDxfY(y + 15, maxY), 10, 0, node.data.label);
 
-      // Хендлы
+      // Хендлы (точки подключения)
       const rowHeight = node.data.rowHeight || 22;
       node.data.inputs.forEach((_, idx) => {
         const offsetY = y + 40 + (idx + 0.5) * rowHeight;
@@ -173,6 +173,7 @@ export const exportToDxf = (
       });
     });
 
+    // Генерация строки DXF и сохранение
     const dxfString = d.toDxfString();
     const blob = new Blob([dxfString], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
