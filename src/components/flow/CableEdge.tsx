@@ -2,6 +2,7 @@
 import { FC } from 'react';
 import {
   getSmoothStepPath,
+  BaseEdge,
   EdgeLabelRenderer,
 } from '@xyflow/react';
 import { CableEdgeData } from '../../types/flowTypes';
@@ -17,6 +18,8 @@ const CableEdge: FC<any> = ({
   data,
   selected,
   style = {},
+  markerEnd,
+  markerStart,
 }) => {
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -55,8 +58,13 @@ const CableEdge: FC<any> = ({
       ? `${d.cableType} (${d.adapter})`
       : d.cableType || 'Cable';
 
-  // Цвет линии: красный при выделении, иначе из настроек
-  const lineColor = selected ? '#ef4444' : edgeStrokeColor;
+  // Формируем классы для толщины и цвета
+  const widthClass = `edge-width-${Math.round(edgeStrokeWidth)}`;
+  const colorClass = `edge-color-${getColorName(edgeStrokeColor)}`;
+
+  const edgeStyle = {
+    ...(style as React.CSSProperties),
+  };
 
   const getPointAtDistanceFromStart = (path: string, distance: number) => {
     const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -119,45 +127,49 @@ const CableEdge: FC<any> = ({
   };
 
   return (
-    <EdgeLabelRenderer>
-      {/* Линия */}
-      <svg
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      >
-        <path
-          id={id}
-          d={edgePath}
-          fill="none"
-          stroke={lineColor}
-          strokeWidth={edgeStrokeWidth}
-          style={style as React.CSSProperties}
-        />
-      </svg>
-
-      {/* Метки и бейджи */}
-      {sourceLabel && (
-        <div style={{ ...markerStyle, left: sourcePos.x, top: sourcePos.y }} className="nodrag nopan">
-          {sourceLabel}
+    <div className={`${widthClass} ${colorClass}`}>
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={edgeStyle}
+        markerEnd={markerEnd}
+        markerStart={markerStart}
+      />
+      <EdgeLabelRenderer>
+        {sourceLabel && (
+          <div style={{ ...markerStyle, left: sourcePos.x, top: sourcePos.y }} className="nodrag nopan">
+            {sourceLabel}
+          </div>
+        )}
+        {targetLabel && (
+          <div style={{ ...markerStyle, left: targetPos.x, top: targetPos.y }} className="nodrag nopan">
+            {targetLabel}
+          </div>
+        )}
+        <div style={{ ...mainBadgeStyle, left: labelX, top: labelY }} className="nodrag nopan">
+          {displayLabel}
         </div>
-      )}
-      {targetLabel && (
-        <div style={{ ...markerStyle, left: targetPos.x, top: targetPos.y }} className="nodrag nopan">
-          {targetLabel}
-        </div>
-      )}
-      <div style={{ ...mainBadgeStyle, left: labelX, top: labelY }} className="nodrag nopan">
-        {displayLabel}
-      </div>
-    </EdgeLabelRenderer>
+      </EdgeLabelRenderer>
+    </div>
   );
 };
+
+// Вспомогательная функция для сопоставления HEX с именем класса
+function getColorName(hex: string): string {
+  const colorMap: Record<string, string> = {
+    '#2563eb': 'blue',
+    '#ef4444': 'red',
+    '#10b981': 'green',
+    '#f59e0b': 'yellow',
+    '#8b5cf6': 'purple',
+    '#ec4899': 'pink',
+    '#06b6d4': 'cyan',
+    '#f97316': 'orange',
+    '#6b7280': 'gray',
+    '#000000': 'black',
+    '#ffffff': 'white',
+  };
+  return colorMap[hex.toLowerCase()] || 'blue';
+}
 
 export default CableEdge;
