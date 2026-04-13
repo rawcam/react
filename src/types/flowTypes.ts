@@ -86,7 +86,7 @@ export interface DeviceNodeData {
   headerFontSize?: number;
   portFontSize?: number;
   headerFontWeight?: 'normal' | 'bold';
-  rowHeight?: number;                     // <-- новое поле
+  rowHeight?: number;
   deviceType?: DeviceType;
   networkSwitchConfig?: NetworkSwitchConfig;
 }
@@ -115,6 +115,7 @@ export interface CableEdgeData {
   markerBorderWidth?: number;
   markerBorderRadius?: number;
   markerBackgroundColor?: string;
+  hideMainBadge?: boolean;
 }
 
 export interface SavedSchema {
