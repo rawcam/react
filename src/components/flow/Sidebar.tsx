@@ -77,6 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     headerFontSize: 10,
     portFontSize: 6,
     headerFontWeight: 'normal' as 'normal' | 'bold',
+    rowHeight: 22,
   });
 
   const [localNodeColor, setLocalNodeColor] = useState('#2563eb');
@@ -115,6 +116,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         headerFontSize: (selectedNode.data.headerFontSize as number) ?? 10,
         portFontSize: (selectedNode.data.portFontSize as number) ?? 6,
         headerFontWeight: (selectedNode.data.headerFontWeight as 'normal' | 'bold') ?? 'normal',
+        rowHeight: (selectedNode.data.rowHeight as number) ?? 22,
       });
       setLocalNodeColor((selectedNode.data.color as string) || '#2563eb');
     }
@@ -330,33 +332,19 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
         {showGrid && !collapsed && (
           <div className="section-content">
-            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ fontSize: 13, color: '#334155' }}>Вид</label>
-              <select value={gridSettings.variant} onChange={(e) => onUpdateGridVariant(e.target.value)} style={{ width: 110, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)' }}>
-                <option value="dots">Точки</option>
-                <option value="lines">Линии</option>
-              </select>
-            </div>
-            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ fontSize: 13, color: '#334155' }}>Ячейка (px)</label>
-              <input type="number" min="5" max="50" value={gridSettings.gap} onChange={(e) => onUpdateGridGap(Number(e.target.value))} style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }} />
-            </div>
-            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ fontSize: 13, color: '#334155' }}>Прилипание</label>
-              <input type="checkbox" checked={gridSettings.snapToGrid} onChange={(e) => onUpdateSnapToGrid(e.target.checked)} />
-            </div>
-            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ fontSize: 13, color: '#334155' }}>Цвет</label>
-              <input type="color" value={gridSettings.color || '#cbd5e1'} onChange={(e) => onUpdateGridColor(e.target.value)} style={{ width: 100, padding: '2px', height: 32, borderRadius: 8, border: '1px solid var(--border-light)' }} />
-            </div>
-            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ fontSize: 13, color: '#334155' }}>Прозрачность</label>
-              <input type="range" min="0" max="1" step="0.05" value={gridSettings.opacity ?? 0.5} onChange={(e) => onUpdateGridOpacity(Number(e.target.value))} style={{ width: 100 }} />
-            </div>
-            <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ fontSize: 13, color: '#334155' }}>Показывать</label>
-              <input type="checkbox" checked={gridSettings.visible ?? true} onChange={(e) => onUpdateGridVisible(e.target.checked)} />
-            </div>
+            <label>Вид сетки</label>
+            <select value={gridSettings.variant} onChange={(e) => onUpdateGridVariant(e.target.value)}>
+              <option value="dots">Точки</option>
+              <option value="lines">Линии</option>
+            </select>
+            <label>Размер ячейки (px)</label>
+            <input type="number" min="5" max="50" value={gridSettings.gap} onChange={(e) => onUpdateGridGap(Number(e.target.value))} />
+            <label><input type="checkbox" checked={gridSettings.snapToGrid} onChange={(e) => onUpdateSnapToGrid(e.target.checked)} /> Прилипание</label>
+            <label>Цвет сетки</label>
+            <input type="color" value={gridSettings.color || '#cbd5e1'} onChange={(e) => onUpdateGridColor(e.target.value)} />
+            <label>Прозрачность</label>
+            <input type="range" min="0" max="1" step="0.05" value={gridSettings.opacity ?? 0.5} onChange={(e) => onUpdateGridOpacity(Number(e.target.value))} />
+            <label><input type="checkbox" checked={gridSettings.visible ?? true} onChange={(e) => onUpdateGridVisible(e.target.checked)} /> Показывать сетку</label>
           </div>
         )}
       </div>
@@ -429,6 +417,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                   min="4" max="12"
                   value={localNodeSettings.portFontSize}
                   onChange={(e) => handleNodeSettingChange('portFontSize', Number(e.target.value))}
+                  style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }}
+                />
+              </div>
+              <div className="compact-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <label style={{ fontSize: 13, color: '#334155' }}>Высота строки (px)</label>
+                <input
+                  type="number"
+                  min="12" max="30" step="1"
+                  value={localNodeSettings.rowHeight}
+                  onChange={(e) => handleNodeSettingChange('rowHeight', Number(e.target.value))}
                   style={{ width: 100, padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-light)', borderRadius: 10, background: 'var(--bg-panel)', color: 'var(--text-primary)', textAlign: 'right' }}
                 />
               </div>
