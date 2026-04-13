@@ -2,7 +2,7 @@
 import { Node, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../types/flowTypes';
 import { getSmoothStepPath, Position } from '@xyflow/react';
-import { DxfWriter } from 'dxf'; // <-- Именованный импорт
+import Writer from 'dxf';
 
 // Преобразование координат (инверсия Y)
 const toDxfY = (y: number, maxY: number) => maxY - y;
@@ -63,11 +63,10 @@ export const exportToDxf = (
     });
     maxY += 100;
 
-    const dxf = new DxfWriter();
+    const dxf = new Writer();
     
     // Устанавливаем единицы и кодировку
     dxf.setUnits('mm');
-    // В библиотеке dxf setVariable принимает имя и значение
     dxf.setVariable('$DWGCODEPAGE', 'ANSI_1251');
 
     // Добавляем слой по умолчанию
@@ -132,7 +131,7 @@ export const exportToDxf = (
         console.warn('Пропущено ребро без точек пути:', edge.id);
       }
 
-      // Бейдж (тип кабеля) — по желанию
+      // Бейдж (тип кабеля)
       if (!edge.data?.hideMainBadge && points.length > 0) {
         const midIdx = Math.floor(points.length / 2);
         const [midX, midY] = points[midIdx];
