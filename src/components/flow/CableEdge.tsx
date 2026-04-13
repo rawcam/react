@@ -58,11 +58,9 @@ const CableEdge: FC<any> = ({
       ? `${d.cableType} (${d.adapter})`
       : d.cableType || 'Cable';
 
-  // Формируем классы для толщины и цвета
-  const widthClass = `edge-width-${Math.round(edgeStrokeWidth)}`;
-  const colorClass = `edge-color-${getColorName(edgeStrokeColor)}`;
-
   const edgeStyle = {
+    stroke: selected ? '#ef4444' : edgeStrokeColor,
+    strokeWidth: edgeStrokeWidth,
     ...(style as React.CSSProperties),
   };
 
@@ -127,7 +125,7 @@ const CableEdge: FC<any> = ({
   };
 
   return (
-    <div className={`${widthClass} ${colorClass}`}>
+    <>
       <BaseEdge
         id={id}
         path={edgePath}
@@ -150,26 +148,8 @@ const CableEdge: FC<any> = ({
           {displayLabel}
         </div>
       </EdgeLabelRenderer>
-    </div>
+    </>
   );
 };
-
-// Вспомогательная функция для сопоставления HEX с именем класса
-function getColorName(hex: string): string {
-  const colorMap: Record<string, string> = {
-    '#2563eb': 'blue',
-    '#ef4444': 'red',
-    '#10b981': 'green',
-    '#f59e0b': 'yellow',
-    '#8b5cf6': 'purple',
-    '#ec4899': 'pink',
-    '#06b6d4': 'cyan',
-    '#f97316': 'orange',
-    '#6b7280': 'gray',
-    '#000000': 'black',
-    '#ffffff': 'white',
-  };
-  return colorMap[hex.toLowerCase()] || 'blue';
-}
 
 export default CableEdge;
