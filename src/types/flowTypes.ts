@@ -107,7 +107,7 @@ export interface CableEdgeData {
   badgeBackgroundColor?: string;
   edgeStrokeWidth?: number;
   edgeStrokeColor?: string;
-  edgeBorderRadius?: number;   // <-- новое поле
+  edgeBorderRadius?: number;
   sourceLabelText?: string;
   targetLabelText?: string;
   markerFontSize?: number;
@@ -117,6 +117,7 @@ export interface CableEdgeData {
   markerBorderRadius?: number;
   markerBackgroundColor?: string;
   hideMainBadge?: boolean;
+  hideMarkers?: boolean;   // <-- новое поле
 }
 
 export interface SavedSchema {
