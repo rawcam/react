@@ -1,5 +1,5 @@
 // src/components/flow/Sidebar.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import type { Node, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../../types/flowTypes';
@@ -195,7 +195,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const resetNodeColor = () => handleNodeColorChange('#2563eb');
   const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => handleEdgeSettingChange(key, defaultColor);
 
-  // Компактный выбор цвета — исправлено позиционирование
+  // Исправленный компонент выбора цвета
   const ColorPickerCompact = ({ value, onChange, onReset, defaultColor }: { value: string; onChange: (c: string) => void; onReset: () => void; defaultColor: string }) => {
     const [expanded, setExpanded] = useState(false);
     const [coords, setCoords] = useState({ top: 0, left: 0 });
@@ -204,16 +204,29 @@ const Sidebar: React.FC<SidebarProps> = ({
     const sidebarRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
-      const sidebar = document.querySelector('.sidebar');
-      if (sidebar instanceof HTMLElement) sidebarRef.current = sidebar;
+      const sidebar = buttonRef.current?.closest('.sidebar') as HTMLElement;
+      if (sidebar) sidebarRef.current = sidebar;
     }, []);
 
-    const updatePosition = () => {
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        setCoords({ top: rect.bottom + 4, left: rect.left });
+    const updatePosition = useCallback(() => {
+      if (!buttonRef.current) return;
+      const rect = buttonRef.current.getBoundingClientRect();
+      const pickerWidth = 240;
+      const pickerHeight = 320; // примерно
+
+      let top = rect.bottom + 4;
+      let left = rect.left;
+
+      if (top + pickerHeight > window.innerHeight) {
+        top = rect.top - pickerHeight - 4;
       }
-    };
+      if (left + pickerWidth > window.innerWidth) {
+        left = window.innerWidth - pickerWidth - 10;
+      }
+      if (left < 10) left = 10;
+
+      setCoords({ top, left });
+    }, []);
 
     const handleToggle = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -224,14 +237,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     useEffect(() => {
       if (!expanded) return;
       const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target;
-        if (!(target instanceof Node)) return;
+        const target = event.target as Node;
         if (buttonRef.current?.contains(target)) return;
         if (pickerRef.current?.contains(target)) return;
         setExpanded(false);
       };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
     }, [expanded]);
 
     useEffect(() => {
@@ -244,7 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         sidebar.removeEventListener('scroll', handleScroll);
         window.removeEventListener('resize', updatePosition);
       };
-    }, [expanded]);
+    }, [expanded, updatePosition]);
 
     const pickerContent = expanded && ReactDOM.createPortal(
       <div
@@ -258,9 +270,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           borderRadius: '12px',
           padding: '12px',
           boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-          zIndex: 10000,
+          zIndex: 10001,
           width: '240px',
+          pointerEvents: 'auto',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         <input
           type="color"
@@ -445,7 +459,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Линия</div>
 
-              {/* Толщина + скругление */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Толщина (px)</label>
@@ -457,7 +470,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
 
-              {/* Цвет линии + чекбоксы */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Цвет линии</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -475,7 +487,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
 
-              {/* Метки и текст бейджа */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Метка начала</label>
                 <input type="text" value={localEdgeSettings.sourceLabelText} onChange={(e) => handleEdgeSettingChange('sourceLabelText', e.target.value)} placeholder="Источник" style={{ width: 130, padding: '4px 8px', fontSize: 12, border: '1px solid var(--border-light)', borderRadius: 6 }} />
@@ -493,7 +504,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Основной бейдж</div>
 
-              {/* Размер + скругление */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Размер (px)</label>
@@ -514,7 +524,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Маркировки</div>
 
-              {/* Размер, скругление, толщина в одной строке */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Размер</label>
