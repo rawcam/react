@@ -39,7 +39,7 @@ body {
 
 /* Сайдбар */
 .sidebar {
-  width: 280px;
+  width: 340px; /* увеличена ширина */
   background: var(--bg-panel);
   border-right: 1px solid var(--border-light);
   display: flex;
@@ -148,8 +148,14 @@ body {
   display: none;
 }
 
+/* Иконки аккордеонов в свёрнутом состоянии */
+.sidebar.collapsed .section-header i:first-child {
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+
 .section-content {
-  padding: 10px 16px;
+  padding: 14px 18px; /* компактнее */
 }
 
 .section-content.collapsed {
