@@ -1,7 +1,7 @@
 // src/components/flow/Sidebar.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
-import type { Node, Edge } from '@xyflow/react';
+import type { Node as FlowNode, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../../types/flowTypes';
 
 const COLOR_PALETTE = [
@@ -11,7 +11,7 @@ const COLOR_PALETTE = [
 ];
 
 interface SidebarProps {
-  selectedNode: Node<DeviceNodeData> | null;
+  selectedNode: FlowNode<DeviceNodeData> | null;
   selectedEdge: Edge<CableEdgeData> | null;
   onUpdateNode: (nodeId: string, updates: Partial<DeviceNodeData>) => void;
   onUpdateEdge: (edgeId: string, updates: Partial<CableEdgeData>) => void;
@@ -195,7 +195,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const resetNodeColor = () => handleNodeColorChange('#2563eb');
   const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => handleEdgeSettingChange(key, defaultColor);
 
-  // Исправленный компонент выбора цвета
+  // Исправленный компонент выбора цвета с корректной типизацией DOM Node
   const ColorPickerCompact = ({ value, onChange, onReset, defaultColor }: { value: string; onChange: (c: string) => void; onReset: () => void; defaultColor: string }) => {
     const [expanded, setExpanded] = useState(false);
     const [coords, setCoords] = useState({ top: 0, left: 0 });
@@ -212,7 +212,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (!buttonRef.current) return;
       const rect = buttonRef.current.getBoundingClientRect();
       const pickerWidth = 240;
-      const pickerHeight = 320; // примерно
+      const pickerHeight = 320;
 
       let top = rect.bottom + 4;
       let left = rect.left;
@@ -237,7 +237,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     useEffect(() => {
       if (!expanded) return;
       const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target as Node;
+        const target = event.target;
+        // Явная проверка, что target является DOM-узлом
+        if (!(target instanceof globalThis.Node)) return;
         if (buttonRef.current?.contains(target)) return;
         if (pickerRef.current?.contains(target)) return;
         setExpanded(false);
