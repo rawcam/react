@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import type { Node as FlowNode, Edge } from '@xyflow/react';
+import { HexColorPicker } from 'react-colorful';
 import { DeviceNodeData, CableEdgeData } from '../../types/flowTypes';
 
 const COLOR_PALETTE = [
@@ -41,6 +42,162 @@ interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
+
+// Компонент всплывающего выбора цвета (портал + react-colorful)
+const ColorPickerPopover: React.FC<{
+  value: string;
+  onChange: (color: string) => void;
+  onReset: () => void;
+  defaultColor: string;
+}> = ({ value, onChange, onReset, defaultColor }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const pickerWidth = 260;
+    const pickerHeight = 300;
+
+    let top = rect.bottom + 6;
+    let left = rect.left;
+
+    // Не вылезаем за нижний край
+    if (top + pickerHeight > window.innerHeight) {
+      top = rect.top - pickerHeight - 6;
+    }
+    // Не вылезаем за правый край
+    if (left + pickerWidth > window.innerWidth) {
+      left = window.innerWidth - pickerWidth - 10;
+    }
+    if (left < 10) left = 10;
+
+    setCoords({ top, left });
+  }, []);
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updatePosition();
+    setExpanded(prev => !prev);
+  };
+
+  // Закрытие по клику вне
+  useEffect(() => {
+    if (!expanded) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof globalThis.Node)) return;
+      if (buttonRef.current?.contains(target)) return;
+      if (pickerRef.current?.contains(target)) return;
+      setExpanded(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [expanded]);
+
+  // Обновление позиции при скролле и ресайзе
+  useEffect(() => {
+    if (!expanded) return;
+    const handleScroll = () => updatePosition();
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [expanded, updatePosition]);
+
+  const pickerContent = expanded && ReactDOM.createPortal(
+    <div
+      ref={pickerRef}
+      style={{
+        position: 'fixed',
+        top: coords.top,
+        left: coords.left,
+        zIndex: 10002,
+        background: 'var(--bg-panel)',
+        border: '1px solid var(--border-light)',
+        borderRadius: '12px',
+        padding: '12px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+        width: '260px',
+        pointerEvents: 'auto',
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <HexColorPicker color={value} onChange={onChange} />
+      <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '6px 8px',
+            border: '1px solid var(--border-light)',
+            borderRadius: '6px',
+            fontSize: 12,
+            background: 'var(--bg-panel)',
+            color: 'var(--text-primary)',
+          }}
+        />
+        <button
+          onClick={() => {
+            onReset();
+            setExpanded(false);
+          }}
+          style={{
+            padding: '6px 12px',
+            background: 'var(--accent)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: 12,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Сбросить
+        </button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginTop: 8 }}>
+        {COLOR_PALETTE.map(c => (
+          <div
+            key={c}
+            style={{
+              width: 24,
+              height: 24,
+              background: c,
+              borderRadius: 6,
+              cursor: 'pointer',
+              border: value === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)',
+            }}
+            onClick={() => onChange(c)}
+          />
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+
+  return (
+    <div
+      ref={buttonRef}
+      onClick={handleToggle}
+      style={{
+        width: '20px',
+        height: '20px',
+        background: value,
+        borderRadius: '5px',
+        border: '1px solid var(--border-light)',
+        cursor: 'pointer',
+        flexShrink: 0,
+      }}
+    />
+  );
+};
 
 const Sidebar: React.FC<SidebarProps> = ({
   selectedNode,
@@ -195,135 +352,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const resetNodeColor = () => handleNodeColorChange('#2563eb');
   const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => handleEdgeSettingChange(key, defaultColor);
 
-  // Исправленный компонент выбора цвета с корректной типизацией DOM Node
-  const ColorPickerCompact = ({ value, onChange, onReset, defaultColor }: { value: string; onChange: (c: string) => void; onReset: () => void; defaultColor: string }) => {
-    const [expanded, setExpanded] = useState(false);
-    const [coords, setCoords] = useState({ top: 0, left: 0 });
-    const buttonRef = useRef<HTMLDivElement>(null);
-    const pickerRef = useRef<HTMLDivElement>(null);
-    const sidebarRef = useRef<HTMLElement | null>(null);
-
-    useEffect(() => {
-      const sidebar = buttonRef.current?.closest('.sidebar') as HTMLElement;
-      if (sidebar) sidebarRef.current = sidebar;
-    }, []);
-
-    const updatePosition = useCallback(() => {
-      if (!buttonRef.current) return;
-      const rect = buttonRef.current.getBoundingClientRect();
-      const pickerWidth = 240;
-      const pickerHeight = 320;
-
-      let top = rect.bottom + 4;
-      let left = rect.left;
-
-      if (top + pickerHeight > window.innerHeight) {
-        top = rect.top - pickerHeight - 4;
-      }
-      if (left + pickerWidth > window.innerWidth) {
-        left = window.innerWidth - pickerWidth - 10;
-      }
-      if (left < 10) left = 10;
-
-      setCoords({ top, left });
-    }, []);
-
-    const handleToggle = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      updatePosition();
-      setExpanded(prev => !prev);
-    };
-
-    useEffect(() => {
-      if (!expanded) return;
-      const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target;
-        // Явная проверка, что target является DOM-узлом
-        if (!(target instanceof globalThis.Node)) return;
-        if (buttonRef.current?.contains(target)) return;
-        if (pickerRef.current?.contains(target)) return;
-        setExpanded(false);
-      };
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }, [expanded]);
-
-    useEffect(() => {
-      if (!expanded || !sidebarRef.current) return;
-      const handleScroll = () => updatePosition();
-      const sidebar = sidebarRef.current;
-      sidebar.addEventListener('scroll', handleScroll);
-      window.addEventListener('resize', updatePosition);
-      return () => {
-        sidebar.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('resize', updatePosition);
-      };
-    }, [expanded, updatePosition]);
-
-    const pickerContent = expanded && ReactDOM.createPortal(
-      <div
-        ref={pickerRef}
-        style={{
-          position: 'fixed',
-          top: coords.top,
-          left: coords.left,
-          background: 'var(--bg-panel)',
-          border: '1px solid var(--border-light)',
-          borderRadius: '12px',
-          padding: '12px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-          zIndex: 10001,
-          width: '240px',
-          pointerEvents: 'auto',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <input
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          style={{ width: '100%', height: '40px', marginBottom: '8px' }}
-        />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          style={{ width: '100%', padding: '6px', marginBottom: '8px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
-        />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
-          {COLOR_PALETTE.map(c => (
-            <div
-              key={c}
-              style={{
-                width: '24px', height: '24px', background: c, borderRadius: '6px', cursor: 'pointer',
-                border: value === c ? '2px solid var(--text-primary)' : '1px solid var(--border-light)'
-              }}
-              onClick={() => onChange(c)}
-            />
-          ))}
-        </div>
-        <button onClick={onReset} style={{ marginTop: '8px', width: '100%', padding: '4px', cursor: 'pointer' }}>Сбросить</button>
-      </div>,
-      document.body
-    );
-
-    return (
-      <div
-        ref={buttonRef}
-        onClick={handleToggle}
-        style={{
-          width: '20px',
-          height: '20px',
-          background: value,
-          borderRadius: '5px',
-          border: '1px solid var(--border-light)',
-          cursor: 'pointer',
-          flexShrink: 0,
-        }}
-      />
-    );
-  };
-
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''} ${theme}`}>
       <div className="sidebar-header">
@@ -414,7 +442,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Цвет</label>
-                <ColorPickerCompact value={localNodeColor} onChange={handleNodeColorChange} onReset={resetNodeColor} defaultColor="#2563eb" />
+                <ColorPickerPopover value={localNodeColor} onChange={handleNodeColorChange} onReset={resetNodeColor} defaultColor="#2563eb" />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Обводка (px)</label>
@@ -475,7 +503,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Цвет линии</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ColorPickerCompact value={localEdgeSettings.edgeStrokeColor} onChange={(c) => handleEdgeSettingChange('edgeStrokeColor', c)} onReset={() => resetEdgeColor('edgeStrokeColor', '#2563eb')} defaultColor="#2563eb" />
+                  <ColorPickerPopover value={localEdgeSettings.edgeStrokeColor} onChange={(c) => handleEdgeSettingChange('edgeStrokeColor', c)} onReset={() => resetEdgeColor('edgeStrokeColor', '#2563eb')} defaultColor="#2563eb" />
                   <div style={{ display: 'flex', gap: 12 }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
                       <input type="checkbox" checked={localEdgeSettings.hideMainBadge} onChange={(e) => handleEdgeSettingChange('hideMainBadge', e.target.checked)} />
@@ -519,7 +547,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Цвет</label>
-                <ColorPickerCompact value={localEdgeSettings.badgeTextColor} onChange={(c) => handleEdgeSettingChange('badgeTextColor', c)} onReset={() => resetEdgeColor('badgeTextColor', '#2563eb')} defaultColor="#2563eb" />
+                <ColorPickerPopover value={localEdgeSettings.badgeTextColor} onChange={(c) => handleEdgeSettingChange('badgeTextColor', c)} onReset={() => resetEdgeColor('badgeTextColor', '#2563eb')} defaultColor="#2563eb" />
               </div>
 
               <div style={{ borderTop: '1px solid var(--border-light)', margin: '8px 0' }} />
@@ -543,15 +571,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Текст</label>
-                <ColorPickerCompact value={localEdgeSettings.markerTextColor} onChange={(c) => handleEdgeSettingChange('markerTextColor', c)} onReset={() => resetEdgeColor('markerTextColor', '#2563eb')} defaultColor="#2563eb" />
+                <ColorPickerPopover value={localEdgeSettings.markerTextColor} onChange={(c) => handleEdgeSettingChange('markerTextColor', c)} onReset={() => resetEdgeColor('markerTextColor', '#2563eb')} defaultColor="#2563eb" />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Обводка</label>
-                <ColorPickerCompact value={localEdgeSettings.markerBorderColor} onChange={(c) => handleEdgeSettingChange('markerBorderColor', c)} onReset={() => resetEdgeColor('markerBorderColor', '#2563eb')} defaultColor="#2563eb" />
+                <ColorPickerPopover value={localEdgeSettings.markerBorderColor} onChange={(c) => handleEdgeSettingChange('markerBorderColor', c)} onReset={() => resetEdgeColor('markerBorderColor', '#2563eb')} defaultColor="#2563eb" />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Фон</label>
-                <ColorPickerCompact value={localEdgeSettings.markerBackgroundColor} onChange={(c) => handleEdgeSettingChange('markerBackgroundColor', c)} onReset={() => resetEdgeColor('markerBackgroundColor', '#ffffff')} defaultColor="#ffffff" />
+                <ColorPickerPopover value={localEdgeSettings.markerBackgroundColor} onChange={(c) => handleEdgeSettingChange('markerBackgroundColor', c)} onReset={() => resetEdgeColor('markerBackgroundColor', '#ffffff')} defaultColor="#ffffff" />
               </div>
 
               <button onClick={handleApplyEdgeStyleToDevice} style={{ marginTop: 8, padding: '8px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '40px', cursor: 'pointer', width: '100%', fontWeight: 500, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
