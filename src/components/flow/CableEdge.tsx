@@ -21,6 +21,9 @@ const CableEdge: FC<any> = ({
   markerEnd,
   markerStart,
 }) => {
+  const d = (data || {}) as CableEdgeData;
+  const borderRadius = d.edgeBorderRadius ?? 8;
+
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -28,10 +31,8 @@ const CableEdge: FC<any> = ({
     targetX,
     targetY,
     targetPosition,
-    borderRadius: 8,
+    borderRadius,
   });
-
-  const d = (data || {}) as CableEdgeData;
 
   // Основной бейдж
   const badgeFontSize = d.badgeFontSize ?? 6;
@@ -57,7 +58,6 @@ const CableEdge: FC<any> = ({
 
   const hideMainBadge = d.hideMainBadge ?? false;
 
-  // Стили линии теперь берутся из пропса style (переданного через updateEdge)
   const edgeStyle = {
     ...(style as React.CSSProperties),
   };
