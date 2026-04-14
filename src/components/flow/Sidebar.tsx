@@ -195,7 +195,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const resetNodeColor = () => handleNodeColorChange('#2563eb');
   const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => handleEdgeSettingChange(key, defaultColor);
 
-  // Компактный выбор цвета — точно как в демо
+  // Компактный выбор цвета — исправлено позиционирование
   const ColorPickerCompact = ({ value, onChange, onReset, defaultColor }: { value: string; onChange: (c: string) => void; onReset: () => void; defaultColor: string }) => {
     const [expanded, setExpanded] = useState(false);
     const [coords, setCoords] = useState({ top: 0, left: 0 });
@@ -239,7 +239,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       const handleScroll = () => updatePosition();
       const sidebar = sidebarRef.current;
       sidebar.addEventListener('scroll', handleScroll);
-      return () => sidebar.removeEventListener('scroll', handleScroll);
+      window.addEventListener('resize', updatePosition);
+      return () => {
+        sidebar.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', updatePosition);
+      };
     }, [expanded]);
 
     const pickerContent = expanded && ReactDOM.createPortal(
@@ -254,7 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           borderRadius: '12px',
           padding: '12px',
           boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-          zIndex: 9999,
+          zIndex: 10000,
           width: '240px',
         }}
       >
@@ -398,15 +402,15 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Обводка (px)</label>
-                <input type="number" min="0" max="10" step="0.5" value={localNodeSettings.borderWidth} onChange={(e) => handleNodeSettingChange('borderWidth', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
+                <input type="number" min="0" max="10" step="0.5" value={localNodeSettings.borderWidth} onChange={(e) => handleNodeSettingChange('borderWidth', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Скругление (px)</label>
-                <input type="number" min="0" max="20" value={localNodeSettings.borderRadius} onChange={(e) => handleNodeSettingChange('borderRadius', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
+                <input type="number" min="0" max="20" value={localNodeSettings.borderRadius} onChange={(e) => handleNodeSettingChange('borderRadius', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Заголовок (px)</label>
-                <input type="number" min="8" max="20" value={localNodeSettings.headerFontSize} onChange={(e) => handleNodeSettingChange('headerFontSize', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
+                <input type="number" min="8" max="20" value={localNodeSettings.headerFontSize} onChange={(e) => handleNodeSettingChange('headerFontSize', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Стиль шрифта</label>
@@ -417,11 +421,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Порты (px)</label>
-                <input type="number" min="4" max="12" value={localNodeSettings.portFontSize} onChange={(e) => handleNodeSettingChange('portFontSize', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
+                <input type="number" min="4" max="12" value={localNodeSettings.portFontSize} onChange={(e) => handleNodeSettingChange('portFontSize', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Высота строки (px)</label>
-                <input type="number" min="12" max="30" step="1" value={localNodeSettings.rowHeight} onChange={(e) => handleNodeSettingChange('rowHeight', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
+                <input type="number" min="12" max="30" step="1" value={localNodeSettings.rowHeight} onChange={(e) => handleNodeSettingChange('rowHeight', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
               </div>
               <button onClick={handleApplyToAll} style={{ marginTop: 8, padding: '6px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '40px', cursor: 'pointer', width: '100%', fontWeight: 500, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                 <i className="fas fa-paint-brush"></i> {applyingAll ? '✓ Применено!' : 'Применить ко всем'}
@@ -440,14 +444,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           {showEdgeStyle && (
             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Линия</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ fontSize: 12 }}>Толщина (px)</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input type="number" min="1" max="5" step="0.5" value={localEdgeSettings.edgeStrokeWidth} onChange={(e) => handleEdgeSettingChange('edgeStrokeWidth', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12 }} />
+
+              {/* Толщина + скругление */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <label style={{ fontSize: 12 }}>Толщина (px)</label>
+                  <input type="number" min="1" max="5" step="0.5" value={localEdgeSettings.edgeStrokeWidth} onChange={(e) => handleEdgeSettingChange('edgeStrokeWidth', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Скругление</label>
-                  <input type="number" min="0" max="20" value={localEdgeSettings.edgeBorderRadius} onChange={(e) => handleEdgeSettingChange('edgeBorderRadius', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12 }} />
+                  <input type="number" min="0" max="20" value={localEdgeSettings.edgeBorderRadius} onChange={(e) => handleEdgeSettingChange('edgeBorderRadius', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
                 </div>
               </div>
+
+              {/* Цвет линии + чекбоксы */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Цвет линии</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -464,6 +474,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Метки и текст бейджа */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Метка начала</label>
                 <input type="text" value={localEdgeSettings.sourceLabelText} onChange={(e) => handleEdgeSettingChange('sourceLabelText', e.target.value)} placeholder="Источник" style={{ width: 130, padding: '4px 8px', fontSize: 12, border: '1px solid var(--border-light)', borderRadius: 6 }} />
@@ -480,14 +492,19 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div style={{ borderTop: '1px solid var(--border-light)', margin: '8px 0' }} />
 
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Основной бейдж</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ fontSize: 12 }}>Размер (px)</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input type="number" min="4" max="20" value={localEdgeSettings.badgeFontSize} onChange={(e) => handleEdgeSettingChange('badgeFontSize', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12 }} />
+
+              {/* Размер + скругление */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <label style={{ fontSize: 12 }}>Размер (px)</label>
+                  <input type="number" min="4" max="20" value={localEdgeSettings.badgeFontSize} onChange={(e) => handleEdgeSettingChange('badgeFontSize', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Скругление</label>
-                  <input type="number" min="0" max="30" value={localEdgeSettings.badgeBorderRadius} onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12 }} />
+                  <input type="number" min="0" max="30" value={localEdgeSettings.badgeBorderRadius} onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
                 </div>
               </div>
+
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Цвет</label>
                 <ColorPickerCompact value={localEdgeSettings.badgeTextColor} onChange={(c) => handleEdgeSettingChange('badgeTextColor', c)} onReset={() => resetEdgeColor('badgeTextColor', '#2563eb')} defaultColor="#2563eb" />
@@ -496,20 +513,23 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div style={{ borderTop: '1px solid var(--border-light)', margin: '8px 0' }} />
 
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Маркировки</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+
+              {/* Размер, скругление, толщина в одной строке */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Размер</label>
-                  <input type="number" min="4" max="20" value={localEdgeSettings.markerFontSize} onChange={(e) => handleEdgeSettingChange('markerFontSize', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12 }} />
+                  <input type="number" min="4" max="20" value={localEdgeSettings.markerFontSize} onChange={(e) => handleEdgeSettingChange('markerFontSize', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Скругление</label>
-                  <input type="number" min="0" max="30" value={localEdgeSettings.markerBorderRadius} onChange={(e) => handleEdgeSettingChange('markerBorderRadius', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12 }} />
+                  <input type="number" min="0" max="30" value={localEdgeSettings.markerBorderRadius} onChange={(e) => handleEdgeSettingChange('markerBorderRadius', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Толщина</label>
-                  <input type="number" min="0" max="5" value={localEdgeSettings.markerBorderWidth} onChange={(e) => handleEdgeSettingChange('markerBorderWidth', Number(e.target.value))} style={{ width: 40, padding: '4px 6px', fontSize: 12 }} />
+                  <input type="number" min="0" max="5" value={localEdgeSettings.markerBorderWidth} onChange={(e) => handleEdgeSettingChange('markerBorderWidth', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
                 </div>
               </div>
+
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Текст</label>
                 <ColorPickerCompact value={localEdgeSettings.markerTextColor} onChange={(c) => handleEdgeSettingChange('markerTextColor', c)} onReset={() => resetEdgeColor('markerTextColor', '#2563eb')} defaultColor="#2563eb" />
