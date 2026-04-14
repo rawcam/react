@@ -545,19 +545,33 @@ const FlowEditor: React.FC = () => {
     event.target.value = '';
   };
 
-  // ✅ Новая функция экспорта SVG с dom-to-image-more
+  // ✅ Экспорт SVG с временным скрытием мини-карты, контролов и сетки
   const exportSVG = async () => {
-    const element = document.querySelector('.react-flow');
-    if (!element) {
+    const flowElement = document.querySelector('.react-flow');
+    if (!flowElement) {
       alert('Не удалось найти область схемы');
       return;
     }
 
+    const minimap = document.querySelector('.react-flow__minimap') as HTMLElement;
+    const controls = document.querySelector('.react-flow__controls') as HTMLElement;
+    const background = document.querySelector('.react-flow__background') as HTMLElement;
+
+    const minimapDisplay = minimap?.style.display;
+    const controlsDisplay = controls?.style.display;
+    const backgroundDisplay = background?.style.display;
+
     try {
+      if (minimap) minimap.style.display = 'none';
+      if (controls) controls.style.display = 'none';
+      if (background) background.style.display = 'none';
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const domtoimage = await import('dom-to-image-more');
-      const dataUrl = await domtoimage.toSvg(element as HTMLElement, {
+      const dataUrl = await domtoimage.toSvg(flowElement as HTMLElement, {
         bgcolor: theme === 'light' ? '#f9fafb' : '#0f172a',
-        copyDefaultStyles: true, // важно для CSS-переменных
+        copyDefaultStyles: true,
       });
 
       const link = document.createElement('a');
@@ -567,6 +581,10 @@ const FlowEditor: React.FC = () => {
     } catch (err) {
       console.error('Ошибка экспорта SVG:', err);
       alert('Ошибка экспорта: ' + (err as Error).message);
+    } finally {
+      if (minimap) minimap.style.display = minimapDisplay || '';
+      if (controls) controls.style.display = controlsDisplay || '';
+      if (background) background.style.display = backgroundDisplay || '';
     }
   };
 
