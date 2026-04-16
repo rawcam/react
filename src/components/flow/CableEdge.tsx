@@ -4,10 +4,11 @@ import {
   getSmoothStepPath,
   BaseEdge,
   EdgeLabelRenderer,
+  EdgeProps,
 } from '@xyflow/react';
 import { CableEdgeData } from '../../types/flowTypes';
 
-const CableEdge: FC<any> = ({
+const CableEdge: FC<EdgeProps> = ({
   id,
   sourceX,
   sourceY,
