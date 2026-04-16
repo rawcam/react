@@ -27,7 +27,7 @@ const generatePortName = (
   existingPorts: DeviceInterface[]
 ): string => {
   // Определяем базовое имя (префикс)
-  let baseName = connector; // по умолчанию берём разъём
+  let baseName: string = connector; // по умолчанию берём разъём
   if (connector === 'RJ45') {
     // Для RJ45 используем протокол (кроме Ethernet -> LAN)
     if (protocol === 'Ethernet') baseName = 'LAN';
