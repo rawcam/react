@@ -53,42 +53,70 @@ const checkCompatibility = (
   source: DeviceInterface,
   target: DeviceInterface
 ): { compatible: boolean; cableType?: string; adapter?: string } => {
-  if (source.connector === target.connector && source.protocol === target.protocol) {
-    return { compatible: true, cableType: `${source.connector} Cable` };
+  // Видео
+  if ((source.connector === 'HDMI' || source.connector === 'DVI' || source.connector === 'DisplayPort') &&
+      (target.connector === 'HDMI' || target.connector === 'DVI' || target.connector === 'DisplayPort')) {
+    if (source.connector === target.connector && source.protocol === target.protocol) {
+      return { compatible: true, cableType: 'Видеосигнал HDMI/DVI' };
+    }
+    if (source.connector === 'DisplayPort' && target.connector === 'HDMI') {
+      return { compatible: true, cableType: 'Видеосигнал HDMI/DVI', adapter: 'DP → HDMI' };
+    }
+    if (source.connector === 'DVI' && target.connector === 'HDMI') {
+      return { compatible: true, cableType: 'Видеосигнал HDMI/DVI', adapter: 'DVI → HDMI' };
+    }
+    return { compatible: false };
   }
-  if (source.connector === 'DisplayPort' && target.connector === 'HDMI' && source.protocol === 'DisplayPort' && target.protocol === 'HDMI') {
-    return { compatible: true, cableType: 'HDMI Cable', adapter: 'DP → HDMI' };
+
+  // Аудио
+  const audioConnectors = ['XLR', 'RCA', 'TRS', 'Speakon', 'Optical'];
+  if (audioConnectors.includes(source.connector) && audioConnectors.includes(target.connector)) {
+    if (source.connector === 'Optical' || target.connector === 'Optical') {
+      return { compatible: true, cableType: 'Оптические линии' };
+    }
+    if (source.connector === 'Speakon' || target.connector === 'Speakon') {
+      return { compatible: true, cableType: 'Акустический сигнал' };
+    }
+    return { compatible: true, cableType: 'Аудио сигнал' };
   }
-  if (source.connector === 'DVI' && target.connector === 'HDMI') {
-    return { compatible: true, cableType: 'HDMI Cable', adapter: 'DVI → HDMI' };
-  }
+
+  // Ethernet / Dante / AES67 / Управление / Кодированный сигнал
   if (source.connector === 'RJ45' && target.connector === 'RJ45') {
+    // PoE проверка (часто для HDBaseT)
     if (source.poe && target.poe && source.poePower && target.poePower) {
       if (source.poePower >= target.poePower) {
-        return { compatible: true, cableType: 'Cat6 SFTP' };
+        return { compatible: true, cableType: 'Кодированный сигнал' };
       } else {
         return { compatible: false };
       }
     }
-    if (source.protocol === 'Ethernet' || source.protocol === 'Dante' || source.protocol === 'AES67') {
-      return { compatible: true, cableType: 'Cat5e' };
+    if (source.protocol === 'Ethernet' && target.protocol === 'Ethernet') {
+      return { compatible: true, cableType: 'Управление' };
     }
+    if (source.protocol === 'Dante' || target.protocol === 'Dante' ||
+        source.protocol === 'AES67' || target.protocol === 'AES67') {
+      return { compatible: true, cableType: 'Аудио сигнал' };
+    }
+    // По умолчанию для RJ45 (например, просто Ethernet без PoE) – кодированный сигнал
+    return { compatible: true, cableType: 'Кодированный сигнал' };
   }
+
+  // RS-232/RS-485
+  if ((source.connector === 'Db9' || source.connector === 'Db25') &&
+      (target.connector === 'Db9' || target.connector === 'Db25')) {
+    return { compatible: true, cableType: 'RS-232/RS-485' };
+  }
+
+  // USB
+  if (source.connector === 'USB' && target.connector === 'USB') {
+    return { compatible: true, cableType: 'USB' };
+  }
+
   return { compatible: false };
 };
 
-// Цвета по типам сигналов
+// Расширенный словарь цветов
 const CABLE_TYPE_COLORS: Record<string, string> = {
-  'HDMI Cable': '#7F1F00',
-  'DisplayPort Cable': '#8b5cf6',
-  'DVI Cable': '#f59e0b',
-  'VGA Cable': '#94a3b8',
-  'Cat5e': '#10b981',
-  'Cat6': '#059669',
-  'Cat6 SFTP': '#ef4444',
-  'AES67': '#06b6d4',
-  'Dante': '#d946ef',
-  'Custom Cable': '#6b7280',
   'Видеосигнал HDMI/DVI': '#7F1F00',
   'Оптические линии': '#FF00FF',
   'Кодированный сигнал': '#FF7F00',
@@ -98,6 +126,11 @@ const CABLE_TYPE_COLORS: Record<string, string> = {
   'Акустический сигнал': '#00BFFF',
   'USB': '#000000',
   'Конференц-связь': '#6B8E23',
+  'Custom Cable': '#6b7280',
+  'HDMI Cable': '#7F1F00',
+  'Cat5e': '#10b981',
+  'Cat6': '#059669',
+  'Cat6 SFTP': '#ef4444',
 };
 const DEFAULT_CABLE_COLOR = '#2563eb';
 
