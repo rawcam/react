@@ -16,8 +16,10 @@ import {
   useOnSelectionChange,
   reconnectEdge,
   useReactFlow,
+  useViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import * as XLSX from 'xlsx';
 import DeviceNode from '../components/flow/DeviceNode';
 import CableEdge from '../components/flow/CableEdge';
 import EditNodeModal from '../components/flow/EditNodeModal';
@@ -73,9 +75,9 @@ const checkCompatibility = (
   return { compatible: false };
 };
 
-// 🎨 Цвета кабелей по типам (задел на будущее)
+// Цвета по типам сигналов
 const CABLE_TYPE_COLORS: Record<string, string> = {
-  'HDMI Cable': '#3b82f6',
+  'HDMI Cable': '#7F1F00',
   'DisplayPort Cable': '#8b5cf6',
   'DVI Cable': '#f59e0b',
   'VGA Cable': '#94a3b8',
@@ -85,6 +87,15 @@ const CABLE_TYPE_COLORS: Record<string, string> = {
   'AES67': '#06b6d4',
   'Dante': '#d946ef',
   'Custom Cable': '#6b7280',
+  'Видеосигнал HDMI/DVI': '#7F1F00',
+  'Оптические линии': '#FF00FF',
+  'Кодированный сигнал': '#FF7F00',
+  'RS-232/RS-485': '#3FFF00',
+  'Управление': '#007F1F',
+  'Аудио сигнал': '#007FFF',
+  'Акустический сигнал': '#00BFFF',
+  'USB': '#000000',
+  'Конференц-связь': '#6B8E23',
 };
 const DEFAULT_CABLE_COLOR = '#2563eb';
 
@@ -109,6 +120,15 @@ const FlowEditor: React.FC = () => {
     };
     return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
   });
+  const [printSettings, setPrintSettings] = useState(() => {
+    const saved = localStorage.getItem('flow_print_settings');
+    const defaults = {
+      format: 'a4',
+      orientation: 'landscape',
+      visible: false,
+    };
+    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+  });
   const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; nodeId: string | null }>({
     visible: false, x: 0, y: 0, nodeId: null,
   });
@@ -117,10 +137,18 @@ const FlowEditor: React.FC = () => {
   });
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [handleHoverEnabled, setHandleHoverEnabled] = useState(() => {
+    const saved = localStorage.getItem('handle_hover_enabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const autoSaveEnabled = true;
+  const autoSaveTimer = useRef<number>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema, importSchema } = useFlowSchemas();
   const { updateEdge } = useReactFlow();
+  const viewport = useViewport();
 
   useOnSelectionChange({
     onChange: ({ nodes: selectedNodes, edges: selectedEdges }) => {
@@ -134,14 +162,18 @@ const FlowEditor: React.FC = () => {
     localStorage.setItem('flow_grid_settings', JSON.stringify(newSettings));
   };
 
-  const updateGridVariant = (variant: string) => {
-    saveGridSettings({ ...gridSettings, variant: variant as BackgroundVariant });
-  };
+  const updateGridVariant = (variant: string) => saveGridSettings({ ...gridSettings, variant: variant as BackgroundVariant });
   const updateGridGap = (gap: number) => saveGridSettings({ ...gridSettings, gap, snapGrid: [gap, gap] });
   const updateSnapToGrid = (snap: boolean) => saveGridSettings({ ...gridSettings, snapToGrid: snap });
   const updateGridColor = (color: string) => saveGridSettings({ ...gridSettings, color });
   const updateGridOpacity = (opacity: number) => saveGridSettings({ ...gridSettings, opacity });
   const updateGridVisible = (visible: boolean) => saveGridSettings({ ...gridSettings, visible });
+
+  const updatePrintSettings = (newSettings: Partial<typeof printSettings>) => {
+    const updated = { ...printSettings, ...newSettings };
+    setPrintSettings(updated);
+    localStorage.setItem('flow_print_settings', JSON.stringify(updated));
+  };
 
   useEffect(() => {
     // Пустой холст при запуске
@@ -186,7 +218,7 @@ const FlowEditor: React.FC = () => {
 
       const sourceLabel = `${sourceNode.data.label}: ${sourceInterface.name}`;
       const targetLabel = `${targetNode.data.label}: ${targetInterface.name}`;
-      
+
       const cableData: CableEdgeData = {
         cableType,
         sourceLabel,
@@ -299,6 +331,7 @@ const FlowEditor: React.FC = () => {
         color: '#000000',
         borderRadius: 2,
         borderWidth: 1,
+        showHandleHover: handleHoverEnabled,
       },
     };
     setNodes(nds => [...nds, newNode]);
@@ -467,6 +500,20 @@ const FlowEditor: React.FC = () => {
         e.preventDefault();
       }
 
+      // Горячие клавиши экспорта
+      if (e.ctrlKey && e.shiftKey) {
+        if (e.key === 'S') {
+          e.preventDefault();
+          exportSVG();
+        } else if (e.key === 'E') {
+          e.preventDefault();
+          exportToExcel();
+        } else if (e.key === 'D') {
+          e.preventDefault();
+          exportDXF();
+        }
+      }
+
       if (selectedEdge && e.shiftKey) {
         const edge = selectedEdge;
         if (e.key === 'H') {
@@ -496,6 +543,29 @@ const FlowEditor: React.FC = () => {
     return () => document.removeEventListener('click', closeContextMenu);
   }, []);
 
+  // Автосохранение
+  useEffect(() => {
+    if (!autoSaveEnabled) return;
+    const save = () => {
+      const schema = { id: currentSchemaId || Date.now().toString(), name: schemaName, nodes, edges };
+      localStorage.setItem('flow_autosave', JSON.stringify(schema));
+    };
+    autoSaveTimer.current = window.setInterval(save, 30000);
+    return () => clearInterval(autoSaveTimer.current);
+  }, [nodes, edges, schemaName, currentSchemaId]);
+
+  // Предупреждение при закрытии
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (nodes.length > 0 || edges.length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [nodes, edges]);
+
   const applyNodeStyleToAll = (styles: Partial<DeviceNodeData>) => {
     setNodes((nds) =>
       nds.map((n) => ({
@@ -503,6 +573,12 @@ const FlowEditor: React.FC = () => {
         data: { ...n.data, ...styles },
       }))
     );
+  };
+
+  const toggleHandleHover = (enabled: boolean) => {
+    setHandleHoverEnabled(enabled);
+    localStorage.setItem('handle_hover_enabled', JSON.stringify(enabled));
+    setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, showHandleHover: enabled } })));
   };
 
   const saveSchemaToFile = () => {
@@ -545,9 +621,64 @@ const FlowEditor: React.FC = () => {
     event.target.value = '';
   };
 
-  // ✅ Экспорт SVG с временным скрытием мини-карты, контролов и сетки
+  const calculateStatistics = () => {
+    const totalPower = nodes.reduce((sum, n) => sum + (n.data.powerSupply?.power || 0), 0);
+    const poeProvided = nodes.reduce((sum, n) => {
+      return sum + (n.data.outputs?.filter(o => o.poe).reduce((s, o) => s + (o.poePower || 0), 0) || 0);
+    }, 0);
+    const poeConsumed = nodes.reduce((sum, n) => sum + (n.data.totalPoEConsumption || 0), 0);
+    return { devices: nodes.length, edges: edges.length, totalPower, poeProvided, poeConsumed };
+  };
+
+  const exportToExcel = () => {
+    const rows = edges.map((edge, index) => {
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
+      const cableType = edge.data?.cableType || '';
+      return [
+        index + 1,
+        edge.data?.sourceLabelText || edge.data?.sourceLabel?.split(':')[1]?.trim() || '',
+        edge.data?.targetLabelText || edge.data?.targetLabel?.split(':')[1]?.trim() || '',
+        sourceNode?.data.label || '',
+        edge.sourceHandle || '',
+        sourceNode?.data.place || '',
+        '',
+        targetNode?.data.label || '',
+        edge.targetHandle || '',
+        targetNode?.data.place || '',
+        '',
+        cableType,
+        edge.data?.cableLength || '',
+        edge.data?.cableMark || '',
+      ];
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['№ п/п', 'Маркировка кабеля', '', 'Начало', '', '', '', 'Конец', '', '', '', 'Проложен', '', ''],
+      ['', 'Начало', 'Конец', 'Обозначение прибора', 'Разъем на приборе', 'Место размещения', 'Разъем на кабеле', 'Обозначение прибора', 'Разъем на приборе', 'Место размещения', 'Разъем на кабеле', 'Тип сигнала', 'Длина, м', 'Марка'],
+      ...rows,
+    ]);
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
+      { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } },
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 6 } },
+      { s: { r: 0, c: 7 }, e: { r: 0, c: 10 } },
+      { s: { r: 0, c: 11 }, e: { r: 0, c: 13 } },
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, 'Кабельный журнал');
+    XLSX.writeFile(wb, `${schemaName || 'scheme'}_cable_journal.xlsx`);
+  };
+
+  const clearCanvas = () => {
+    if (window.confirm('Очистить холст? Все несохранённые изменения будут потеряны.')) {
+      setNodes([]);
+      setEdges([]);
+    }
+  };
+
   const exportSVG = async () => {
-    const flowElement = document.querySelector('.react-flow');
+    const flowElement = document.querySelector('.react-flow') as HTMLElement;
     if (!flowElement) {
       alert('Не удалось найти область схемы');
       return;
@@ -556,20 +687,26 @@ const FlowEditor: React.FC = () => {
     const minimap = document.querySelector('.react-flow__minimap') as HTMLElement;
     const controls = document.querySelector('.react-flow__controls') as HTMLElement;
     const background = document.querySelector('.react-flow__background') as HTMLElement;
+    const attribution = document.querySelector('.react-flow__attribution') as HTMLElement;
+    const sidebar = document.querySelector('.sidebar') as HTMLElement;
 
     const minimapDisplay = minimap?.style.display;
     const controlsDisplay = controls?.style.display;
     const backgroundDisplay = background?.style.display;
+    const attributionDisplay = attribution?.style.display;
+    const sidebarDisplay = sidebar?.style.display;
 
     try {
       if (minimap) minimap.style.display = 'none';
       if (controls) controls.style.display = 'none';
       if (background) background.style.display = 'none';
+      if (attribution) attribution.style.display = 'none';
+      if (sidebar) sidebar.style.display = 'none';
 
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const domtoimage = await import('dom-to-image-more');
-      const dataUrl = await domtoimage.toSvg(flowElement as HTMLElement, {
+      const dataUrl = await domtoimage.toSvg(flowElement, {
         bgcolor: theme === 'light' ? '#f9fafb' : '#0f172a',
         copyDefaultStyles: true,
       });
@@ -585,6 +722,8 @@ const FlowEditor: React.FC = () => {
       if (minimap) minimap.style.display = minimapDisplay || '';
       if (controls) controls.style.display = controlsDisplay || '';
       if (background) background.style.display = backgroundDisplay || '';
+      if (attribution) attribution.style.display = attributionDisplay || '';
+      if (sidebar) sidebar.style.display = sidebarDisplay || '';
     }
   };
 
@@ -636,6 +775,24 @@ const FlowEditor: React.FC = () => {
   const handleToggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const handleToggleSidebar = () => setSidebarCollapsed(prev => !prev);
 
+  // Рамка печати
+  const mmToPx = (mm: number) => (mm / 25.4) * 96;
+  const formatSizes: Record<string, { width: number; height: number }> = {
+    a4: { width: 210, height: 297 },
+    a3: { width: 297, height: 420 },
+    a2: { width: 420, height: 594 },
+  };
+  const getFrameSize = () => {
+    const size = formatSizes[printSettings.format];
+    let width = mmToPx(size.width);
+    let height = mmToPx(size.height);
+    if (printSettings.orientation === 'landscape') {
+      [width, height] = [height, width];
+    }
+    return { width, height };
+  };
+  const frameSize = getFrameSize();
+
   return (
     <div className={`flow-editor ${theme}`} style={{ height: '100vh', display: 'flex', background: 'var(--bg-page)' }}>
       <input type="file" accept=".json" ref={fileInputRef} style={{ display: 'none' }} onChange={loadSchemaFromFile} />
@@ -655,6 +812,9 @@ const FlowEditor: React.FC = () => {
         onSaveSchema={handleSaveSchema}
         onExportSVG={exportSVG}
         onExportDXF={exportDXF}
+        onExportExcel={exportToExcel}
+        onClearCanvas={clearCanvas}
+        onShowStatistics={() => setShowStatsModal(true)}
         onSaveToFile={saveSchemaToFile}
         onLoadFromFile={() => fileInputRef.current?.click()}
         onAddNode={addNewNode}
@@ -665,6 +825,10 @@ const FlowEditor: React.FC = () => {
         onUpdateGridColor={updateGridColor}
         onUpdateGridOpacity={updateGridOpacity}
         onUpdateGridVisible={updateGridVisible}
+        printSettings={printSettings}
+        onUpdatePrintSettings={updatePrintSettings}
+        handleHoverEnabled={handleHoverEnabled}
+        onToggleHandleHover={toggleHandleHover}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         collapsed={sidebarCollapsed}
@@ -697,7 +861,54 @@ const FlowEditor: React.FC = () => {
           )}
           <Controls />
           <MiniMap />
+
+          {printSettings.visible && (
+            <div
+              style={{
+                position: 'absolute',
+                left: -frameSize.width / 2,
+                top: -frameSize.height / 2,
+                width: frameSize.width,
+                height: frameSize.height,
+                border: '2px dashed #ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                pointerEvents: 'none',
+                zIndex: 5,
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 4,
+                  right: 8,
+                  fontSize: 12,
+                  color: '#ef4444',
+                  background: 'var(--bg-panel)',
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  opacity: 0.8,
+                }}
+              >
+                {printSettings.format.toUpperCase()} {printSettings.orientation === 'landscape' ? '🏞️' : '📄'}
+              </div>
+            </div>
+          )}
         </ReactFlow>
+
+        {/* Строка состояния */}
+        <div className="flow-statusbar">
+          <div className="status-left">
+            <span><i className="fas fa-microchip"></i> {nodes.length} устр.</span>
+            <span><i className="fas fa-plug"></i> {edges.length} каб.</span>
+            <span>⚡ {calculateStatistics().totalPower} Вт</span>
+          </div>
+          <div className="status-center">
+            <span>📏 Масштаб: {Math.round((viewport?.zoom || 1) * 100)}%</span>
+          </div>
+          <div className="status-right">
+            <span>🔌 PoE: {calculateStatistics().poeConsumed} / {calculateStatistics().poeProvided} Вт</span>
+          </div>
+        </div>
       </div>
 
       {contextMenu.visible && (
@@ -752,6 +963,22 @@ const FlowEditor: React.FC = () => {
           }
         }}
       />
+
+      {showStatsModal && (
+        <div className="modal-overlay" onClick={() => setShowStatsModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--bg-panel)', padding: 20, borderRadius: 16, width: 350, color: 'var(--text-primary)' }}>
+            <h3>Статистика схемы</h3>
+            <div style={{ marginTop: 16 }}>
+              <p>Устройств: {nodes.length}</p>
+              <p>Кабелей: {edges.length}</p>
+              <p>Общая мощность: {calculateStatistics().totalPower} Вт</p>
+              <p>PoE предоставлено: {calculateStatistics().poeProvided} Вт</p>
+              <p>PoE потреблено: {calculateStatistics().poeConsumed} Вт</p>
+            </div>
+            <button onClick={() => setShowStatsModal(false)} style={{ marginTop: 16, padding: '6px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Закрыть</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
