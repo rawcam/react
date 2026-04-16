@@ -304,3 +304,25 @@ body {
   box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3) !important;
   background: #3b82f6 !important;
 }
+/* Иконки в свёрнутом сайдбаре */
+.sidebar.collapsed .section-header {
+  justify-content: center;
+  padding: 12px 0;
+}
+.sidebar.collapsed .section-header i {
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+.sidebar.collapsed .section-header span {
+  display: none;
+}
+
+/* Подсветка хендлов */
+.react-flow__handle.handle-hover-visible {
+  transition: box-shadow 0.1s;
+}
+.react-flow__handle.handle-hover-visible:hover {
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.35) !important;
+  background: #3b82f6 !important;
+  z-index: 100;
+}
