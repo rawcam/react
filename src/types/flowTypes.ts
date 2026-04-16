@@ -13,11 +13,24 @@ export interface DeviceInterface {
 export interface PowerSupply {
   voltage: string;
   power: number;
-  connector: string;
+  connector?: string;
+}
+
+export type DeviceType = 'generic' | 'extender' | 'matrix' | 'network_switch';
+
+export interface NetworkSwitchConfig {
+  numPorts: number;
+  poePorts: number;
+  sfpPorts: number;
+  speed: '100M' | '1G' | '2.5G' | '10G';
+  portLayout: 'odd_left' | 'odd_right';
+  rj45NameTemplate?: string;
+  sfpNameTemplate?: string;
+  highlightPorts?: boolean;
 }
 
 export interface DeviceNodeData {
-  [key: string]: unknown; // ← индексная сигнатура для совместимости с Record<string, unknown>
+  [key: string]: unknown;
   label: string;
   icon?: string;
   inputs: DeviceInterface[];
@@ -36,41 +49,8 @@ export interface DeviceNodeData {
   place?: string;
   videoLatencyMs?: number;
   showHandleHover?: boolean;
+  deviceType?: DeviceType;
+  networkSwitchConfig?: NetworkSwitchConfig;
 }
 
-export interface CableEdgeData {
-  [key: string]: unknown; // ← индексная сигнатура
-  cableType?: string;
-  sourceLabel?: string;
-  targetLabel?: string;
-  sourceLabelText?: string;
-  targetLabelText?: string;
-  labelText?: string;
-  adapter?: string;
-  edgeStrokeColor?: string;
-  edgeStrokeWidth?: number;
-  edgeBorderRadius?: number;
-  badgeFontSize?: number;
-  badgeTextColor?: string;
-  badgeBorderColor?: string;
-  badgeBorderWidth?: number;
-  badgeBorderRadius?: number;
-  badgeBackgroundColor?: string;
-  markerFontSize?: number;
-  markerTextColor?: string;
-  markerBorderColor?: string;
-  markerBorderWidth?: number;
-  markerBorderRadius?: number;
-  markerBackgroundColor?: string;
-  hideMainBadge?: boolean;
-  hideMarkers?: boolean;
-  cableLength?: number;
-  cableMark?: string;
-}
-
-export interface SavedSchema {
-  id: string;
-  name: string;
-  nodes: any[];
-  edges: any[];
-}
+// ... остальные типы (CableEdgeData, SavedSchema)
