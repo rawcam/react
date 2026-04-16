@@ -992,6 +992,8 @@ const FlowEditor: React.FC = () => {
           snapGrid={gridSettings.snapGrid}
           connectionLineType={ConnectionLineType.Step}
           defaultEdgeOptions={{ type: 'cableEdge', animated: false }}
+          minZoom={0.1}   // можно оставить по умолчанию или задать своё
+          maxZoom={4}     // вместо 2 ставим 4 (400%)
         >
           {gridSettings.visible && (
             <div style={{ opacity: gridSettings.opacity ?? 0.5 }}>
