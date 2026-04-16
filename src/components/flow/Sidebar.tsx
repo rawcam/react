@@ -12,12 +12,12 @@ const COLOR_PALETTE = [
 
 // Цвета по типам сигналов (легенда)
 const CABLE_TYPE_COLORS: Record<string, string> = {
-  'Видеосигнал HDMI/DVI': '#7F1F00',
+  'HDMI/DVI': '#7F1F00',
   'Оптические линии': '#FF00FF',
   'Кодированный сигнал': '#FF7F00',
   'RS-232/RS-485': '#3FFF00',
   'Управление': '#007F1F',
-  'Аудио сигнал': '#007FFF',
+  'Аудио': '#007FFF',
   'Акустический сигнал': '#00BFFF',
   'USB': '#000000',
   'Конференц-связь': '#6B8E23',
@@ -40,9 +40,9 @@ interface SidebarProps {
   onSaveSchema: () => void;
   onExportSVG: () => void;
   onExportDXF: () => void;
-  onExportExcel: () => void;          // новая
-  onClearCanvas: () => void;          // новая
-  onShowStatistics: () => void;       // новая
+  onExportExcel: () => void;
+  onClearCanvas: () => void;
+  onShowStatistics: () => void;
   onSaveToFile: () => void;
   onLoadFromFile: () => void;
   onAddNode: () => void;
@@ -57,6 +57,7 @@ interface SidebarProps {
   onUpdatePrintSettings: (settings: any) => void;
   handleHoverEnabled: boolean;
   onToggleHandleHover: (enabled: boolean) => void;
+  onAlignNodes?: (type: string) => void; // новая функция выравнивания
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   collapsed: boolean;
@@ -108,6 +109,42 @@ const NativeColorPicker: React.FC<{
   );
 };
 
+// Компонент тултипа для свёрнутого сайдбара
+const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div
+      style={{ position: 'relative', display: 'inline-block' }}
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      {children}
+      {visible && (
+        <div
+          style={{
+            position: 'absolute',
+            left: '100%',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            marginLeft: 8,
+            background: 'var(--bg-panel)',
+            border: '1px solid var(--border-light)',
+            borderRadius: 4,
+            padding: '4px 8px',
+            fontSize: 11,
+            whiteSpace: 'nowrap',
+            zIndex: 1001,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          {text}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Sidebar: React.FC<SidebarProps> = ({
   selectedNode,
   selectedEdge,
@@ -141,6 +178,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUpdatePrintSettings,
   handleHoverEnabled,
   onToggleHandleHover,
+  onAlignNodes,
   theme,
   onToggleTheme,
   collapsed,
@@ -186,6 +224,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [showPrint, setShowPrint] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const [showView, setShowView] = useState(false);
+  const [showAlign, setShowAlign] = useState(false);
   const [showNodeStyle, setShowNodeStyle] = useState(true);
   const [showEdgeStyle, setShowEdgeStyle] = useState(true);
 
@@ -279,6 +318,36 @@ const Sidebar: React.FC<SidebarProps> = ({
     a2: { width: 420, height: 594 },
   };
 
+  // Обёртка для секции с поддержкой тултипа в свёрнутом виде
+  const SectionHeader: React.FC<{
+    icon: string;
+    title: string;
+    expanded: boolean;
+    onToggle: () => void;
+  }> = ({ icon, title, expanded, onToggle }) => {
+    if (collapsed) {
+      return (
+        <Tooltip text={title}>
+          <div
+            className="section-header"
+            onClick={onToggle}
+            style={{ justifyContent: 'center', padding: '10px 0' }}
+          >
+            <i className={icon} style={{ fontSize: '1.2rem', color: 'var(--accent)' }} />
+          </div>
+        </Tooltip>
+      );
+    }
+    return (
+      <div className="section-header" onClick={onToggle}>
+        <span>
+          <i className={icon}></i> {title}
+        </span>
+        <i className={`fas fa-chevron-${expanded ? 'down' : 'right'}`}></i>
+      </div>
+    );
+  };
+
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''} ${theme}`}>
       <div className="sidebar-header">
@@ -299,10 +368,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Управление */}
       <div className="sidebar-section">
-        <div className="section-header" onClick={() => setShowManage(!showManage)}>
-          <span><i className="fas fa-folder-open"></i> {!collapsed && 'Управление'}</span>
-          {!collapsed && <i className={`fas fa-chevron-${showManage ? 'down' : 'right'}`}></i>}
-        </div>
+        <SectionHeader
+          icon="fas fa-folder-open"
+          title="Управление"
+          expanded={showManage}
+          onToggle={() => setShowManage(!showManage)}
+        />
         {showManage && !collapsed && (
           <div className="section-content">
             <select value={currentSchemaId || ''} onChange={(e) => onLoadSchema(e.target.value)}>
@@ -327,12 +398,14 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Сетка */}
       <div className="sidebar-section">
-        <div className="section-header" onClick={() => setShowGrid(!showGrid)}>
-          <span><i className="fas fa-th"></i> {!collapsed && 'Сетка'}</span>
-          {!collapsed && <i className={`fas fa-chevron-${showGrid ? 'down' : 'right'}`}></i>}
-        </div>
+        <SectionHeader
+          icon="fas fa-th"
+          title="Сетка"
+          expanded={showGrid}
+          onToggle={() => setShowGrid(!showGrid)}
+        />
         {showGrid && !collapsed && (
-          <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <label style={{ fontSize: 12 }}>Вид</label>
               <select value={gridSettings.variant} onChange={(e) => onUpdateGridVariant(e.target.value)} style={{ width: 100, padding: '4px 6px', fontSize: 12 }}>
@@ -366,12 +439,14 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Печать */}
       <div className="sidebar-section">
-        <div className="section-header" onClick={() => setShowPrint(!showPrint)}>
-          <span><i className="fas fa-print"></i> {!collapsed && 'Печать'}</span>
-          {!collapsed && <i className={`fas fa-chevron-${showPrint ? 'down' : 'right'}`}></i>}
-        </div>
+        <SectionHeader
+          icon="fas fa-print"
+          title="Печать"
+          expanded={showPrint}
+          onToggle={() => setShowPrint(!showPrint)}
+        />
         {showPrint && !collapsed && (
-          <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <label style={{ fontSize: 12 }}>Формат</label>
               <select value={printSettings.format} onChange={(e) => onUpdatePrintSettings({ format: e.target.value })} style={{ width: 100, padding: '4px 6px', fontSize: 12 }}>
@@ -391,24 +466,35 @@ const Sidebar: React.FC<SidebarProps> = ({
               <label style={{ fontSize: 12 }}>Показать рамку</label>
               <input type="checkbox" checked={printSettings.visible} onChange={(e) => onUpdatePrintSettings({ visible: e.target.checked })} />
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ fontSize: 12 }}>Перетаскивать рамку</label>
+              <input type="checkbox" checked={printSettings.draggable || false} onChange={(e) => onUpdatePrintSettings({ draggable: e.target.checked })} />
+            </div>
           </div>
         )}
       </div>
 
       {/* Легенда */}
       <div className="sidebar-section">
-        <div className="section-header" onClick={() => setShowLegend(!showLegend)}>
-          <span><i className="fas fa-palette"></i> {!collapsed && 'Легенда'}</span>
-          {!collapsed && <i className={`fas fa-chevron-${showLegend ? 'down' : 'right'}`}></i>}
-        </div>
+        <SectionHeader
+          icon="fas fa-palette"
+          title="Легенда"
+          expanded={showLegend}
+          onToggle={() => setShowLegend(!showLegend)}
+        />
         {showLegend && !collapsed && (
           <div className="section-content" style={{ fontSize: 11 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <tbody>
                 {Object.entries(CABLE_TYPE_COLORS).map(([type, color]) => (
-                  <tr key={type}>
-                    <td style={{ padding: '2px 0' }}>{type}</td>
-                    <td style={{ width: 30 }}><div style={{ width: 20, height: 20, background: color, borderRadius: 4 }} /></td>
+                  <tr key={type} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                    <td style={{ padding: '4px 0' }}>{type}</td>
+                    <td style={{ width: 40, textAlign: 'right' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                        <div style={{ width: 16, height: 16, background: color, borderRadius: 4 }} />
+                        <span style={{ fontFamily: 'monospace' }}>{color}</span>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -417,12 +503,38 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
+      {/* Выравнивание */}
+      {!collapsed && (
+        <div className="sidebar-section">
+          <SectionHeader
+            icon="fas fa-arrows-alt"
+            title="Выравнивание"
+            expanded={showAlign}
+            onToggle={() => setShowAlign(!showAlign)}
+          />
+          {showAlign && (
+            <div className="section-content">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <button onClick={() => onAlignNodes?.('left')} style={{ padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>← Влево</button>
+                <button onClick={() => onAlignNodes?.('right')} style={{ padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>Вправо →</button>
+                <button onClick={() => onAlignNodes?.('top')} style={{ padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>↑ Вверх</button>
+                <button onClick={() => onAlignNodes?.('bottom')} style={{ padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>↓ Вниз</button>
+                <button onClick={() => onAlignNodes?.('horizontal')} style={{ gridColumn: 'span 2', padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>Распределить по горизонтали</button>
+                <button onClick={() => onAlignNodes?.('vertical')} style={{ gridColumn: 'span 2', padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>Распределить по вертикали</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Вид */}
       <div className="sidebar-section">
-        <div className="section-header" onClick={() => setShowView(!showView)}>
-          <span><i className="fas fa-eye"></i> {!collapsed && 'Вид'}</span>
-          {!collapsed && <i className={`fas fa-chevron-${showView ? 'down' : 'right'}`}></i>}
-        </div>
+        <SectionHeader
+          icon="fas fa-eye"
+          title="Вид"
+          expanded={showView}
+          onToggle={() => setShowView(!showView)}
+        />
         {showView && !collapsed && (
           <div className="section-content">
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
@@ -436,10 +548,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Свойства устройства */}
       {selectedNode && !collapsed && (
         <div className="sidebar-section">
-          <div className="section-header" onClick={() => setShowNodeStyle(!showNodeStyle)}>
-            <span><i className="fas fa-sliders-h"></i> Свойства устройства</span>
-            <i className={`fas fa-chevron-${showNodeStyle ? 'down' : 'right'}`}></i>
-          </div>
+          <SectionHeader
+            icon="fas fa-sliders-h"
+            title="Свойства устройства"
+            expanded={showNodeStyle}
+            onToggle={() => setShowNodeStyle(!showNodeStyle)}
+          />
           {showNodeStyle && (
             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -484,10 +598,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Свойства кабеля */}
       {selectedEdge && !selectedNode && !collapsed && (
         <div className="sidebar-section">
-          <div className="section-header" onClick={() => setShowEdgeStyle(!showEdgeStyle)}>
-            <span><i className="fas fa-paint-brush"></i> Свойства кабеля</span>
-            <i className={`fas fa-chevron-${showEdgeStyle ? 'down' : 'right'}`}></i>
-          </div>
+          <SectionHeader
+            icon="fas fa-paint-brush"
+            title="Свойства кабеля"
+            expanded={showEdgeStyle}
+            onToggle={() => setShowEdgeStyle(!showEdgeStyle)}
+          />
           {showEdgeStyle && (
             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Линия</div>
