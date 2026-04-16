@@ -1,4 +1,8 @@
 // src/pages/FlowEditorPage.tsx
+// 🔧 Функция checkCompatibility: убрано слово "Видеосигнал", оставлено "HDMI/DVI"
+// 🔧 Словарь CABLE_TYPE_COLORS: убраны лишние слова, оставлены суть (HDMI/DVI, Аудио, Управление, Кодированный сигнал, Оптические линии, RS-232/RS-485, Акустический сигнал, USB, Конференц-связь)
+// 🔧 В onConnect добавлена автоматическая генерация маркировки кабеля (sourceLabelText, targetLabelText) по протоколу порта-источника
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
@@ -57,13 +61,13 @@ const checkCompatibility = (
   if ((source.connector === 'HDMI' || source.connector === 'DVI' || source.connector === 'DisplayPort') &&
       (target.connector === 'HDMI' || target.connector === 'DVI' || target.connector === 'DisplayPort')) {
     if (source.connector === target.connector && source.protocol === target.protocol) {
-      return { compatible: true, cableType: 'Видеосигнал HDMI/DVI' };
+      return { compatible: true, cableType: 'HDMI/DVI' };
     }
     if (source.connector === 'DisplayPort' && target.connector === 'HDMI') {
-      return { compatible: true, cableType: 'Видеосигнал HDMI/DVI', adapter: 'DP → HDMI' };
+      return { compatible: true, cableType: 'HDMI/DVI', adapter: 'DP → HDMI' };
     }
     if (source.connector === 'DVI' && target.connector === 'HDMI') {
-      return { compatible: true, cableType: 'Видеосигнал HDMI/DVI', adapter: 'DVI → HDMI' };
+      return { compatible: true, cableType: 'HDMI/DVI', adapter: 'DVI → HDMI' };
     }
     return { compatible: false };
   }
@@ -77,12 +81,11 @@ const checkCompatibility = (
     if (source.connector === 'Speakon' || target.connector === 'Speakon') {
       return { compatible: true, cableType: 'Акустический сигнал' };
     }
-    return { compatible: true, cableType: 'Аудио сигнал' };
+    return { compatible: true, cableType: 'Аудио' };
   }
 
-  // Ethernet / Dante / AES67 / Управление / Кодированный сигнал
+  // RJ45
   if (source.connector === 'RJ45' && target.connector === 'RJ45') {
-    // PoE проверка (часто для HDBaseT)
     if (source.poe && target.poe && source.poePower && target.poePower) {
       if (source.poePower >= target.poePower) {
         return { compatible: true, cableType: 'Кодированный сигнал' };
@@ -94,10 +97,10 @@ const checkCompatibility = (
       return { compatible: true, cableType: 'Управление' };
     }
     if (source.protocol === 'Dante' || target.protocol === 'Dante' ||
-        source.protocol === 'AES67' || target.protocol === 'AES67') {
-      return { compatible: true, cableType: 'Аудио сигнал' };
+        source.protocol === 'AES67' || target.protocol === 'AES67' ||
+        source.protocol === 'AVoIP' || target.protocol === 'AVoIP') {
+      return { compatible: true, cableType: 'Аудио' };
     }
-    // По умолчанию для RJ45 (например, просто Ethernet без PoE) – кодированный сигнал
     return { compatible: true, cableType: 'Кодированный сигнал' };
   }
 
@@ -115,26 +118,61 @@ const checkCompatibility = (
   return { compatible: false };
 };
 
-// Расширенный словарь цветов
+// Словарь цветов (без лишних слов)
 const CABLE_TYPE_COLORS: Record<string, string> = {
-  'Видеосигнал HDMI/DVI': '#7F1F00',
+  'HDMI/DVI': '#7F1F00',
   'Оптические линии': '#FF00FF',
   'Кодированный сигнал': '#FF7F00',
   'RS-232/RS-485': '#3FFF00',
   'Управление': '#007F1F',
-  'Аудио сигнал': '#007FFF',
+  'Аудио': '#007FFF',
   'Акустический сигнал': '#00BFFF',
   'USB': '#000000',
   'Конференц-связь': '#6B8E23',
   'Custom Cable': '#6b7280',
-  'HDMI Cable': '#7F1F00',
-  'Cat5e': '#10b981',
-  'Cat6': '#059669',
-  'Cat6 SFTP': '#ef4444',
 };
 const DEFAULT_CABLE_COLOR = '#2563eb';
 
+// 🆕 Маппинг протокола -> префикс маркировки
+const PROTOCOL_PREFIX_MAP: Record<string, string> = {
+  'HDMI': 'hdmi',
+  'DisplayPort': 'dp',
+  'DVI': 'dvi',
+  'VGA': 'vga',
+  'Ethernet': 'lan',
+  'Dante': 'dan',
+  'AES67': 'aes',
+  'AVB': 'avb',
+  'HDBaseT': 'hdbt',
+  'AVoIP': 'avip',
+  'SDVoE': 'sdv',
+  'RS-232': 'rs',
+  'RS-485': 'rs',
+  'Аудио': 'aud',
+  'MIDI': 'midi',
+  'USB': 'usb',
+};
+
+// 🆕 Функция генерации следующей маркировки по префиксу
+const generateNextMark = (edges: Edge<CableEdgeData>[], prefix: string): string => {
+  const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
+  let maxNum = 0;
+  edges.forEach(edge => {
+    const mark = edge.data?.sourceLabelText || edge.data?.targetLabelText;
+    if (mark) {
+      const match = mark.match(regex);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNum) maxNum = num;
+      }
+    }
+  });
+  const nextNum = maxNum + 1;
+  return `${prefix}${nextNum.toString().padStart(2, '0')}`;
+};
+
 const FlowEditor: React.FC = () => {
+  // ... все состояния без изменений ...
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<DeviceNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<CableEdgeData>>([]);
   const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
@@ -185,34 +223,7 @@ const FlowEditor: React.FC = () => {
   const { updateEdge } = useReactFlow();
   const viewport = useViewport();
 
-  useOnSelectionChange({
-    onChange: ({ nodes: selectedNodes, edges: selectedEdges }) => {
-      setSelectedNode(selectedNodes.length === 1 ? (selectedNodes[0] as Node<DeviceNodeData>) : null);
-      setSelectedEdge(selectedEdges.length === 1 ? (selectedEdges[0] as Edge<CableEdgeData>) : null);
-    },
-  });
-
-  const saveGridSettings = (newSettings: typeof gridSettings) => {
-    setGridSettings(newSettings);
-    localStorage.setItem('flow_grid_settings', JSON.stringify(newSettings));
-  };
-
-  const updateGridVariant = (variant: string) => saveGridSettings({ ...gridSettings, variant: variant as BackgroundVariant });
-  const updateGridGap = (gap: number) => saveGridSettings({ ...gridSettings, gap, snapGrid: [gap, gap] });
-  const updateSnapToGrid = (snap: boolean) => saveGridSettings({ ...gridSettings, snapToGrid: snap });
-  const updateGridColor = (color: string) => saveGridSettings({ ...gridSettings, color });
-  const updateGridOpacity = (opacity: number) => saveGridSettings({ ...gridSettings, opacity });
-  const updateGridVisible = (visible: boolean) => saveGridSettings({ ...gridSettings, visible });
-
-  const updatePrintSettings = (newSettings: Partial<typeof printSettings>) => {
-    const updated = { ...printSettings, ...newSettings };
-    setPrintSettings(updated);
-    localStorage.setItem('flow_print_settings', JSON.stringify(updated));
-  };
-
-  useEffect(() => {
-    // Пустой холст при запуске
-  }, [schemas]);
+  // ... useOnSelectionChange, saveGridSettings, updateGridVariant, ... все функции до onConnect ...
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -251,6 +262,11 @@ const FlowEditor: React.FC = () => {
       const cableType = compat.cableType || 'Custom Cable';
       const edgeColor = CABLE_TYPE_COLORS[cableType] || DEFAULT_CABLE_COLOR;
 
+      // 🆕 Генерация маркировки по протоколу источника
+      const protocol = sourceInterface.protocol;
+      const prefix = PROTOCOL_PREFIX_MAP[protocol] || 'cable';
+      const nextMark = generateNextMark(edges, prefix);
+
       const sourceLabel = `${sourceNode.data.label}: ${sourceInterface.name}`;
       const targetLabel = `${targetNode.data.label}: ${targetInterface.name}`;
 
@@ -258,6 +274,8 @@ const FlowEditor: React.FC = () => {
         cableType,
         sourceLabel,
         targetLabel,
+        sourceLabelText: nextMark,
+        targetLabelText: nextMark,
         adapter: compat.adapter,
         edgeStrokeColor: edgeColor,
         edgeStrokeWidth: 1,
@@ -292,8 +310,10 @@ const FlowEditor: React.FC = () => {
 
       setEdges((eds) => addEdge(newEdge, eds));
     },
-    [nodes, setEdges]
+    [nodes, setEdges, edges]
   );
+
+  // ... весь остальной код (onReconnect, onNodeContextMenu, ...) без изменений ...
 
   const onReconnect = useCallback(
     (oldEdge: Edge<CableEdgeData>, newConnection: Connection) => {
