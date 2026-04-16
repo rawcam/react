@@ -17,13 +17,16 @@ const DeviceNode: React.FC<NodeProps<DeviceNodeData>> = ({ data, selected }) => 
     headerFontWeight = 'normal',
     rowHeight = 22,
     showHandleHover = false,
+    width: nodeWidthProp,
+    powerSupply,
+    videoLatencyMs,
   } = data;
 
   const maxRows = Math.max(inputs.length, outputs.length);
   const headerHeight = 36;
   const footerHeight = 20;
   const nodeHeight = headerHeight + maxRows * rowHeight + footerHeight;
-  const nodeWidth = data.width || 90;
+  const nodeWidth = nodeWidthProp || 90;
 
   const handleClass = showHandleHover ? 'handle-hover-visible' : '';
 
@@ -42,7 +45,6 @@ const DeviceNode: React.FC<NodeProps<DeviceNodeData>> = ({ data, selected }) => 
         position: 'relative',
       }}
     >
-      {/* Заголовок */}
       <div
         style={{
           height: headerHeight,
@@ -60,11 +62,9 @@ const DeviceNode: React.FC<NodeProps<DeviceNodeData>> = ({ data, selected }) => 
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
       </div>
 
-      {/* Тело с портами */}
       <div style={{ flex: 1, display: 'flex', position: 'relative' }}>
-        {/* Входы (слева) */}
         <div style={{ width: '50%', display: 'flex', flexDirection: 'column' }}>
-          {inputs.map((port, idx) => (
+          {inputs.map((port) => (
             <div
               key={port.id}
               style={{
@@ -107,9 +107,8 @@ const DeviceNode: React.FC<NodeProps<DeviceNodeData>> = ({ data, selected }) => 
           ))}
         </div>
 
-        {/* Выходы (справа) */}
         <div style={{ width: '50%', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          {outputs.map((port, idx) => (
+          {outputs.map((port) => (
             <div
               key={port.id}
               style={{
@@ -154,7 +153,6 @@ const DeviceNode: React.FC<NodeProps<DeviceNodeData>> = ({ data, selected }) => 
         </div>
       </div>
 
-      {/* Подвал (можно для индикации PoE и т.п.) */}
       <div
         style={{
           height: footerHeight,
@@ -167,13 +165,13 @@ const DeviceNode: React.FC<NodeProps<DeviceNodeData>> = ({ data, selected }) => 
           color: 'var(--text-secondary)',
         }}
       >
-        {data.powerSupply && (
+        {powerSupply && (
           <span>
-            {data.powerSupply.voltage} {data.powerSupply.power}W
+            {powerSupply.voltage} {powerSupply.power}W
           </span>
         )}
-        {data.videoLatencyMs ? (
-          <span style={{ marginLeft: 8 }}>⏱️ {data.videoLatencyMs}ms</span>
+        {videoLatencyMs ? (
+          <span style={{ marginLeft: 8 }}>⏱️ {videoLatencyMs}ms</span>
         ) : null}
       </div>
     </div>
