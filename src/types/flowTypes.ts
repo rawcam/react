@@ -17,6 +17,7 @@ export interface PowerSupply {
 }
 
 export interface DeviceNodeData {
+  [key: string]: unknown; // ← индексная сигнатура для совместимости с Record<string, unknown>
   label: string;
   icon?: string;
   inputs: DeviceInterface[];
@@ -32,12 +33,13 @@ export interface DeviceNodeData {
   height?: number;
   powerSupply?: PowerSupply;
   totalPoEConsumption?: number;
-  place?: string;                     // место размещения (для кабельного журнала)
-  videoLatencyMs?: number;            // задержка видеосигнала в мс
-  showHandleHover?: boolean;          // управление подсветкой хендлов
+  place?: string;
+  videoLatencyMs?: number;
+  showHandleHover?: boolean;
 }
 
 export interface CableEdgeData {
+  [key: string]: unknown; // ← индексная сигнатура
   cableType?: string;
   sourceLabel?: string;
   targetLabel?: string;
@@ -62,8 +64,8 @@ export interface CableEdgeData {
   markerBackgroundColor?: string;
   hideMainBadge?: boolean;
   hideMarkers?: boolean;
-  cableLength?: number;               // длина кабеля (м)
-  cableMark?: string;                 // марка кабеля
+  cableLength?: number;
+  cableMark?: string;
 }
 
 export interface SavedSchema {
