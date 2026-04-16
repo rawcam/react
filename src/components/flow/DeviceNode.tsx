@@ -3,14 +3,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeResizeControl, useReactFlow, NodeProps } from '@xyflow/react';
 import { DeviceNodeData } from '../../types/flowTypes';
 
-const DeviceNode: React.FC<NodeProps<DeviceNodeData>> = ({ id, data, selected }) => {
+const DeviceNode: React.FC<NodeProps> = ({ id, data, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editLabel, setEditLabel] = useState(data.label);
+  const [editLabel, setEditLabel] = useState((data as DeviceNodeData).label);
   const inputRef = useRef<HTMLInputElement>(null);
-  const borderColor = data.color || '#2563eb';
+  const borderColor = (data as DeviceNodeData).color || '#2563eb';
   const { setNodes } = useReactFlow();
 
-  const d = data;
+  const d = data as DeviceNodeData;
   const borderWidth = d.borderWidth ?? 1;
   const borderRadius = d.borderRadius ?? 8;
   const headerFontSize = d.headerFontSize ?? 10;
@@ -205,7 +205,7 @@ const DeviceNode: React.FC<NodeProps<DeviceNodeData>> = ({ id, data, selected })
       )}
 
       <NodeResizeControl
-        nodeId={id}
+        nodeId={id as string}
         minWidth={90}
         minHeight={40}
         maxWidth={800}
