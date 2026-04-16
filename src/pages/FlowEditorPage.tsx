@@ -1,8 +1,4 @@
 // src/pages/FlowEditorPage.tsx
-// 🔧 Функция checkCompatibility: убрано слово "Видеосигнал", оставлено "HDMI/DVI"
-// 🔧 Словарь CABLE_TYPE_COLORS: убраны лишние слова, оставлены суть (HDMI/DVI, Аудио, Управление, Кодированный сигнал, Оптические линии, RS-232/RS-485, Акустический сигнал, USB, Конференц-связь)
-// 🔧 В onConnect добавлена автоматическая генерация маркировки кабеля (sourceLabelText, targetLabelText) по протоколу порта-источника
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
@@ -133,7 +129,7 @@ const CABLE_TYPE_COLORS: Record<string, string> = {
 };
 const DEFAULT_CABLE_COLOR = '#2563eb';
 
-// 🆕 Маппинг протокола -> префикс маркировки
+// Маппинг протокола -> префикс маркировки
 const PROTOCOL_PREFIX_MAP: Record<string, string> = {
   'HDMI': 'hdmi',
   'DisplayPort': 'dp',
@@ -153,7 +149,7 @@ const PROTOCOL_PREFIX_MAP: Record<string, string> = {
   'USB': 'usb',
 };
 
-// 🆕 Функция генерации следующей маркировки по префиксу
+// Генерация следующей маркировки по префиксу
 const generateNextMark = (edges: Edge<CableEdgeData>[], prefix: string): string => {
   const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
   let maxNum = 0;
@@ -172,7 +168,6 @@ const generateNextMark = (edges: Edge<CableEdgeData>[], prefix: string): string 
 };
 
 const FlowEditor: React.FC = () => {
-  // ... все состояния без изменений ...
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<DeviceNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<CableEdgeData>>([]);
   const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
@@ -223,7 +218,34 @@ const FlowEditor: React.FC = () => {
   const { updateEdge } = useReactFlow();
   const viewport = useViewport();
 
-  // ... useOnSelectionChange, saveGridSettings, updateGridVariant, ... все функции до onConnect ...
+  useOnSelectionChange({
+    onChange: ({ nodes: selectedNodes, edges: selectedEdges }) => {
+      setSelectedNode(selectedNodes.length === 1 ? (selectedNodes[0] as Node<DeviceNodeData>) : null);
+      setSelectedEdge(selectedEdges.length === 1 ? (selectedEdges[0] as Edge<CableEdgeData>) : null);
+    },
+  });
+
+  const saveGridSettings = (newSettings: typeof gridSettings) => {
+    setGridSettings(newSettings);
+    localStorage.setItem('flow_grid_settings', JSON.stringify(newSettings));
+  };
+
+  const updateGridVariant = (variant: string) => saveGridSettings({ ...gridSettings, variant: variant as BackgroundVariant });
+  const updateGridGap = (gap: number) => saveGridSettings({ ...gridSettings, gap, snapGrid: [gap, gap] });
+  const updateSnapToGrid = (snap: boolean) => saveGridSettings({ ...gridSettings, snapToGrid: snap });
+  const updateGridColor = (color: string) => saveGridSettings({ ...gridSettings, color });
+  const updateGridOpacity = (opacity: number) => saveGridSettings({ ...gridSettings, opacity });
+  const updateGridVisible = (visible: boolean) => saveGridSettings({ ...gridSettings, visible });
+
+  const updatePrintSettings = (newSettings: Partial<typeof printSettings>) => {
+    const updated = { ...printSettings, ...newSettings };
+    setPrintSettings(updated);
+    localStorage.setItem('flow_print_settings', JSON.stringify(updated));
+  };
+
+  useEffect(() => {
+    // Пустой холст при запуске
+  }, [schemas]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -262,7 +284,6 @@ const FlowEditor: React.FC = () => {
       const cableType = compat.cableType || 'Custom Cable';
       const edgeColor = CABLE_TYPE_COLORS[cableType] || DEFAULT_CABLE_COLOR;
 
-      // 🆕 Генерация маркировки по протоколу источника
       const protocol = sourceInterface.protocol;
       const prefix = PROTOCOL_PREFIX_MAP[protocol] || 'cable';
       const nextMark = generateNextMark(edges, prefix);
@@ -312,8 +333,6 @@ const FlowEditor: React.FC = () => {
     },
     [nodes, setEdges, edges]
   );
-
-  // ... весь остальной код (onReconnect, onNodeContextMenu, ...) без изменений ...
 
   const onReconnect = useCallback(
     (oldEdge: Edge<CableEdgeData>, newConnection: Connection) => {
@@ -396,7 +415,6 @@ const FlowEditor: React.FC = () => {
     const edge = edges.find(e => e.id === edgeId);
     if (!edge) return;
     const deviceNodeId = edge.source;
-    const styleToApply = edge.style;
     const dataToApply = {
       hideMainBadge: edge.data?.hideMainBadge,
       hideMarkers: edge.data?.hideMarkers,
@@ -410,46 +428,33 @@ const FlowEditor: React.FC = () => {
 
     setEdges(eds => eds.map(e => {
       if (e.source === deviceNodeId || e.target === deviceNodeId) {
-        updateEdge(e.id, { style: styleToApply });
         return {
           ...e,
-          style: styleToApply,
           data: { ...e.data, ...dataToApply },
         } as Edge<CableEdgeData>;
       }
       return e;
     }));
-  }, [edges, updateEdge, setEdges]);
+  }, [edges, setEdges]);
 
   const applyStyleToNodeEdges = (edgeId: string, nodeSide: 'source' | 'target') => {
     const edge = edges.find(e => e.id === edgeId);
     if (!edge) return;
     const nodeId = nodeSide === 'source' ? edge.source : edge.target;
-    const styleToApply = edge.style;
-    const hideMainBadge = edge.data?.hideMainBadge;
-    const hideMarkers = edge.data?.hideMarkers;
-    const markerFontSize = edge.data?.markerFontSize;
-    const markerTextColor = edge.data?.markerTextColor;
-    const markerBorderColor = edge.data?.markerBorderColor;
-    const markerBorderWidth = edge.data?.markerBorderWidth;
-    const markerBorderRadius = edge.data?.markerBorderRadius;
-    const markerBackgroundColor = edge.data?.markerBackgroundColor;
+    const dataToApply = {
+      hideMainBadge: edge.data?.hideMainBadge,
+      hideMarkers: edge.data?.hideMarkers,
+      markerFontSize: edge.data?.markerFontSize,
+      markerTextColor: edge.data?.markerTextColor,
+      markerBorderColor: edge.data?.markerBorderColor,
+      markerBorderWidth: edge.data?.markerBorderWidth,
+      markerBorderRadius: edge.data?.markerBorderRadius,
+      markerBackgroundColor: edge.data?.markerBackgroundColor,
+    };
 
     setEdges(eds => eds.map(e => {
       if (e.source === nodeId || e.target === nodeId) {
-        const updatedData = {
-          ...e.data,
-          hideMainBadge,
-          hideMarkers,
-          markerFontSize,
-          markerTextColor,
-          markerBorderColor,
-          markerBorderWidth,
-          markerBorderRadius,
-          markerBackgroundColor,
-        };
-        updateEdge(e.id, { style: styleToApply });
-        return { ...e, style: styleToApply, data: updatedData } as Edge<CableEdgeData>;
+        return { ...e, data: { ...e.data, ...dataToApply } } as Edge<CableEdgeData>;
       }
       return e;
     }));
@@ -460,31 +465,20 @@ const FlowEditor: React.FC = () => {
     if (!edge || !edge.data) return;
     const cableType = edge.data.cableType;
     if (!cableType) return;
-    const styleToApply = edge.style;
-    const hideMainBadge = edge.data.hideMainBadge;
-    const hideMarkers = edge.data.hideMarkers;
-    const markerFontSize = edge.data.markerFontSize;
-    const markerTextColor = edge.data.markerTextColor;
-    const markerBorderColor = edge.data.markerBorderColor;
-    const markerBorderWidth = edge.data.markerBorderWidth;
-    const markerBorderRadius = edge.data.markerBorderRadius;
-    const markerBackgroundColor = edge.data.markerBackgroundColor;
+    const dataToApply = {
+      hideMainBadge: edge.data.hideMainBadge,
+      hideMarkers: edge.data.hideMarkers,
+      markerFontSize: edge.data.markerFontSize,
+      markerTextColor: edge.data.markerTextColor,
+      markerBorderColor: edge.data.markerBorderColor,
+      markerBorderWidth: edge.data.markerBorderWidth,
+      markerBorderRadius: edge.data.markerBorderRadius,
+      markerBackgroundColor: edge.data.markerBackgroundColor,
+    };
 
     setEdges(eds => eds.map(e => {
       if (e.data?.cableType === cableType) {
-        const updatedData = {
-          ...e.data,
-          hideMainBadge,
-          hideMarkers,
-          markerFontSize,
-          markerTextColor,
-          markerBorderColor,
-          markerBorderWidth,
-          markerBorderRadius,
-          markerBackgroundColor,
-        };
-        updateEdge(e.id, { style: styleToApply });
-        return { ...e, style: styleToApply, data: updatedData } as Edge<CableEdgeData>;
+        return { ...e, data: { ...e.data, ...dataToApply } } as Edge<CableEdgeData>;
       }
       return e;
     }));
@@ -555,7 +549,6 @@ const FlowEditor: React.FC = () => {
         e.preventDefault();
       }
 
-      // Горячие клавиши экспорта
       if (e.ctrlKey && e.shiftKey) {
         if (e.key === 'S') {
           e.preventDefault();
@@ -598,7 +591,6 @@ const FlowEditor: React.FC = () => {
     return () => document.removeEventListener('click', closeContextMenu);
   }, []);
 
-  // Автосохранение
   useEffect(() => {
     if (!autoSaveEnabled) return;
     const save = () => {
@@ -609,7 +601,6 @@ const FlowEditor: React.FC = () => {
     return () => clearInterval(autoSaveTimer.current);
   }, [nodes, edges, schemaName, currentSchemaId]);
 
-  // Предупреждение при закрытии
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (nodes.length > 0 || edges.length > 0) {
