@@ -19,6 +19,49 @@ const COLOR_PALETTE = [
   '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6',
 ];
 
+// 🆕 Функция генерации имени порта по разъёму, протоколу и направлению
+const generatePortName = (
+  connector: ConnectorType,
+  protocol: ProtocolType,
+  direction: 'input' | 'output',
+  existingPorts: DeviceInterface[]
+): string => {
+  // Определяем базовое имя (префикс)
+  let baseName = connector; // по умолчанию берём разъём
+  if (connector === 'RJ45') {
+    // Для RJ45 используем протокол (кроме Ethernet -> LAN)
+    if (protocol === 'Ethernet') baseName = 'LAN';
+    else if (protocol === 'Dante') baseName = 'Dante';
+    else if (protocol === 'AVoIP') baseName = 'AVoIP';
+    else if (protocol === 'HDBaseT') baseName = 'HDBaseT';
+    else if (protocol === 'AES67') baseName = 'AES67';
+    else if (protocol === 'AVB') baseName = 'AVB';
+    else baseName = protocol; // на всякий случай
+  } else if (connector === 'Db9' || connector === 'Db25') {
+    baseName = protocol === 'MIDI' ? 'MIDI' : 'RS-232';
+  } else if (connector === 'Terminal') {
+    baseName = 'Terminal';
+  }
+
+  // Направление: IN или OUT
+  const dirStr = direction === 'input' ? 'IN' : 'OUT';
+
+  // Собираем полный префикс: "HDMI IN", "Dante OUT" и т.д.
+  const prefix = `${baseName} ${dirStr}`;
+
+  // Ищем максимальный номер среди портов с таким же префиксом
+  let maxNum = 0;
+  existingPorts.forEach(port => {
+    if (port.name.startsWith(prefix)) {
+      const rest = port.name.substring(prefix.length).trim();
+      const num = parseInt(rest, 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+  });
+
+  return `${prefix} ${maxNum + 1}`;
+};
+
 const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, onSave }) => {
   const [editedData, setEditedData] = useState<DeviceNodeData | null>(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
@@ -45,6 +88,7 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
           current.poe = false;
           current.poePower = undefined;
         }
+        // Имя не меняем, так как пользователь мог его задать вручную
       } else {
         (current as any)[field] = value;
       }
@@ -55,12 +99,20 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
 
   const addInterface = (type: 'inputs' | 'outputs') => {
     const newId = `${type}-${Date.now()}-${Math.random()}`;
+    const direction = type === 'inputs' ? 'input' : 'output';
+    const defaultConnector: ConnectorType = 'HDMI';
+    const defaultProtocol = CONNECTOR_PROTOCOL_MAP['HDMI'][0];
+
+    // 🆕 Генерируем автоматическое имя на основе разъёма/протокола
+    const allPorts = [...editedData.inputs, ...editedData.outputs];
+    const autoName = generatePortName(defaultConnector, defaultProtocol, direction, allPorts);
+
     const newIf: DeviceInterface = {
       id: newId,
-      name: type === 'inputs' ? `Вход ${editedData.inputs.length + 1}` : `Выход ${editedData.outputs.length + 1}`,
-      direction: type === 'inputs' ? 'input' : 'output',
-      connector: 'HDMI',
-      protocol: 'HDMI',
+      name: autoName,
+      direction,
+      connector: defaultConnector,
+      protocol: defaultProtocol,
     };
     setEditedData({ ...editedData, [type]: [...editedData[type], newIf] });
   };
