@@ -17,6 +17,8 @@ import {
   reconnectEdge,
   useReactFlow,
   useViewport,
+  NodeTypes,
+  EdgeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import * as XLSX from 'xlsx';
@@ -28,7 +30,6 @@ import { useFlowSchemas } from '../hooks/useFlowSchemas';
 import { DeviceNodeData, CableEdgeData, DeviceInterface, SavedSchema } from '../types/flowTypes';
 import { exportToDxf } from '../utils/exportToDxf';
 import './FlowEditorPage.css';
-import { NodeTypes, EdgeTypes } from '@xyflow/react';
 
 const nodeTypes: NodeTypes = { deviceNode: DeviceNode };
 const edgeTypes: EdgeTypes = { cableEdge: CableEdge };
@@ -776,7 +777,6 @@ const FlowEditor: React.FC = () => {
   const handleToggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const handleToggleSidebar = () => setSidebarCollapsed(prev => !prev);
 
-  // Рамка печати
   const mmToPx = (mm: number) => (mm / 25.4) * 96;
   const formatSizes: Record<string, { width: number; height: number }> = {
     a4: { width: 210, height: 297 },
@@ -896,7 +896,6 @@ const FlowEditor: React.FC = () => {
           )}
         </ReactFlow>
 
-        {/* Строка состояния */}
         <div className="flow-statusbar">
           <div className="status-left">
             <span><i className="fas fa-microchip"></i> {nodes.length} устр.</span>
