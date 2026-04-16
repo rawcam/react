@@ -1,5 +1,6 @@
 // src/components/flow/Sidebar.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import type { Node as FlowNode, Edge } from '@xyflow/react';
 import { DeviceNodeData, CableEdgeData } from '../../types/flowTypes';
 
@@ -8,6 +9,20 @@ const COLOR_PALETTE = [
   '#9ca3af', '#6b7280', '#4b5563', '#374151', '#1f2937',
   '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6',
 ];
+
+// Цвета по типам сигналов (легенда)
+const CABLE_TYPE_COLORS: Record<string, string> = {
+  'Видеосигнал HDMI/DVI': '#7F1F00',
+  'Оптические линии': '#FF00FF',
+  'Кодированный сигнал': '#FF7F00',
+  'RS-232/RS-485': '#3FFF00',
+  'Управление': '#007F1F',
+  'Аудио сигнал': '#007FFF',
+  'Акустический сигнал': '#00BFFF',
+  'USB': '#000000',
+  'Конференц-связь': '#6B8E23',
+  'Custom Cable': '#6b7280',
+};
 
 interface SidebarProps {
   selectedNode: FlowNode<DeviceNodeData> | null;
@@ -25,6 +40,9 @@ interface SidebarProps {
   onSaveSchema: () => void;
   onExportSVG: () => void;
   onExportDXF: () => void;
+  onExportExcel: () => void;          // новая
+  onClearCanvas: () => void;          // новая
+  onShowStatistics: () => void;       // новая
   onSaveToFile: () => void;
   onLoadFromFile: () => void;
   onAddNode: () => void;
@@ -35,13 +53,16 @@ interface SidebarProps {
   onUpdateGridColor: (color: string) => void;
   onUpdateGridOpacity: (opacity: number) => void;
   onUpdateGridVisible: (visible: boolean) => void;
+  printSettings: any;
+  onUpdatePrintSettings: (settings: any) => void;
+  handleHoverEnabled: boolean;
+  onToggleHandleHover: (enabled: boolean) => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
 
-// Простой компонент с нативным input type="color"
 const NativeColorPicker: React.FC<{
   value: string;
   onChange: (color: string) => void;
@@ -103,6 +124,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSaveSchema,
   onExportSVG,
   onExportDXF,
+  onExportExcel,
+  onClearCanvas,
+  onShowStatistics,
   onSaveToFile,
   onLoadFromFile,
   onAddNode,
@@ -113,6 +137,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUpdateGridColor,
   onUpdateGridOpacity,
   onUpdateGridVisible,
+  printSettings,
+  onUpdatePrintSettings,
+  handleHoverEnabled,
+  onToggleHandleHover,
   theme,
   onToggleTheme,
   collapsed,
@@ -126,16 +154,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     headerFontWeight: 'normal' as 'normal' | 'bold',
     rowHeight: 22,
   });
-
   const [localNodeColor, setLocalNodeColor] = useState('#2563eb');
-
   const [localEdgeSettings, setLocalEdgeSettings] = useState({
     labelText: '',
     sourceLabelText: '',
     targetLabelText: '',
-    edgeStrokeWidth: 2,
+    edgeStrokeWidth: 1,
     edgeStrokeColor: '#2563eb',
-    edgeBorderRadius: 8,
+    edgeBorderRadius: 2,
     badgeFontSize: 6,
     badgeTextColor: '#2563eb',
     badgeBorderColor: '#2563eb',
@@ -143,18 +169,23 @@ const Sidebar: React.FC<SidebarProps> = ({
     badgeBorderRadius: 12,
     badgeBackgroundColor: '#ffffff',
     markerFontSize: 5,
-    markerTextColor: '#2563eb',
+    markerTextColor: '#000000',
     markerBorderColor: '#2563eb',
     markerBorderWidth: 1,
-    markerBorderRadius: 8,
+    markerBorderRadius: 2,
     markerBackgroundColor: '#ffffff',
     hideMainBadge: false,
     hideMarkers: false,
+    cableLength: 0,
+    cableMark: '',
   });
 
   const [applyingAll, setApplyingAll] = useState(false);
   const [showManage, setShowManage] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
+  const [showPrint, setShowPrint] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
+  const [showView, setShowView] = useState(false);
   const [showNodeStyle, setShowNodeStyle] = useState(true);
   const [showEdgeStyle, setShowEdgeStyle] = useState(true);
 
@@ -179,9 +210,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         labelText: (d.labelText as string) || '',
         sourceLabelText: (d.sourceLabelText as string) || '',
         targetLabelText: (d.targetLabelText as string) || '',
-        edgeStrokeWidth: (d.edgeStrokeWidth as number) ?? 2,
+        edgeStrokeWidth: (d.edgeStrokeWidth as number) ?? 1,
         edgeStrokeColor: (d.edgeStrokeColor as string) ?? '#2563eb',
-        edgeBorderRadius: (d.edgeBorderRadius as number) ?? 8,
+        edgeBorderRadius: (d.edgeBorderRadius as number) ?? 2,
         badgeFontSize: (d.badgeFontSize as number) ?? 6,
         badgeTextColor: (d.badgeTextColor as string) ?? '#2563eb',
         badgeBorderColor: (d.badgeBorderColor as string) ?? '#2563eb',
@@ -189,13 +220,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         badgeBorderRadius: (d.badgeBorderRadius as number) ?? 12,
         badgeBackgroundColor: (d.badgeBackgroundColor as string) ?? '#ffffff',
         markerFontSize: (d.markerFontSize as number) ?? 5,
-        markerTextColor: (d.markerTextColor as string) ?? '#2563eb',
+        markerTextColor: (d.markerTextColor as string) ?? '#000000',
         markerBorderColor: (d.markerBorderColor as string) ?? '#2563eb',
         markerBorderWidth: (d.markerBorderWidth as number) ?? 1,
-        markerBorderRadius: (d.markerBorderRadius as number) ?? 8,
+        markerBorderRadius: (d.markerBorderRadius as number) ?? 2,
         markerBackgroundColor: (d.markerBackgroundColor as string) ?? '#ffffff',
         hideMainBadge: (d.hideMainBadge as boolean) ?? false,
         hideMarkers: (d.hideMarkers as boolean) ?? false,
+        cableLength: d.cableLength ?? 0,
+        cableMark: d.cableMark || '',
       });
     }
   }, [selectedEdge]);
@@ -237,6 +270,15 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const resetNodeColor = () => handleNodeColorChange('#2563eb');
+  const resetEdgeColor = (key: keyof typeof localEdgeSettings, defaultColor: string) => handleEdgeSettingChange(key, defaultColor);
+
+  const formatSizes: Record<string, { width: number; height: number }> = {
+    a4: { width: 210, height: 297 },
+    a3: { width: 297, height: 420 },
+    a2: { width: 420, height: 594 },
+  };
+
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''} ${theme}`}>
       <div className="sidebar-header">
@@ -255,6 +297,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
+      {/* Управление */}
       <div className="sidebar-section">
         <div className="section-header" onClick={() => setShowManage(!showManage)}>
           <span><i className="fas fa-folder-open"></i> {!collapsed && 'Управление'}</span>
@@ -270,15 +313,19 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="sidebar-actions">
               <button onClick={onSaveSchema}><i className="fas fa-save"></i> Сохранить</button>
               <button onClick={onNewSchema}><i className="fas fa-file"></i> Новая</button>
-              <button onClick={onExportSVG}><i className="fas fa-camera"></i> Экспорт</button>
-              <button onClick={onSaveToFile}><i className="fas fa-download"></i> В файл</button>
-              <button onClick={onLoadFromFile}><i className="fas fa-upload"></i> Из файла</button>
-              <button onClick={onExportDXF}><i className="fas fa-cube"></i> В DXF</button>
+              <button onClick={onExportSVG}><i className="fas fa-camera"></i> SVG</button>
+              <button onClick={onExportDXF}><i className="fas fa-cube"></i> DXF</button>
+              <button onClick={onExportExcel}><i className="fas fa-file-excel"></i> Excel</button>
+              <button onClick={onSaveToFile}><i className="fas fa-download"></i> JSON</button>
+              <button onClick={onLoadFromFile}><i className="fas fa-upload"></i> Загрузить</button>
+              <button onClick={onShowStatistics}><i className="fas fa-chart-pie"></i> Статистика</button>
+              <button onClick={onClearCanvas} style={{ color: 'var(--danger)' }}><i className="fas fa-trash-alt"></i> Очистить</button>
             </div>
           </div>
         )}
       </div>
 
+      {/* Сетка */}
       <div className="sidebar-section">
         <div className="section-header" onClick={() => setShowGrid(!showGrid)}>
           <span><i className="fas fa-th"></i> {!collapsed && 'Сетка'}</span>
@@ -317,6 +364,76 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
+      {/* Печать */}
+      <div className="sidebar-section">
+        <div className="section-header" onClick={() => setShowPrint(!showPrint)}>
+          <span><i className="fas fa-print"></i> {!collapsed && 'Печать'}</span>
+          {!collapsed && <i className={`fas fa-chevron-${showPrint ? 'down' : 'right'}`}></i>}
+        </div>
+        {showPrint && !collapsed && (
+          <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ fontSize: 12 }}>Формат</label>
+              <select value={printSettings.format} onChange={(e) => onUpdatePrintSettings({ format: e.target.value })} style={{ width: 100, padding: '4px 6px', fontSize: 12 }}>
+                <option value="a4">A4</option>
+                <option value="a3">A3</option>
+                <option value="a2">A2</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ fontSize: 12 }}>Ориентация</label>
+              <select value={printSettings.orientation} onChange={(e) => onUpdatePrintSettings({ orientation: e.target.value })} style={{ width: 100, padding: '4px 6px', fontSize: 12 }}>
+                <option value="portrait">Книжная</option>
+                <option value="landscape">Альбомная</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ fontSize: 12 }}>Показать рамку</label>
+              <input type="checkbox" checked={printSettings.visible} onChange={(e) => onUpdatePrintSettings({ visible: e.target.checked })} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Легенда */}
+      <div className="sidebar-section">
+        <div className="section-header" onClick={() => setShowLegend(!showLegend)}>
+          <span><i className="fas fa-palette"></i> {!collapsed && 'Легенда'}</span>
+          {!collapsed && <i className={`fas fa-chevron-${showLegend ? 'down' : 'right'}`}></i>}
+        </div>
+        {showLegend && !collapsed && (
+          <div className="section-content" style={{ fontSize: 11 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {Object.entries(CABLE_TYPE_COLORS).map(([type, color]) => (
+                  <tr key={type}>
+                    <td style={{ padding: '2px 0' }}>{type}</td>
+                    <td style={{ width: 30 }}><div style={{ width: 20, height: 20, background: color, borderRadius: 4 }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Вид */}
+      <div className="sidebar-section">
+        <div className="section-header" onClick={() => setShowView(!showView)}>
+          <span><i className="fas fa-eye"></i> {!collapsed && 'Вид'}</span>
+          {!collapsed && <i className={`fas fa-chevron-${showView ? 'down' : 'right'}`}></i>}
+        </div>
+        {showView && !collapsed && (
+          <div className="section-content">
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+              <input type="checkbox" checked={handleHoverEnabled} onChange={(e) => onToggleHandleHover(e.target.checked)} />
+              Подсветка области захвата портов
+            </label>
+          </div>
+        )}
+      </div>
+
+      {/* Свойства устройства */}
       {selectedNode && !collapsed && (
         <div className="sidebar-section">
           <div className="section-header" onClick={() => setShowNodeStyle(!showNodeStyle)}>
@@ -364,6 +481,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
+      {/* Свойства кабеля */}
       {selectedEdge && !selectedNode && !collapsed && (
         <div className="sidebar-section">
           <div className="section-header" onClick={() => setShowEdgeStyle(!showEdgeStyle)}>
@@ -373,7 +491,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           {showEdgeStyle && (
             <div className="section-content" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Линия</div>
-
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Толщина (px)</label>
@@ -384,7 +501,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <input type="number" min="0" max="20" value={localEdgeSettings.edgeBorderRadius} onChange={(e) => handleEdgeSettingChange('edgeBorderRadius', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
                 </div>
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Цвет линии</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -401,7 +517,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 </div>
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Метка начала</label>
                 <input type="text" value={localEdgeSettings.sourceLabelText} onChange={(e) => handleEdgeSettingChange('sourceLabelText', e.target.value)} placeholder="Источник" style={{ width: 130, padding: '4px 8px', fontSize: 12, border: '1px solid var(--border-light)', borderRadius: 6 }} />
@@ -414,11 +529,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <label style={{ fontSize: 12 }}>Текст бейджа</label>
                 <input type="text" value={localEdgeSettings.labelText} onChange={(e) => handleEdgeSettingChange('labelText', e.target.value)} placeholder="Авто" style={{ width: 130, padding: '4px 8px', fontSize: 12, border: '1px solid var(--border-light)', borderRadius: 6 }} />
               </div>
-
               <div style={{ borderTop: '1px solid var(--border-light)', margin: '8px 0' }} />
-
+              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Параметры кабеля</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ fontSize: 12 }}>Длина (м)</label>
+                <input type="number" min="0" step="0.1" value={localEdgeSettings.cableLength} onChange={(e) => handleEdgeSettingChange('cableLength', parseFloat(e.target.value) || 0)} style={{ width: 80, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ fontSize: 12 }}>Марка</label>
+                <input type="text" value={localEdgeSettings.cableMark} onChange={(e) => handleEdgeSettingChange('cableMark', e.target.value)} style={{ width: 130, padding: '4px 8px', fontSize: 12, border: '1px solid var(--border-light)', borderRadius: 6 }} />
+              </div>
+              <div style={{ borderTop: '1px solid var(--border-light)', margin: '8px 0' }} />
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Основной бейдж</div>
-
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Размер (px)</label>
@@ -429,16 +551,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <input type="number" min="0" max="30" value={localEdgeSettings.badgeBorderRadius} onChange={(e) => handleEdgeSettingChange('badgeBorderRadius', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
                 </div>
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Цвет</label>
                 <NativeColorPicker value={localEdgeSettings.badgeTextColor} onChange={(c) => handleEdgeSettingChange('badgeTextColor', c)} />
               </div>
-
               <div style={{ borderTop: '1px solid var(--border-light)', margin: '8px 0' }} />
-
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Маркировки</div>
-
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <label style={{ fontSize: 12 }}>Размер</label>
@@ -453,7 +571,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <input type="number" min="0" max="5" value={localEdgeSettings.markerBorderWidth} onChange={(e) => handleEdgeSettingChange('markerBorderWidth', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
                 </div>
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 12 }}>Текст</label>
                 <NativeColorPicker value={localEdgeSettings.markerTextColor} onChange={(c) => handleEdgeSettingChange('markerTextColor', c)} />
@@ -466,7 +583,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <label style={{ fontSize: 12 }}>Фон</label>
                 <NativeColorPicker value={localEdgeSettings.markerBackgroundColor} onChange={(c) => handleEdgeSettingChange('markerBackgroundColor', c)} />
               </div>
-
               <button onClick={handleApplyEdgeStyleToDevice} style={{ marginTop: 8, padding: '8px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '40px', cursor: 'pointer', width: '100%', fontWeight: 500, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 <i className="fas fa-check"></i> Применить ко всем кабелям устройства
               </button>
