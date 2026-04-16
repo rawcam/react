@@ -759,7 +759,7 @@ const FlowEditor: React.FC = () => {
     return { devices: nodes.length, edges: edges.length, totalPower, poeProvided, poeConsumed };
   };
 
-  const rows = edges.map((edge, index) => {
+ const rows = edges.map((edge, index) => {
   const sourceNode = nodes.find(n => n.id === edge.source);
   const targetNode = nodes.find(n => n.id === edge.target);
   const cableType = edge.data?.cableType || '';
@@ -768,22 +768,26 @@ const FlowEditor: React.FC = () => {
   const sourceInterface = sourceNode ? [...sourceNode.data.inputs, ...sourceNode.data.outputs].find(i => i.id === edge.sourceHandle) : null;
   const targetInterface = targetNode ? [...targetNode.data.inputs, ...targetNode.data.outputs].find(i => i.id === edge.targetHandle) : null;
 
-  // Формируем разъём с гендером
+  // Формируем разъём с гендером для прибора
   const sourceConnector = sourceInterface ? `${sourceInterface.connector}(${sourceInterface.direction === 'input' ? 'f' : 'm'})` : '';
   const targetConnector = targetInterface ? `${targetInterface.connector}(${targetInterface.direction === 'output' ? 'f' : 'm'})` : '';
+
+  // Разъём кабеля — просто название разъёма (без гендера)
+  const sourceCableConnector = sourceInterface ? sourceInterface.connector : '';
+  const targetCableConnector = targetInterface ? targetInterface.connector : '';
 
   return [
     index + 1,
     edge.data?.sourceLabelText || edge.data?.sourceLabel?.split(':')[1]?.trim() || '',
     edge.data?.targetLabelText || edge.data?.targetLabel?.split(':')[1]?.trim() || '',
     sourceNode?.data.label || '',
-    sourceConnector,
+    sourceConnector,                    // разъём на приборе (начало)
     sourceNode?.data.place || '',
-    '',
+    sourceCableConnector,               // разъём на кабеле (начало)
     targetNode?.data.label || '',
-    targetConnector,
+    targetConnector,                    // разъём на приборе (конец)
     targetNode?.data.place || '',
-    '',
+    targetCableConnector,               // разъём на кабеле (конец)
     cableType,
     edge.data?.cableLength || '',
     edge.data?.cableMark || '',
