@@ -28,9 +28,10 @@ import { useFlowSchemas } from '../hooks/useFlowSchemas';
 import { DeviceNodeData, CableEdgeData, DeviceInterface, SavedSchema } from '../types/flowTypes';
 import { exportToDxf } from '../utils/exportToDxf';
 import './FlowEditorPage.css';
+import { NodeTypes, EdgeTypes } from '@xyflow/react';
 
-const nodeTypes = { deviceNode: DeviceNode };
-const edgeTypes = { cableEdge: CableEdge };
+const nodeTypes: NodeTypes = { deviceNode: DeviceNode };
+const edgeTypes: EdgeTypes = { cableEdge: CableEdge };
 
 const createDemoInterfaces = (): { inputs: DeviceInterface[]; outputs: DeviceInterface[] } => {
   const inputId = (name: string) => `in-${Date.now()}-${name}`;
