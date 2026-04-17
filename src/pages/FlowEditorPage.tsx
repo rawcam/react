@@ -22,6 +22,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import * as XLSX from 'xlsx';
+import useUndoable from 'use-undoable';
 import DeviceNode from '../components/flow/DeviceNode';
 import CableEdge from '../components/flow/CableEdge';
 import EditNodeModal from '../components/flow/EditNodeModal';
@@ -34,6 +35,7 @@ import './FlowEditorPage.css';
 const nodeTypes: NodeTypes = { deviceNode: DeviceNode };
 const edgeTypes: EdgeTypes = { cableEdge: CableEdge };
 
+// --- Вспомогательные функции (без изменений) ---
 const createDemoInterfaces = (): { inputs: DeviceInterface[]; outputs: DeviceInterface[] } => {
   const inputId = (name: string) => `in-${Date.now()}-${name}`;
   const outputId = (name: string) => `out-${Date.now()}-${name}`;
@@ -82,7 +84,6 @@ const checkCompatibility = (
 
   // RJ45
   if (source.connector === 'RJ45' && target.connector === 'RJ45') {
-    // PoE проверка (часто для HDBaseT)
     if (source.poe && target.poe && source.poePower && target.poePower) {
       if (source.poePower >= target.poePower) {
         return { compatible: true, cableType: 'Кодированный сигнал' };
@@ -93,13 +94,11 @@ const checkCompatibility = (
     if (source.protocol === 'Ethernet' && target.protocol === 'Ethernet') {
       return { compatible: true, cableType: 'Управление' };
     }
-    // Аудио-протоколы по RJ45 тоже получают оранжевый цвет (Кодированный сигнал)
     if (source.protocol === 'Dante' || target.protocol === 'Dante' ||
         source.protocol === 'AES67' || target.protocol === 'AES67' ||
         source.protocol === 'AVoIP' || target.protocol === 'AVoIP') {
       return { compatible: true, cableType: 'Кодированный сигнал' };
     }
-    // По умолчанию для RJ45 (например, просто Ethernet без PoE) – кодированный сигнал
     return { compatible: true, cableType: 'Кодированный сигнал' };
   }
 
@@ -117,7 +116,6 @@ const checkCompatibility = (
   return { compatible: false };
 };
 
-// Словарь цветов
 const CABLE_TYPE_COLORS: Record<string, string> = {
   'HDMI/DVI': '#7F1F00',
   'Оптические линии': '#FF00FF',
@@ -132,7 +130,6 @@ const CABLE_TYPE_COLORS: Record<string, string> = {
 };
 const DEFAULT_CABLE_COLOR = '#2563eb';
 
-// Маппинг протокола -> префикс маркировки
 const PROTOCOL_PREFIX_MAP: Record<string, string> = {
   'HDMI': 'hdmi',
   'DisplayPort': 'dp',
@@ -170,9 +167,38 @@ const generateNextMark = (edges: Edge<CableEdgeData>[], prefix: string): string 
   return `${formattedPrefix} ${nextNum.toString().padStart(2, '0')}`;
 };
 
+// --- Компонент FlowEditor ---
 const FlowEditor: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<DeviceNodeData>>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<CableEdgeData>>([]);
+  // 🔥 UNDO/REDO: оборачиваем состояние узлов и рёбер
+  const {
+    state: undoableNodes,
+    setState: setUndoableNodes,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoable<Node<DeviceNodeData>[]>([]);
+  const {
+    state: undoableEdges,
+    setState: setUndoableEdges,
+    undo: undoEdges,
+    redo: redoEdges,
+    canUndo: canUndoEdges,
+    canRedo: canRedoEdges,
+  } = useUndoable<Edge<CableEdgeData>[]>([]);
+
+  // Синхронизируем с React Flow
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<DeviceNodeData>>(undoableNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<CableEdgeData>>(undoableEdges);
+
+  // При изменении nodes/edges обновляем undoable состояние (но не при программной установке)
+  useEffect(() => {
+    setUndoableNodes(nodes);
+  }, [nodes, setUndoableNodes]);
+  useEffect(() => {
+    setUndoableEdges(edges);
+  }, [edges, setUndoableEdges]);
+
   const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node<DeviceNodeData> | null>(null);
@@ -220,8 +246,11 @@ const FlowEditor: React.FC = () => {
   const autoSaveTimer = useRef<number>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 🔍 ПОИСК
+  const [searchQuery, setSearchQuery] = useState('');
+
   const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema, importSchema } = useFlowSchemas();
-  const { updateEdge } = useReactFlow();
+  const { updateEdge, fitView } = useReactFlow();
   const viewport = useViewport();
 
   useOnSelectionChange({
@@ -397,6 +426,7 @@ const FlowEditor: React.FC = () => {
     setNodes(nds => [...nds, newNode]);
   };
 
+  // 🆕 U-01: начальные порты именуются по правилам
   const addNewNode = () => {
     const newId = Date.now().toString();
     const newNode: Node<DeviceNodeData> = {
@@ -406,8 +436,8 @@ const FlowEditor: React.FC = () => {
       data: {
         label: 'Новое устройство',
         icon: 'fas fa-microchip',
-        inputs: [{ id: `in-${newId}-1`, name: 'Вход 1', direction: 'input', connector: 'HDMI', protocol: 'HDMI' }],
-        outputs: [{ id: `out-${newId}-1`, name: 'Выход 1', direction: 'output', connector: 'HDMI', protocol: 'HDMI' }],
+        inputs: [{ id: `in-${newId}-1`, name: 'HDMI IN 1', direction: 'input', connector: 'HDMI', protocol: 'HDMI' }],
+        outputs: [{ id: `out-${newId}-1`, name: 'HDMI OUT 1', direction: 'output', connector: 'HDMI', protocol: 'HDMI' }],
         color: '#000000',
         borderRadius: 2,
         borderWidth: 1,
@@ -531,11 +561,22 @@ const FlowEditor: React.FC = () => {
     closeContextMenu();
   };
 
+  // 🔥 ГОРЯЧИЕ КЛАВИШИ (включая Ctrl+Z / Ctrl+Y)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
       const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.getAttribute('contenteditable') === 'true');
       if (isInput) return;
+
+      // Undo / Redo
+      if (e.ctrlKey && !e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        if (canUndo) { undo(); undoEdges(); }
+      }
+      if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        if (canRedo) { redo(); redoEdges(); }
+      }
 
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         if (selectedNode) {
@@ -590,7 +631,7 @@ const FlowEditor: React.FC = () => {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNode, copiedNode, setNodes, setEdges, selectedEdge]);
+  }, [selectedNode, copiedNode, setNodes, setEdges, selectedEdge, canUndo, canRedo, undo, undoEdges, redo, redoEdges]);
 
   useEffect(() => {
     document.addEventListener('click', closeContextMenu);
@@ -915,7 +956,21 @@ const FlowEditor: React.FC = () => {
   const handleToggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const handleToggleSidebar = () => setSidebarCollapsed(prev => !prev);
 
+  // 🔍 Функция поиска и центрирования
+  const performSearch = () => {
+    if (!searchQuery.trim()) return;
+    const lowerQuery = searchQuery.toLowerCase();
+    const foundNode = nodes.find(n => n.data.label.toLowerCase().includes(lowerQuery));
+    if (foundNode) {
+      setNodes(nds => nds.map(n => n.id === foundNode.id ? { ...n, selected: true } : { ...n, selected: false }));
+      fitView({ nodes: [foundNode], duration: 300, padding: 0.2 });
+    } else {
+      alert(`Устройство "${searchQuery}" не найдено`);
+    }
+  };
+
   const mmToPx = (mm: number) => (mm / 25.4) * 96;
+  const pxToMm = (px: number) => (px * 25.4) / 96;
   const formatSizes: Record<string, { width: number; height: number }> = {
     a4: { width: 210, height: 297 },
     a3: { width: 297, height: 420 },
@@ -931,6 +986,11 @@ const FlowEditor: React.FC = () => {
     return { width, height };
   };
   const frameSize = getFrameSize();
+
+  // Размер выделенной ноды в мм
+  const selectedNodeSizeMm = selectedNode
+    ? `${pxToMm(selectedNode.width || 90).toFixed(1)} × ${pxToMm(selectedNode.height || 100).toFixed(1)} мм`
+    : null;
 
   return (
     <div className={`flow-editor ${theme}`} style={{ height: '100vh', display: 'flex', background: 'var(--bg-page)' }}>
@@ -1044,17 +1104,40 @@ const FlowEditor: React.FC = () => {
           )}
         </ReactFlow>
 
-        <div className="flow-statusbar" style={{ minHeight: 48, height: 'auto', padding: '8px 16px' }}>
-          <div className="status-left">
+        {/* СТАТУСБАР С ПОИСКОМ И РАЗМЕРОМ НОДЫ */}
+        <div className="flow-statusbar" style={{ minHeight: 48, height: 'auto', padding: '8px 16px', gap: 12 }}>
+          <div className="status-left" style={{ gap: 16 }}>
             <span><i className="fas fa-microchip"></i> {nodes.length} устр.</span>
             <span><i className="fas fa-plug"></i> {edges.length} каб.</span>
             <span>⚡ {calculateStatistics().totalPower} Вт</span>
+            {selectedNodeSizeMm && <span>📐 {selectedNodeSizeMm}</span>}
           </div>
-          <div className="status-center">
-            <span>📏 Масштаб: {Math.round((viewport?.zoom || 1) * 100)}%</span>
+          <div className="status-center" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="text"
+                placeholder="Поиск устройства..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && performSearch()}
+                style={{
+                  width: 200,
+                  padding: '4px 8px',
+                  fontSize: 11,
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 6,
+                  background: 'var(--bg-panel)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+              <button onClick={performSearch} style={{ padding: '4px 8px', fontSize: 11, background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+                <i className="fas fa-search"></i>
+              </button>
+            </div>
           </div>
           <div className="status-right">
-            <span>🔌 PoE: {calculateStatistics().poeConsumed} / {calculateStatistics().poeProvided} Вт</span>
+            <span>📏 Масштаб: {Math.round((viewport?.zoom || 1) * 100)}%</span>
+            <span style={{ marginLeft: 16 }}>🔌 PoE: {calculateStatistics().poeConsumed} / {calculateStatistics().poeProvided} Вт</span>
           </div>
         </div>
       </div>
