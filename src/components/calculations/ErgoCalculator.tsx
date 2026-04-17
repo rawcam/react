@@ -33,6 +33,8 @@ export const ErgoCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => 
       type: 'display',
       modelName: `ЭКП ${screenWidth}x${screenHeight} см`,
       latency: 0,
+      poe: false,
+      poePower: 0,
       poeEnabled: false,
       powerW: 0,
       shortName: `ECP${Math.floor(Math.random() * 1000)}`,
