@@ -1,0 +1,140 @@
+/* src/styles/topbar.css */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  height: 64px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.3rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-nav {
+  display: flex;
+  gap: 8px;
+  margin-left: 40px;
+}
+
+.topbar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 40px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.topbar-nav a i {
+  font-size: 1rem;
+}
+
+.topbar-nav a:hover {
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.topbar-nav a.active {
+  color: var(--accent);
+  background: var(--accent-glow);
+  font-weight: 600;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.topbar-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 8px;
+  border-radius: 40px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-icon-btn:hover {
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 8px;
+  background: var(--card-bg);
+  border-radius: 40px;
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+}
+
+.user-menu i {
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+
+.user-menu span {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.role-badge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  background: var(--accent-glow);
+  border-radius: 40px;
+  color: var(--accent);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.role-switch {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  margin-left: 4px;
+}
+
+.role-switch option {
+  background: var(--bg-panel-solid);
+}
