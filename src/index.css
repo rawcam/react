@@ -1,34 +1,11 @@
 /* src/index.css */
+@import './styles/variables.css';
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
-
-:root {
-  --bg-page: #f4f7fb;
-  --bg-panel: #ffffff;
-  --text-primary: #1e2b3c;
-  --text-secondary: #4a5a6e;
-  --border-light: #d9e1ec;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --card-bg: #f9fcff;
-  --shadow: 0 8px 20px -8px rgba(0, 20, 40, 0.15);
-  --danger: #dc2626;
-}
-
-.dark {
-  --bg-page: #121212;
-  --bg-panel: #1e1e1e;
-  --text-primary: #e0e0e0;
-  --text-secondary: #a0a0a0;
-  --border-light: #333333;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --card-bg: #2a2a2a;
-  --shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.7);
 }
 
 body {
@@ -37,9 +14,9 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-/* Сайдбар */
+/* Сайдбар (общие стили, используются и в основном лейауте, и в редакторе) */
 .sidebar {
-  width: 340px;
+  width: var(--sidebar-width);
   background: var(--bg-panel);
   border-right: 1px solid var(--border-light);
   display: flex;
@@ -48,10 +25,12 @@ body {
   overflow-y: auto;
   color: var(--text-primary);
   transition: width 0.2s;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .sidebar.collapsed {
-  width: 60px;
+  width: var(--sidebar-collapsed-width);
 }
 
 .sidebar-header {
@@ -119,7 +98,7 @@ body {
 }
 
 .sidebar.collapsed .section-header {
-  padding: 10px 0;
+  padding: 12px 0;
   justify-content: center;
 }
 
@@ -133,7 +112,7 @@ body {
 
 .sidebar.collapsed .section-header i:first-child {
   margin-right: 0;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: var(--accent);
 }
 
@@ -186,7 +165,7 @@ body {
 .section-content select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 .sidebar-actions {
@@ -217,7 +196,7 @@ body {
   border-color: var(--accent);
 }
 
-/* Рёбра */
+/* Рёбра React Flow */
 .react-flow__edge-path {
   stroke: #2563eb;
   stroke-width: 2;
@@ -248,16 +227,15 @@ body {
   z-index: 10 !important;
 }
 
-/* Убираем глобальные позиции — теперь они задаются инлайн-стилями в DeviceNode */
 .react-flow__handle-left,
 .react-flow__handle-right {
   /* намеренно пусто */
 }
 
-/* Чтобы нода не обрезала хендлы */
 .react-flow__node {
   overflow: visible !important;
 }
+
 /* Усиление ховера в сайдбаре */
 .section-header:hover {
   background: rgba(59, 130, 246, 0.15) !important;
@@ -268,23 +246,26 @@ body {
   border-color: var(--accent) !important;
 }
 
-/* Строка состояния */
+/* Строка состояния (редактор) */
 .flow-statusbar {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 26px;
+  min-height: 48px;
+  height: auto;
   background: var(--bg-panel);
   border-top: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 8px 16px;
   font-size: 11px;
   color: var(--text-secondary);
   z-index: 10;
   pointer-events: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .flow-statusbar span {
@@ -299,41 +280,51 @@ body {
   gap: 16px;
 }
 
-/* Круглый ховер для хендлов (опционально) */
-.react-flow__handle.handle-hover-visible:hover {
-  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3) !important;
-  background: #3b82f6 !important;
-}
-/* Иконки в свёрнутом сайдбаре */
-.sidebar.collapsed .section-header {
-  justify-content: center;
-  padding: 12px 0;
-}
-.sidebar.collapsed .section-header i {
-  font-size: 1.4rem;
-  color: var(--accent);
-}
-.sidebar.collapsed .section-header span {
-  display: none;
-}
-
-/* Подсветка хендлов */
+/* Круглый ховер для хендлов */
 .react-flow__handle.handle-hover-visible {
   transition: box-shadow 0.1s;
 }
+
 .react-flow__handle.handle-hover-visible:hover {
   box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.35) !important;
   background: #3b82f6 !important;
   z-index: 100;
 }
-/* Иконки в свёрнутом сайдбаре — гарантированно видны */
+
+/* Иконки в свёрнутом сайдбаре */
 .sidebar.collapsed .section-header i:first-child {
   display: inline-block !important;
   font-size: 1.4rem !important;
   color: var(--accent) !important;
   margin-right: 0 !important;
 }
+
 .sidebar.collapsed .section-header span,
 .sidebar.collapsed .section-header i:last-child {
   display: none !important;
+}
+
+/* Модальные окна */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-panel);
+  border-radius: var(--border-radius-card);
+  box-shadow: var(--shadow-hover);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
