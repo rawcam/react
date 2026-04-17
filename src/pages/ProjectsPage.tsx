@@ -13,7 +13,7 @@ export const ProjectsPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  const handleCreateProject = async (newProject: Omit<Project, 'id' | 'shortId'>) => {
+  const handleCreateProject = async (newProject: Omit<Project, 'id'>) => {
     await addProjectToDb(newProject);
     setShowCreateModal(false);
   };
