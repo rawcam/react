@@ -51,7 +51,7 @@ export const NetworkSection: React.FC = () => {
       </div>
       <div className="setting checkbox-row">
         <label>Резервирование:</label>
-        <input type="checkbox" checked={settings.redundancy} onChange={e => handleChange('redundancy', e.target.checked)} />
+        <input type="checkbox" checked={settings.redundance} onChange={e => handleChange('redundance', e.target.checked)} />
       </div>
     </div>
   );
