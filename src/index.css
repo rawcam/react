@@ -1,22 +1,101 @@
 /* src/index.css */
-@import './styles/variables.css';
-
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg-page);
   color: var(--text-primary);
   transition: background 0.2s, color 0.2s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Сайдбар (общие стили, используются и в основном лейауте, и в редакторе) */
+/* ----- ПЕРЕМЕННЫЕ (из variables.css + наши) ----- */
+:root {
+  --bg-page: #f4f7fb;
+  --bg-panel: #ffffff;
+  --bg-panel-solid: #ffffff;
+  --text-primary: #1e2b3c;
+  --text-secondary: #4a5a6e;
+  --text-muted: #6c7e97;
+  --border-light: #d9e1ec;
+  --accent: #2563eb;
+  --accent-glow: rgba(37, 99, 235, 0.3);
+  --accent-hover: #1d4ed8;
+  --card-bg: #f9fcff;
+  --shadow: 0 8px 20px -8px rgba(0, 20, 40, 0.15);
+  --shadow-hover: 0 30px 45px -15px rgba(0, 0, 0, 0.15);
+  --danger: #dc2626;
+  --sidebar-width: 300px;
+  --sidebar-collapsed-width: 70px;
+  --transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  --border-radius-card: 32px;
+  --border-radius-element: 24px;
+  --border-radius-small: 16px;
+  --dashboard-gap: 20px;
+  --dashboard-widget-radius: 20px;
+  --dashboard-widget-padding: 14px 18px 18px 18px;
+  --dashboard-font-size: 0.85rem;
+  --dashboard-text-hover: var(--accent);
+  --dashboard-text-hover-weight: 600;
+}
+
+body.dark {
+  --bg-page: #121212;
+  --bg-panel: #1e1e1e;
+  --bg-panel-solid: #1e293b;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #7f8ea3;
+  --border-light: #333333;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.3);
+  --accent-hover: #2563eb;
+  --card-bg: #2a2a2a;
+  --shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.7);
+  --shadow-hover: 0 30px 45px -15px rgba(0, 0, 0, 0.4);
+  --dashboard-text-hover: var(--accent);
+}
+
+/* ----- ОБЩИЕ СТИЛИ ПРИЛОЖЕНИЯ ----- */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  background: var(--bg-page);
+}
+
+/* ----- ТОПБАР (стили будут позже, пока заготовка) ----- */
+.topbar {
+  height: 60px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  box-shadow: var(--shadow);
+}
+
+/* ----- САЙДБАР (общие стили, специфичные для редактора уже есть) ----- */
 .sidebar {
-  width: var(--sidebar-width);
+  width: 340px;
   background: var(--bg-panel);
   border-right: 1px solid var(--border-light);
   display: flex;
@@ -25,12 +104,10 @@ body {
   overflow-y: auto;
   color: var(--text-primary);
   transition: width 0.2s;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 .sidebar.collapsed {
-  width: var(--sidebar-collapsed-width);
+  width: 60px;
 }
 
 .sidebar-header {
@@ -98,12 +175,12 @@ body {
 }
 
 .sidebar.collapsed .section-header {
-  padding: 12px 0;
+  padding: 10px 0;
   justify-content: center;
 }
 
 .section-header:hover {
-  background: var(--card-bg);
+  background: rgba(59, 130, 246, 0.15) !important;
 }
 
 .section-header i:first-child {
@@ -112,7 +189,7 @@ body {
 
 .sidebar.collapsed .section-header i:first-child {
   margin-right: 0;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   color: var(--accent);
 }
 
@@ -192,11 +269,11 @@ body {
 }
 
 .sidebar-actions button:hover {
-  background: var(--border-light);
-  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: var(--accent) !important;
 }
 
-/* Рёбра React Flow */
+/* ----- РЁБРА И НОДЫ REACT FLOW ----- */
 .react-flow__edge-path {
   stroke: #2563eb;
   stroke-width: 2;
@@ -213,7 +290,6 @@ body {
   display: none !important;
 }
 
-/* Глобальные стили для хендлов: тонкая полоска 8x1 пикселей */
 .react-flow__handle {
   width: 8px !important;
   height: 1px !important;
@@ -227,26 +303,20 @@ body {
   z-index: 10 !important;
 }
 
-.react-flow__handle-left,
-.react-flow__handle-right {
-  /* намеренно пусто */
-}
-
 .react-flow__node {
   overflow: visible !important;
 }
 
-/* Усиление ховера в сайдбаре */
-.section-header:hover {
-  background: rgba(59, 130, 246, 0.15) !important;
+.react-flow__handle.handle-hover-visible {
+  transition: box-shadow 0.1s;
+}
+.react-flow__handle.handle-hover-visible:hover {
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.35) !important;
+  background: #3b82f6 !important;
+  z-index: 100;
 }
 
-.sidebar-actions button:hover {
-  background: rgba(59, 130, 246, 0.15) !important;
-  border-color: var(--accent) !important;
-}
-
-/* Строка состояния (редактор) */
+/* ----- СТРОКА СОСТОЯНИЯ ----- */
 .flow-statusbar {
   position: absolute;
   bottom: 0;
@@ -254,18 +324,16 @@ body {
   right: 0;
   min-height: 48px;
   height: auto;
+  padding: 8px 16px;
   background: var(--bg-panel);
   border-top: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
   font-size: 11px;
   color: var(--text-secondary);
   z-index: 10;
   pointer-events: none;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 .flow-statusbar span {
@@ -280,31 +348,7 @@ body {
   gap: 16px;
 }
 
-/* Круглый ховер для хендлов */
-.react-flow__handle.handle-hover-visible {
-  transition: box-shadow 0.1s;
-}
-
-.react-flow__handle.handle-hover-visible:hover {
-  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.35) !important;
-  background: #3b82f6 !important;
-  z-index: 100;
-}
-
-/* Иконки в свёрнутом сайдбаре */
-.sidebar.collapsed .section-header i:first-child {
-  display: inline-block !important;
-  font-size: 1.4rem !important;
-  color: var(--accent) !important;
-  margin-right: 0 !important;
-}
-
-.sidebar.collapsed .section-header span,
-.sidebar.collapsed .section-header i:last-child {
-  display: none !important;
-}
-
-/* Модальные окна */
+/* ----- МОДАЛЬНЫЕ ОКНА ----- */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -316,15 +360,28 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   background: var(--bg-panel);
-  border-radius: var(--border-radius-card);
-  box-shadow: var(--shadow-hover);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  color: var(--text-primary);
   max-width: 90vw;
   max-height: 90vh;
   overflow: auto;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ----- ИКОНКИ В СВЁРНУТОМ САЙДБАРЕ ----- */
+.sidebar.collapsed .section-header i:first-child {
+  display: inline-block !important;
+  font-size: 1.4rem !important;
+  color: var(--accent) !important;
+  margin-right: 0 !important;
+}
+.sidebar.collapsed .section-header span,
+.sidebar.collapsed .section-header i:last-child {
+  display: none !important;
 }
