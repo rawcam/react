@@ -9,7 +9,7 @@ const toDxfY = (y: number, maxY: number) => maxY - y;
 
 type HandlePosition = Position.Left | Position.Right | Position.Top | Position.Bottom;
 
-// УЛУЧШЕННАЯ ФУНКЦИЯ: Генерация ортогонального пути (возвращает массив точек [x, y])
+// Генерация ортогонального пути (возвращает массив точек [x, y])
 const generateOrthoPoints = (
   sourceX: number, sourceY: number,
   targetX: number, targetY: number,
@@ -20,15 +20,24 @@ const generateOrthoPoints = (
     sourceX, sourceY, targetX, targetY,
     sourcePosition: sourcePos,
     targetPosition: targetPos,
-    borderRadius: 8, // Можно поставить 0 для идеально прямых углов
+    borderRadius: 0,
   });
   const points: [number, number][] = [];
-  // Более надежный разбор SVG-пути
-  const commands = path.match(/[ML]\s*[\d.]+\s*[\d.]+/g) || [];
+  const commands = path.match(/[MLQ]\s*[\d.,\s]+/g) || [];
   commands.forEach(cmd => {
-    const parts = cmd.match(/[\d.]+/g);
-    if (parts && parts.length >= 2) {
-      points.push([parseFloat(parts[0]), parseFloat(parts[1])]);
+    const nums = cmd.match(/[\d.]+/g);
+    if (nums) {
+      if (cmd.startsWith('Q')) {
+        const x = parseFloat(nums[2]);
+        const y = parseFloat(nums[3]);
+        points.push([x, y]);
+      } else {
+        for (let i = 0; i < nums.length; i += 2) {
+          const x = parseFloat(nums[i]);
+          const y = parseFloat(nums[i + 1]);
+          points.push([x, y]);
+        }
+      }
     }
   });
   return points;
@@ -40,14 +49,12 @@ const mapColorToAci = (hex: string): number => {
   const g = parseInt(hex.slice(3,5), 16);
   const b = parseInt(hex.slice(5,7), 16);
   
-  // Стандартные цвета
-  if (r === 239 && g === 68 && b === 68) return 1;   // #ef4444 → красный
-  if (r === 16 && g === 185 && b === 129) return 3;  // #10b981 → зелёный
-  if (r === 37 && g === 99 && b === 235) return 5;   // #2563eb → синий
-  if (r === 0 && g === 0 && b === 0) return 7;       // чёрный
-  if (r === 255 && g === 255 && b === 255) return 7; // белый
+  if (r === 239 && g === 68 && b === 68) return 1;
+  if (r === 16 && g === 185 && b === 129) return 3;
+  if (r === 37 && g === 99 && b === 235) return 5;
+  if (r === 0 && g === 0 && b === 0) return 7;
+  if (r === 255 && g === 255 && b === 255) return 7;
   
-  // Для остальных — подбор ближайшего по яркости
   const brightness = r * 0.299 + g * 0.587 + b * 0.114;
   return Math.max(1, Math.min(255, Math.round(brightness / 255 * 254) + 1));
 };
@@ -58,7 +65,6 @@ export const exportToDxf = (
   filename: string = 'sputnik-scheme'
 ) => {
   try {
-    // Определяем максимальный Y для инверсии
     let maxY = 0;
     nodes.forEach(n => {
       const h = (n.data.height as number) || 90;
@@ -68,10 +74,8 @@ export const exportToDxf = (
 
     const d = new Drawing();
     
-    // Устанавливаем единицы измерения
     d.setUnits('Millimeters');
     
-    // Добавляем слой по умолчанию и делаем его активным
     d.addLayer('0', 7, 'CONTINUOUS');
     d.setActiveLayer('0');
 
@@ -128,7 +132,6 @@ export const exportToDxf = (
       const width = edge.data?.edgeStrokeWidth || 2;
       const layerName = `edge-color-${colorAci}`;
 
-      // ИСПРАВЛЕНО: Создаём отдельный слой для каждого цвета
       if (!d.layers[layerName]) {
         d.addLayer(layerName, colorAci, 'CONTINUOUS');
       }
@@ -141,7 +144,6 @@ export const exportToDxf = (
         console.warn('Пропущено ребро без точек пути:', edge.id);
       }
 
-      // Бейдж (тип кабеля)
       if (!edge.data?.hideMainBadge && points.length > 0) {
         const midIdx = Math.floor(points.length / 2);
         const [midX, midY] = points[midIdx];
@@ -150,7 +152,6 @@ export const exportToDxf = (
       }
     });
 
-    // Возвращаем активный слой на "0" для нод
     d.setActiveLayer('0');
 
     // --- Ноды ---
@@ -162,50 +163,39 @@ export const exportToDxf = (
       const colorAci = mapColorToAci(node.data.color || '#2563eb');
       const layerName = `node-color-${colorAci}`;
 
-      // Создаём отдельный слой для цвета ноды
       if (!d.layers[layerName]) {
         d.addLayer(layerName, colorAci, 'CONTINUOUS');
       }
       d.setActiveLayer(layerName);
 
-      // Рамка ноды (замкнутая полилиния)
       const pts: [number, number][] = [
         [x, toDxfY(y, maxY)],
         [x + w, toDxfY(y, maxY)],
         [x + w, toDxfY(y + h, maxY)],
         [x, toDxfY(y + h, maxY)],
-        [x, toDxfY(y, maxY)], // замыкаем
+        [x, toDxfY(y, maxY)],
       ];
       d.drawPolyline(pts);
 
-      // Текст метки ноды
       d.drawText(x + 5, toDxfY(y + 15, maxY), 10, 0, node.data.label);
 
-      // Хендлы и подписи портов
       const rowHeight = node.data.rowHeight || 22;
       
-      // Входы (inputs)
-      node.data.inputs.forEach((port, idx) => {
+      node.data.inputs.forEach((_, idx) => {
         const offsetY = y + 40 + (idx + 0.5) * rowHeight;
         const dxfY = toDxfY(offsetY, maxY);
-        // Рисуем кружок хендла
-        d.drawCircle(x - 8, dxfY, 3);
-        // ИСПРАВЛЕНО: Добавляем подпись порта
-        d.drawText(x - 20, dxfY - 2, 6, 0, port.name);
+        d.drawLine(x - 8, dxfY, x - 16, dxfY);
+        d.drawText(x - 20, dxfY - 2, 6, 0, node.data.inputs[idx].name);
       });
       
-      // Выходы (outputs)
-      node.data.outputs.forEach((port, idx) => {
+      node.data.outputs.forEach((_, idx) => {
         const offsetY = y + 40 + (idx + 0.5) * rowHeight;
         const dxfY = toDxfY(offsetY, maxY);
-        // Рисуем кружок хендла
-        d.drawCircle(x + w + 8, dxfY, 3);
-        // ИСПРАВЛЕНО: Добавляем подпись порта
-        d.drawText(x + w + 15, dxfY - 2, 6, 0, port.name);
+        d.drawLine(x + w + 8, dxfY, x + w + 16, dxfY);
+        d.drawText(x + w + 15, dxfY - 2, 6, 0, node.data.outputs[idx].name);
       });
     });
 
-    // Генерация строки DXF и сохранение
     const dxfString = d.toDxfString();
     const blob = new Blob([dxfString], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
