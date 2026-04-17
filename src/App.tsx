@@ -1,8 +1,8 @@
 // src/App.tsx
 import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Provider } from 'react-redux';
 import { ReactFlowProvider } from '@xyflow/react';
+import { Provider } from 'react-redux';
 import { store } from './store';
 import { Topbar } from './components/layout/Topbar';
 import { DashboardPage } from './pages/DashboardPage';
@@ -17,7 +17,7 @@ function App() {
   useEffect(() => {
     const userRole = localStorage.getItem('userRole');
     if (!userRole) {
-      // Если роль не сохранена, отправляем на страницу входа
+      // Если роль не сохранена — перенаправляем на страницу входа
       window.location.href = '/reactflow/login.html';
     }
   }, []);
