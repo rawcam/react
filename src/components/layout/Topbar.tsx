@@ -1,17 +1,26 @@
 // src/components/layout/Topbar.tsx
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { useDispatch } from 'react-redux';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
 import { setRole } from '../../store/authSlice';
 import { openWidgetConfig } from '../../store/uiSlice';
+import { useAuth } from '../../hooks/useAuth';
 
-const Topbar: React.FC = () => {
-  const { user, hasRole } = useAuth();
+export const Topbar: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user, hasRole } = useAuth();
+  const widgetConfigOpen = useSelector((state: RootState) => state.ui.widgetConfigOpen);
 
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setRole(e.target.value as any));
+    const newRole = e.target.value as any;
+    dispatch(setRole(newRole));
+  };
+
+  const handleThemeToggle = () => {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
   };
 
   return (
@@ -42,6 +51,9 @@ const Topbar: React.FC = () => {
       </nav>
 
       <div className="topbar-right">
+        <button className="topbar-icon-btn" onClick={handleThemeToggle}>
+          <i className={`fas ${document.body.classList.contains('dark') ? 'fa-sun' : 'fa-moon'}`}></i>
+        </button>
         <button className="topbar-icon-btn" onClick={() => dispatch(openWidgetConfig())}>
           <i className="fas fa-th-large"></i>
         </button>
@@ -56,14 +68,14 @@ const Topbar: React.FC = () => {
               <option value="engineer">Инженер</option>
               <option value="pm">Руководитель</option>
               <option value="director">Директор</option>
+              <option value="designer">Проектировщик</option>
+              <option value="logist">Логист</option>
             </select>
           ) : (
-            <span className="role-badge">{user?.role}</span>
+            <span className="role-badge">{user?.role === 'pm' ? 'ГИП' : user?.role}</span>
           )}
         </div>
       </div>
     </header>
   );
 };
-
-export { Topbar };
