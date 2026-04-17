@@ -57,7 +57,7 @@ interface SidebarProps {
   onUpdatePrintSettings: (settings: any) => void;
   handleHoverEnabled: boolean;
   onToggleHandleHover: (enabled: boolean) => void;
-  onAlignNodes?: (type: string) => void; // новая функция выравнивания
+  onAlignNodes?: (type: string) => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   collapsed: boolean;
@@ -109,7 +109,6 @@ const NativeColorPicker: React.FC<{
   );
 };
 
-// Компонент тултипа для свёрнутого сайдбара
 const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => {
   const [visible, setVisible] = useState(false);
   return (
@@ -318,7 +317,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     a2: { width: 420, height: 594 },
   };
 
-  // Обёртка для секции с поддержкой тултипа в свёрнутом виде
   const SectionHeader: React.FC<{
     icon: string;
     title: string;
