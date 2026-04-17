@@ -81,27 +81,27 @@ const checkCompatibility = (
   }
 
   // RJ45
-if (source.connector === 'RJ45' && target.connector === 'RJ45') {
-  // PoE проверка (часто для HDBaseT)
-  if (source.poe && target.poe && source.poePower && target.poePower) {
-    if (source.poePower >= target.poePower) {
-      return { compatible: true, cableType: 'Кодированный сигнал' };
-    } else {
-      return { compatible: false };
+  if (source.connector === 'RJ45' && target.connector === 'RJ45') {
+    // PoE проверка (часто для HDBaseT)
+    if (source.poe && target.poe && source.poePower && target.poePower) {
+      if (source.poePower >= target.poePower) {
+        return { compatible: true, cableType: 'Кодированный сигнал' };
+      } else {
+        return { compatible: false };
+      }
     }
-  }
-  if (source.protocol === 'Ethernet' && target.protocol === 'Ethernet') {
-    return { compatible: true, cableType: 'Управление' };
-  }
-  // Аудио-протоколы по RJ45 тоже получают оранжевый цвет (Кодированный сигнал)
-  if (source.protocol === 'Dante' || target.protocol === 'Dante' ||
-      source.protocol === 'AES67' || target.protocol === 'AES67' ||
-      source.protocol === 'AVoIP' || target.protocol === 'AVoIP') {
+    if (source.protocol === 'Ethernet' && target.protocol === 'Ethernet') {
+      return { compatible: true, cableType: 'Управление' };
+    }
+    // Аудио-протоколы по RJ45 тоже получают оранжевый цвет (Кодированный сигнал)
+    if (source.protocol === 'Dante' || target.protocol === 'Dante' ||
+        source.protocol === 'AES67' || target.protocol === 'AES67' ||
+        source.protocol === 'AVoIP' || target.protocol === 'AVoIP') {
+      return { compatible: true, cableType: 'Кодированный сигнал' };
+    }
+    // По умолчанию для RJ45 (например, просто Ethernet без PoE) – кодированный сигнал
     return { compatible: true, cableType: 'Кодированный сигнал' };
   }
-  // По умолчанию для RJ45 (например, просто Ethernet без PoE) – кодированный сигнал
-  return { compatible: true, cableType: 'Кодированный сигнал' };
-}
 
   // RS-232/RS-485
   if ((source.connector === 'Db9' || source.connector === 'Db25') &&
@@ -166,7 +166,8 @@ const generateNextMark = (edges: Edge<CableEdgeData>[], prefix: string): string 
     }
   });
   const nextNum = maxNum + 1;
-  return `${prefix}${nextNum.toString().padStart(2, '0')}`;
+  const formattedPrefix = prefix.toUpperCase();
+  return `${formattedPrefix} ${nextNum.toString().padStart(2, '0')}`;
 };
 
 const FlowEditor: React.FC = () => {
@@ -759,55 +760,55 @@ const FlowEditor: React.FC = () => {
     return { devices: nodes.length, edges: edges.length, totalPower, poeProvided, poeConsumed };
   };
 
- const exportToExcel = () => {
-  const rows = edges.map((edge, index) => {
-    const sourceNode = nodes.find(n => n.id === edge.source);
-    const targetNode = nodes.find(n => n.id === edge.target);
-    const cableType = edge.data?.cableType || '';
+  const exportToExcel = () => {
+    const rows = edges.map((edge, index) => {
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
+      const cableType = edge.data?.cableType || '';
 
-    const sourceInterface = sourceNode ? [...sourceNode.data.inputs, ...sourceNode.data.outputs].find(i => i.id === edge.sourceHandle) : null;
-    const targetInterface = targetNode ? [...targetNode.data.inputs, ...targetNode.data.outputs].find(i => i.id === edge.targetHandle) : null;
+      const sourceInterface = sourceNode ? [...sourceNode.data.inputs, ...sourceNode.data.outputs].find(i => i.id === edge.sourceHandle) : null;
+      const targetInterface = targetNode ? [...targetNode.data.inputs, ...targetNode.data.outputs].find(i => i.id === edge.targetHandle) : null;
 
-    const sourceConnector = sourceInterface ? `${sourceInterface.connector}(${sourceInterface.direction === 'input' ? 'f' : 'm'})` : '';
-    const targetConnector = targetInterface ? `${targetInterface.connector}(${targetInterface.direction === 'output' ? 'f' : 'm'})` : '';
+      const sourceConnector = sourceInterface ? `${sourceInterface.connector}(${sourceInterface.direction === 'input' ? 'f' : 'm'})` : '';
+      const targetConnector = targetInterface ? `${targetInterface.connector}(${targetInterface.direction === 'output' ? 'f' : 'm'})` : '';
 
-    const sourceCableConnector = sourceInterface ? sourceInterface.connector : '';
-    const targetCableConnector = targetInterface ? targetInterface.connector : '';
+      const sourceCableConnector = sourceInterface ? sourceInterface.connector : '';
+      const targetCableConnector = targetInterface ? targetInterface.connector : '';
 
-    return [
-      index + 1,
-      edge.data?.sourceLabelText || edge.data?.sourceLabel?.split(':')[1]?.trim() || '',
-      edge.data?.targetLabelText || edge.data?.targetLabel?.split(':')[1]?.trim() || '',
-      sourceNode?.data.label || '',
-      sourceConnector,
-      sourceNode?.data.place || '',
-      sourceCableConnector,
-      targetNode?.data.label || '',
-      targetConnector,
-      targetNode?.data.place || '',
-      targetCableConnector,
-      cableType,
-      edge.data?.cableLength || '',
-      edge.data?.cableMark || '',
+      return [
+        index + 1,
+        edge.data?.sourceLabelText || edge.data?.sourceLabel?.split(':')[1]?.trim() || '',
+        edge.data?.targetLabelText || edge.data?.targetLabel?.split(':')[1]?.trim() || '',
+        sourceNode?.data.label || '',
+        sourceConnector,
+        sourceNode?.data.place || '',
+        sourceCableConnector,
+        targetNode?.data.label || '',
+        targetConnector,
+        targetNode?.data.place || '',
+        targetCableConnector,
+        cableType,
+        edge.data?.cableLength || '',
+        edge.data?.cableMark || '',
+      ];
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['№ п/п', 'Маркировка кабеля', '', 'Начало', '', '', '', 'Конец', '', '', '', 'Проложен', '', ''],
+      ['', 'Начало', 'Конец', 'Обозначение прибора', 'Разъем на приборе', 'Место размещения', 'Разъем на кабеле', 'Обозначение прибора', 'Разъем на приборе', 'Место размещения', 'Разъем на кабеле', 'Тип сигнала', 'Длина, м', 'Марка'],
+      ...rows,
+    ]);
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
+      { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } },
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 6 } },
+      { s: { r: 0, c: 7 }, e: { r: 0, c: 10 } },
+      { s: { r: 0, c: 11 }, e: { r: 0, c: 13 } },
     ];
-  });
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([
-    ['№ п/п', 'Маркировка кабеля', '', 'Начало', '', '', '', 'Конец', '', '', '', 'Проложен', '', ''],
-    ['', 'Начало', 'Конец', 'Обозначение прибора', 'Разъем на приборе', 'Место размещения', 'Разъем на кабеле', 'Обозначение прибора', 'Разъем на приборе', 'Место размещения', 'Разъем на кабеле', 'Тип сигнала', 'Длина, м', 'Марка'],
-    ...rows,
-  ]);
-  ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
-    { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } },
-    { s: { r: 0, c: 3 }, e: { r: 0, c: 6 } },
-    { s: { r: 0, c: 7 }, e: { r: 0, c: 10 } },
-    { s: { r: 0, c: 11 }, e: { r: 0, c: 13 } },
-  ];
-  XLSX.utils.book_append_sheet(wb, ws, 'Кабельный журнал');
-  XLSX.writeFile(wb, `${schemaName || 'scheme'}_cable_journal.xlsx`);
-};
+    XLSX.utils.book_append_sheet(wb, ws, 'Кабельный журнал');
+    XLSX.writeFile(wb, `${schemaName || 'scheme'}_cable_journal.xlsx`);
+  };
 
   const clearCanvas = () => {
     if (window.confirm('Очистить холст? Все несохранённые изменения будут потеряны.')) {
@@ -992,8 +993,8 @@ const FlowEditor: React.FC = () => {
           snapGrid={gridSettings.snapGrid}
           connectionLineType={ConnectionLineType.Step}
           defaultEdgeOptions={{ type: 'cableEdge', animated: false }}
-          minZoom={0.1}   // можно оставить по умолчанию или задать своё
-          maxZoom={4}     // вместо 2 ставим 4 (400%)
+          minZoom={0.1}
+          maxZoom={4}
         >
           {gridSettings.visible && (
             <div style={{ opacity: gridSettings.opacity ?? 0.5 }}>
