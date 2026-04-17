@@ -1,7 +1,8 @@
 // src/App.tsx
+import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ReactFlowProvider } from '@xyflow/react';
 import { Provider } from 'react-redux';
+import { ReactFlowProvider } from '@xyflow/react';
 import { store } from './store';
 import { Topbar } from './components/layout/Topbar';
 import { DashboardPage } from './pages/DashboardPage';
@@ -13,6 +14,14 @@ import FlowEditorPage from './pages/FlowEditorPage';
 import './index.css';
 
 function App() {
+  useEffect(() => {
+    const userRole = localStorage.getItem('userRole');
+    if (!userRole) {
+      // Если роль не сохранена, отправляем на страницу входа
+      window.location.href = '/reactflow/login.html';
+    }
+  }, []);
+
   return (
     <Provider store={store}>
       <ReactFlowProvider>
