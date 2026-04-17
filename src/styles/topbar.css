@@ -138,3 +138,52 @@
 .role-switch option {
   background: var(--bg-panel-solid);
 }
+/* src/styles/topbar.css — добавьте в конец */
+.topbar-nav a i {
+  margin-right: 6px;
+}
+
+.topbar-icon-btn {
+  position: relative;
+}
+
+.topbar-icon-btn .fa-bell {
+  animation: ring 4s ease-in-out infinite;
+}
+
+@keyframes ring {
+  0%, 100% { transform: rotate(0); }
+  5%, 15% { transform: rotate(5deg); }
+  10%, 20% { transform: rotate(-5deg); }
+  25% { transform: rotate(0); }
+}
+
+.role-switch {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  margin-left: 8px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.role-switch option {
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+}
+
+.role-badge {
+  font-size: 0.7rem;
+  padding: 2px 10px;
+  background: var(--accent-glow);
+  border-radius: 40px;
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-left: 8px;
+}
