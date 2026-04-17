@@ -1,6 +1,6 @@
 /* src/index.css */
-@import './variables.css';
-@import './global.css';
+@import './styles/variables.css';
+@import './styles/global.css';
 
 /* ----- Дополнительные стили редактора схем ----- */
 .flow-editor {
