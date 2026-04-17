@@ -1,16 +1,42 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// src/App.tsx
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import { Topbar } from './components/layout/Topbar';
+import { DashboardPage } from './pages/DashboardPage';
+import { ProjectsPage } from './pages/ProjectsPage';
+import { CalculationsPage } from './pages/CalculationsPage';
+import { SpecificationsListPage } from './pages/SpecificationsListPage';
+import { SpecificationPage } from './pages/SpecificationPage';
 import FlowEditorPage from './pages/FlowEditorPage';
+import './index.css';
 
 function App() {
   return (
-    <ReactFlowProvider>
-      <BrowserRouter basename="/reactflow">
-        <Routes>
-          <Route path="/" element={<FlowEditorPage />} />
-        </Routes>
-      </BrowserRouter>
-    </ReactFlowProvider>
+    <Provider store={store}>
+      <ReactFlowProvider>
+        <HashRouter>
+          <div className="app">
+            <Topbar />
+            <div className="app-layout">
+              <main className="main-content">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/projects" element={<ProjectsPage />} />
+                  <Route path="/calculations" element={<CalculationsPage />} />
+                  <Route path="/specifications" element={<SpecificationsListPage />} />
+                  <Route path="/specification/:id" element={<SpecificationPage />} />
+                  <Route path="/specification" element={<SpecificationPage />} />
+                  <Route path="/flow-editor" element={<FlowEditorPage />} />
+                </Routes>
+              </main>
+            </div>
+          </div>
+        </HashRouter>
+      </ReactFlowProvider>
+    </Provider>
   );
 }
 
