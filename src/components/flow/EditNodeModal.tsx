@@ -19,17 +19,14 @@ const COLOR_PALETTE = [
   '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6',
 ];
 
-// 🆕 Функция генерации имени порта по разъёму, протоколу и направлению
 const generatePortName = (
   connector: ConnectorType,
   protocol: ProtocolType,
   direction: 'input' | 'output',
   existingPorts: DeviceInterface[]
 ): string => {
-  // Определяем базовое имя (префикс)
-  let baseName: string = connector; // по умолчанию берём разъём
+  let baseName: string = connector;
   if (connector === 'RJ45') {
-    // Для RJ45 используем протокол (кроме Ethernet -> LAN)
     if (protocol === 'Ethernet') baseName = 'LAN';
     else if (protocol === 'Dante') baseName = 'Dante';
     else if (protocol === 'AVoIP') baseName = 'AVoIP';
@@ -41,13 +38,9 @@ const generatePortName = (
     baseName = protocol === 'MIDI' ? 'MIDI' : 'RS-232';
   }
 
-  // Направление: IN или OUT
   const dirStr = direction === 'input' ? 'IN' : 'OUT';
-
-  // Собираем полный префикс: "HDMI IN", "Dante OUT" и т.д.
   const prefix = `${baseName} ${dirStr}`;
 
-  // Ищем максимальный номер среди портов с таким же префиксом
   let maxNum = 0;
   existingPorts.forEach(port => {
     if (port.name.startsWith(prefix)) {
@@ -59,6 +52,7 @@ const generatePortName = (
 
   return `${prefix} ${maxNum + 1}`;
 };
+
 const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, onSave }) => {
   const [editedData, setEditedData] = useState<DeviceNodeData | null>(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
@@ -85,7 +79,6 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
           current.poe = false;
           current.poePower = undefined;
         }
-        // Имя не меняем, так как пользователь мог его задать вручную
       } else {
         (current as any)[field] = value;
       }
@@ -99,8 +92,6 @@ const EditNodeModal: React.FC<EditNodeModalProps> = ({ isOpen, node, onClose, on
     const direction = type === 'inputs' ? 'input' : 'output';
     const defaultConnector: ConnectorType = 'HDMI';
     const defaultProtocol = CONNECTOR_PROTOCOL_MAP['HDMI'][0];
-
-    // 🆕 Генерируем автоматическое имя на основе разъёма/протокола
     const allPorts = [...editedData.inputs, ...editedData.outputs];
     const autoName = generatePortName(defaultConnector, defaultProtocol, direction, allPorts);
 
