@@ -17,7 +17,6 @@ const CableEdge: FC<EdgeProps> = ({
   sourcePosition,
   targetPosition,
   data,
-  selected,
   style = {},
   markerEnd,
   markerStart,
