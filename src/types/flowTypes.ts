@@ -1,7 +1,4 @@
 // src/types/flowTypes.ts
-// 🔧 Добавлены протоколы HDBaseT, AVoIP, SDVoE для RJ45
-// 🔧 В DeviceNodeData добавлено поле portNameTemplate (задел на будущее)
-
 export interface DeviceInterface {
   id: string;
   name: string;
@@ -53,7 +50,6 @@ export interface DeviceNodeData {
   showHandleHover?: boolean;
   deviceType?: DeviceType;
   networkSwitchConfig?: NetworkSwitchConfig;
-  portNameTemplate?: string; // задел для автоматического именования портов
 }
 
 export interface CableEdgeData {
@@ -101,7 +97,7 @@ export type ConnectorType =
 export type ProtocolType = 
   | 'HDMI' | 'DisplayPort' | 'DVI' | 'VGA' 
   | 'Ethernet' | 'Dante' | 'AES67' | 'AVB'
-  | 'HDBaseT' | 'AVoIP' | 'SDVoE'  // 🆕 добавлены
+  | 'HDBaseT' | 'AVoIP' | 'SDVoE'
   | 'RS-232' | 'RS-485' | 'Аудио' | 'MIDI' | 'USB';
 
 export const CONNECTOR_PROTOCOL_MAP: Record<ConnectorType, ProtocolType[]> = {
@@ -109,7 +105,7 @@ export const CONNECTOR_PROTOCOL_MAP: Record<ConnectorType, ProtocolType[]> = {
   'DisplayPort': ['DisplayPort'],
   'DVI': ['DVI'],
   'VGA': ['VGA'],
-  'RJ45': ['Ethernet', 'Dante', 'AES67', 'AVB', 'HDBaseT', 'AVoIP', 'SDVoE'], // 🆕 расширено
+  'RJ45': ['Ethernet', 'Dante', 'AES67', 'AVB', 'HDBaseT', 'AVoIP', 'SDVoE'],
   'XLR': ['Аудио'],
   'RCA': ['Аудио'],
   'TRS': ['Аудио'],
