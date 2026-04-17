@@ -25,6 +25,8 @@ export const VideoCalculator: React.FC<{ onBack?: () => void }> = ({ onBack }) =
       type: 'videoSource',
       modelName: `Видеоисточник (${bitrate} Мбит/с)`,
       latency: 0.5,
+      poe: false,
+      poePower: 0,
       poeEnabled: false,
       powerW: 5,
       shortName: `VID${Math.floor(Math.random() * 1000)}`,
