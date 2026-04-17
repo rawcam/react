@@ -45,6 +45,8 @@ export const VcCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       type: 'vcDevice',
       modelName: `Кодек ВКС (${result.text})`,
       latency: 0,
+      poe: false,
+      poePower: 0,
       poeEnabled: false,
       powerW: 0,
       shortName: `VC${Math.floor(Math.random() * 1000)}`,
