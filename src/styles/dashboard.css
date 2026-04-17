@@ -1,0 +1,258 @@
+/* src/styles/dashboard.css */
+.dashboard-page {
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+/* Виджеты (общие стили) */
+.dashboard-widget {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.dashboard-widget:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+}
+
+.dashboard-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px 10px 18px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.dashboard-widget-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.dashboard-widget-title i {
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+.dashboard-widget-actions {
+  position: relative;
+}
+
+.dashboard-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.dashboard-icon-btn:hover {
+  background: var(--border-light);
+  color: var(--accent);
+}
+
+.dashboard-widget-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 8px;
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 8px 0;
+  min-width: 180px;
+  z-index: 1000;
+  box-shadow: 0 0 15px var(--accent-glow);
+  backdrop-filter: blur(8px);
+}
+
+body.dark .dashboard-widget-menu {
+  background: #2a2f3f;
+}
+
+.dashboard-widget-menu-item {
+  padding: 8px 18px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-primary);
+}
+
+.dashboard-widget-menu-item:hover {
+  background: var(--border-light);
+  color: var(--accent);
+}
+
+.dashboard-widget-content {
+  padding: 14px 18px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Финансовые строки */
+.dashboard-finance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.9rem;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.dashboard-finance-row:last-child {
+  border-bottom: none;
+}
+
+.dashboard-finance-label {
+  color: var(--text-muted);
+  font-weight: 450;
+}
+
+.dashboard-finance-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dashboard-trend {
+  font-size: 0.7rem;
+  margin-left: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.dashboard-trend.up { color: #10b981; }
+.dashboard-trend.down { color: var(--danger); }
+
+/* Компактный режим */
+.dashboard-widget.compact-widget {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.compact-widget-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-widget-content i {
+  font-size: 2.2rem;
+  color: var(--accent);
+}
+
+.compact-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.compact-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Загрузка сотрудников */
+.dashboard-workload-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.dashboard-workload-row:last-child {
+  border-bottom: none;
+}
+
+.dashboard-workload-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.dashboard-workload-count {
+  background: var(--accent-glow);
+  padding: 2px 10px;
+  border-radius: 40px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Риски */
+.dashboard-risk-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.dashboard-risk-name {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.dashboard-risk-delay {
+  font-weight: 600;
+}
+
+/* Сервис */
+.dashboard-service-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.dashboard-service-label {
+  color: var(--text-muted);
+}
+
+.dashboard-service-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
