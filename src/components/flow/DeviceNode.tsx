@@ -145,7 +145,7 @@ const DeviceNode: React.FC<NodeProps> = ({ id, data, selected }) => {
               <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
                 {output && (
                   <>
-                    <span style={{ overflow: 'visible', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...getPortStyle(output) }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...getPortStyle(output) }}>
                       {output.name}
                     </span>
                     <Handle
@@ -156,7 +156,7 @@ const DeviceNode: React.FC<NodeProps> = ({ id, data, selected }) => {
                       style={{
                         background: effectiveBorderColor,
                         top: '50%',
-                        right: -handleLeftOffset,
+                        right: -handleRightOffset,
                         transform: 'translateY(-50%)',
                         width: 8,
                         height: 1,
