@@ -16,6 +16,7 @@ import specificationsReducer from './specificationsSlice';
 import widgetsReducer from './widgetsSlice';
 import uiReducer from './uiSlice';
 import currencyReducer from './currencySlice';
+import themeReducer from './themeSlice';
 
 export const store = configureStore({
   reducer: {
@@ -35,6 +36,7 @@ export const store = configureStore({
     widgets: widgetsReducer,
     ui: uiReducer,
     currency: currencyReducer,
+    theme: themeReducer,
   },
 });
 
