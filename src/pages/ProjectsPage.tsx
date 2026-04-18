@@ -1,85 +1,206 @@
 // src/pages/ProjectsPage.tsx
-import React, { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
-import { useProjectsDb } from '../hooks/useProjectsDb';
+import { ProjectList } from '../components/projects/ProjectList';
+import { ProjectDetail } from '../features/projects/ProjectDetail';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
-import { ProjectDetail } from '../components/projects/ProjectDetail';
-import { Project } from '../store/projectsSlice';
+import { useAuth } from '../hooks/useAuth';
+import { useProjectsDb } from '../hooks/useProjectsDb';
 import './ProjectsPage.css';
 
-export const ProjectsPage: React.FC = () => {
+export const ProjectsPage = () => {
+  const { hasRole } = useAuth();
+  const { loadProjects, addProject, initDemoData } = useProjectsDb();
   const projects = useSelector((state: RootState) => state.projects.list);
-  const { addProjectToDb } = useProjectsDb();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const handleCreateProject = async (newProject: Omit<Project, 'id' | 'shortId'>) => {
-    await addProjectToDb(newProject);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    const saved = localStorage.getItem('projectsViewMode');
+    return saved === 'list' ? 'list' : 'grid';
+  });
+
+  const [sortBy, setSortBy] = useState<'name' | 'budget' | 'margin' | 'date' | 'progress'>('name');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'priority' | 'normal'>('all');
+
+  const getProjectIdFromHash = () => {
+    const hash = window.location.hash;
+    const match = hash.match(/[?&]id=([^&]+)/);
+    return match ? match[1] : null;
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      await initDemoData();
+      await loadProjects();
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    const projectId = getProjectIdFromHash();
+    if (projectId && projects.length > 0) {
+      const project = projects.find(p => p.id === projectId);
+      setSelectedProject(project || null);
+    }
+  }, [projects, loading]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (loading) return;
+      const projectId = getProjectIdFromHash();
+      if (projectId && projects.length > 0) {
+        const project = projects.find(p => p.id === projectId);
+        setSelectedProject(project || null);
+      } else {
+        setSelectedProject(null);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [projects, loading]);
+
+  useEffect(() => {
+    localStorage.setItem('projectsViewMode', viewMode);
+  }, [viewMode]);
+
+  const filteredAndSortedProjects = useMemo(() => {
+    let filtered = [...projects];
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(p => p.status === statusFilter);
+    }
+    if (priorityFilter === 'priority') {
+      filtered = filtered.filter(p => p.priority === true);
+    } else if (priorityFilter === 'normal') {
+      filtered = filtered.filter(p => p.priority === false);
+    }
+
+    if (sortBy === 'name') {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'budget') {
+      filtered.sort((a, b) => b.contractAmount - a.contractAmount);
+    } else if (sortBy === 'margin') {
+      filtered.sort((a, b) => (b.actualIncome - b.actualExpenses) - (a.actualIncome - a.actualExpenses));
+    } else if (sortBy === 'date') {
+      filtered.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    } else if (sortBy === 'progress') {
+      filtered.sort((a, b) => b.progress - a.progress);
+    }
+
+    return filtered;
+  }, [projects, sortBy, statusFilter, priorityFilter]);
+
+  const handleSelectProject = (project: any) => {
+    navigate(`/projects?id=${project.id}`, { replace: true });
+  };
+
+  const handleBack = () => {
+    navigate('/projects', { replace: true });
+    setSelectedProject(null);
+  };
+
+  const handleCreate = async (projectData: any) => {
+    await addProject(projectData);
     setShowCreateModal(false);
   };
 
+  const resetFilters = () => {
+    setSortBy('name');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+  };
+
+  if (loading) {
+    return (
+      <div className="projects-page">
+        <div className="dashboard-wrapper" style={{ textAlign: 'center', padding: '40px' }}>
+          <i className="fas fa-spinner fa-pulse" style={{ fontSize: '2rem' }}></i>
+          <p>Загрузка проектов...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (selectedProject) {
-    return <ProjectDetail project={selectedProject} onBack={() => setSelectedProject(null)} />;
+    return <ProjectDetail project={selectedProject} onBack={handleBack} />;
   }
 
   return (
-    <div className="projects-page" style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 600, color: 'var(--text-primary)' }}>Проекты</h1>
-        <button
-          className="btn-primary"
-          onClick={() => setShowCreateModal(true)}
-          style={{ padding: '10px 20px', borderRadius: '40px' }}
-        >
-          <i className="fas fa-plus"></i> Новый проект
-        </button>
-      </div>
-
-      <div className="projects-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
-        {projects.map(project => (
-          <div
-            key={project.id}
-            className="project-card"
-            onClick={() => setSelectedProject(project)}
-            style={{
-              background: 'var(--bg-panel)',
-              borderRadius: '20px',
-              padding: '20px',
-              boxShadow: 'var(--shadow)',
-              cursor: 'pointer',
-              transition: 'transform 0.1s, box-shadow 0.2s',
-              border: '1px solid var(--border-light)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>{project.shortId}</div>
-                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px', color: 'var(--text-primary)' }}>{project.name}</h3>
-              </div>
-              {project.priority && <i className="fas fa-exclamation-circle" style={{ color: 'var(--danger)' }}></i>}
+    <div className="projects-page">
+      <div className="dashboard-wrapper">
+        <div className="projects-toolbar">
+          <div className="toolbar-left">
+            <div className="view-toggle">
+              <button
+                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+              >
+                <i className="fas fa-th"></i> Сетка
+              </button>
+              <button
+                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+              >
+                <i className="fas fa-list"></i> Список
+              </button>
             </div>
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-              <span><i className="fas fa-user"></i> {project.engineer}</span>
-              <span><i className="fas fa-chart-line"></i> {project.progress}%</span>
+            <div className="filter-group">
+              <label><i className="fas fa-sort"></i> Сортировка</label>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
+                <option value="name">По названию</option>
+                <option value="budget">По бюджету (убыв.)</option>
+                <option value="margin">По марже (убыв.)</option>
+                <option value="date">По дате начала (новые)</option>
+                <option value="progress">По прогрессу</option>
+              </select>
             </div>
-            <div style={{ height: '6px', background: 'var(--border-light)', borderRadius: '3px', marginBottom: '16px' }}>
-              <div style={{ width: `${project.progress}%`, height: '6px', background: 'var(--accent)', borderRadius: '3px' }} />
+            <div className="filter-group">
+              <label><i className="fas fa-filter"></i> Статус</label>
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="all">Все</option>
+                <option value="presale">Пресейл</option>
+                <option value="design">Проект</option>
+                <option value="ready">Готов</option>
+                <option value="construction">Стройка</option>
+                <option value="done">Завершён</option>
+              </select>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-              <span style={{ color: 'var(--text-primary)' }}>Статус: {project.status}</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                {new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(project.contractAmount)}
-              </span>
+            <div className="filter-group">
+              <label><i className="fas fa-star"></i> Приоритет</label>
+              <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as any)}>
+                <option value="all">Все</option>
+                <option value="priority">Только срочные</option>
+                <option value="normal">Обычные</option>
+              </select>
             </div>
+            <button className="reset-btn" onClick={resetFilters}>Сбросить</button>
           </div>
-        ))}
-      </div>
+          {(hasRole('director') || hasRole('pm')) && (
+            <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+              <i className="fas fa-plus"></i> Новый проект
+            </button>
+          )}
+        </div>
 
+        <ProjectList
+          projects={filteredAndSortedProjects}
+          onSelectProject={handleSelectProject}
+          viewMode={viewMode}
+        />
+      </div>
       <CreateProjectModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreate={handleCreateProject}
+        onCreate={handleCreate}
       />
     </div>
   );
