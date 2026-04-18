@@ -9,24 +9,18 @@
 @import './styles/specifications.css';
 @import './styles/widgets.css';
 
-/* ----- Дополнительные стили редактора схем ----- */
+/* ----- ИЗОЛЯЦИЯ РЕДАКТОРА СХЕМ ----- */
 .flow-editor {
   --sidebar-width: 340px;
+  font-size: 14px;
 }
-
-.react-flow__edge-path {
-  stroke: #2563eb;
+.flow-editor .react-flow__node {
+  font-size: 10px;
+}
+.flow-editor .react-flow__edge-path {
   stroke-width: 2;
-  animation: none !important;
-  marker-end: none !important;
-  marker-start: none !important;
 }
-
-.react-flow__edge.selected .react-flow__edge-path {
-  stroke: #ef4444 !important;
-}
-
-.react-flow__handle {
+.flow-editor .react-flow__handle {
   width: 8px !important;
   height: 1px !important;
   min-width: 8px !important;
@@ -38,21 +32,18 @@
   transform: translateY(-50%) !important;
   z-index: 10 !important;
 }
-
-.react-flow__node {
+.flow-editor .react-flow__node {
   overflow: visible !important;
 }
-
-.react-flow__handle.handle-hover-visible {
+.flow-editor .react-flow__handle.handle-hover-visible {
   transition: box-shadow 0.1s;
 }
-.react-flow__handle.handle-hover-visible:hover {
+.flow-editor .react-flow__handle.handle-hover-visible:hover {
   box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.35) !important;
   background: #3b82f6 !important;
   z-index: 100;
 }
-
-.flow-statusbar {
+.flow-editor .flow-statusbar {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -70,27 +61,23 @@
   z-index: 10;
   pointer-events: none;
 }
-
-.flow-statusbar span {
+.flow-editor .flow-statusbar span {
   pointer-events: auto;
 }
-
-.flow-statusbar .status-left,
-.flow-statusbar .status-center,
-.flow-statusbar .status-right {
+.flow-editor .flow-statusbar .status-left,
+.flow-editor .flow-statusbar .status-center,
+.flow-editor .flow-statusbar .status-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
-
-/* Иконки в свёрнутом сайдбаре редактора */
-.sidebar.collapsed .section-header i:first-child {
+.flow-editor .sidebar.collapsed .section-header i:first-child {
   display: inline-block !important;
   font-size: 1.4rem !important;
   color: var(--accent) !important;
   margin-right: 0 !important;
 }
-.sidebar.collapsed .section-header span,
-.sidebar.collapsed .section-header i:last-child {
+.flow-editor .sidebar.collapsed .section-header span,
+.flow-editor .sidebar.collapsed .section-header i:last-child {
   display: none !important;
 }
