@@ -21,7 +21,7 @@ const defaultVisibleForRole: Record<string, WidgetId[]> = {
   pm: ['projectsFinance', 'service', 'workload', 'risks', 'carousel'],
   engineer: ['service', 'workload', 'carousel'],
   designer: ['carousel'],
-  logist: ['service', 'carousel'],
+  logist: ['carousel'],
 };
 
 const getRoleFromStorage = (): string => {
