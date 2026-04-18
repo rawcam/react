@@ -218,8 +218,8 @@
     scene.background = new THREE.Color(0x050510);
     
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(6, 4, 14);
-    camera.lookAt(-2, 1, 0);
+    camera.position.set(20, 12, 40);
+    camera.lookAt(0, 0, 0);
     
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -232,101 +232,71 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.8;
+    controls.autoRotateSpeed = 0.3;
     controls.enableZoom = true;
-    controls.zoomSpeed = 1.2;
-    controls.rotateSpeed = 0.6;
-    controls.enablePan = false;
-    controls.maxPolarAngle = Math.PI / 1.8;
+    controls.zoomSpeed = 2.0;
+    controls.rotateSpeed = 0.8;
+    controls.enablePan = true;
+    controls.maxPolarAngle = Math.PI;
     controls.minDistance = 8;
-    controls.maxDistance = 30;
-    controls.target.set(-2, 1, 0);
+    controls.maxDistance = 180;
+    controls.target.set(0, 0, 0);
 
-    // --- Освещение (уменьшена интенсивность для спутника) ---
-    const sunLight = new THREE.DirectionalLight(0xfff5e6, 0.9);
-    sunLight.position.set(8, 20, 6);
+    // --- ОСВЕЩЕНИЕ: источник в центре (невидимый) ---
+    const sunLight = new THREE.PointLight(0xffdd99, 1.8, 0, 0);
+    sunLight.position.set(0, 0, 0);
     sunLight.castShadow = true;
-    sunLight.receiveShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
-    const d = 20;
-    sunLight.shadow.camera.left = -d;
-    sunLight.shadow.camera.right = d;
-    sunLight.shadow.camera.top = d;
-    sunLight.shadow.camera.bottom = -d;
-    sunLight.shadow.camera.near = 1;
-    sunLight.shadow.camera.far = 50;
-    sunLight.shadow.bias = -0.0005;
+    sunLight.shadow.bias = -0.0001;
     scene.add(sunLight);
     
-    const fillLight = new THREE.AmbientLight(0x404c66, 0.8);
-    scene.add(fillLight);
+    const ambientLight = new THREE.AmbientLight(0x404c66, 0.6);
+    scene.add(ambientLight);
     
-    const backLight1 = new THREE.PointLight(0x6688aa, 0.5);
-    backLight1.position.set(-5, 4, -10);
-    scene.add(backLight1);
-    const backLight2 = new THREE.PointLight(0xaa88aa, 0.4);
-    backLight2.position.set(10, 3, -14);
-    scene.add(backLight2);
-    
-    const planetFillLight = new THREE.PointLight(0xaaccdd, 0.5);
-    planetFillLight.position.set(-2, 2, 8);
-    scene.add(planetFillLight);
+    const backLight = new THREE.DirectionalLight(0x99aacc, 0.3);
+    backLight.position.set(-20, 10, -25);
+    scene.add(backLight);
 
-    // --- Туманность и звёзды ---
-    function createNebula() {
+    // --- Галактика и звёзды ---
+    function createGalaxy() {
       const geometry = new THREE.BufferGeometry();
-      const count = 2500;
+      const count = 8000;
       const positions = new Float32Array(count * 3);
       const colors = new Float32Array(count * 3);
-      const color1 = new THREE.Color(0x906080);
-      const color2 = new THREE.Color(0x704060);
-      const color3 = new THREE.Color(0x5070a0);
-      
+      const innerColor = new THREE.Color(0xaaccff);
+      const outerColor = new THREE.Color(0x5577aa);
       for (let i = 0; i < count; i++) {
-        const r = 30 + Math.random() * 60;
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos((Math.random() * 2) - 1);
-        const x = Math.sin(phi) * Math.cos(theta) * r;
-        const y = Math.sin(phi) * Math.sin(theta) * r * 0.4;
-        const z = Math.cos(phi) * r;
-        
+        const radius = 60 + Math.random() * 90;
+        const spin = radius * 0.03;
+        const angle = (i % 400) * 0.06 + spin;
+        const height = (Math.random() - 0.5) * 25 * Math.sin(radius * 0.05);
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const y = height;
         positions[i*3] = x;
-        positions[i*3+1] = y + 2;
+        positions[i*3+1] = y;
         positions[i*3+2] = z;
-        
-        let mixColor;
-        if (Math.random() < 0.5) {
-          mixColor = color1.clone().lerp(color2, Math.random());
-        } else {
-          mixColor = color1.clone().lerp(color3, Math.random());
-        }
-        mixColor.multiplyScalar(0.7 + Math.random() * 0.5);
-        
+        const mixColor = innerColor.clone().lerp(outerColor, radius / 150);
         colors[i*3] = mixColor.r;
         colors[i*3+1] = mixColor.g;
         colors[i*3+2] = mixColor.b;
       }
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      
-      const material = new THREE.PointsMaterial({ 
-        size: 0.35, 
-        vertexColors: true, 
-        transparent: true, 
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      });
+      const material = new THREE.PointsMaterial({ size: 0.6, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       return new THREE.Points(geometry, material);
     }
-    const nebula = createNebula();
-    scene.add(nebula);
+    const galaxy = createGalaxy();
+    galaxy.rotation.x = 0.3;
+    galaxy.rotation.y = 0.5;
+    scene.add(galaxy);
     
     const starsGeometry = new THREE.BufferGeometry();
-    const starsCount = 4000;
+    const starsCount = 6000;
     const starsPositions = new Float32Array(starsCount * 3);
     for (let i = 0; i < starsCount * 3; i += 3) {
-      const r = 80 + Math.random() * 150;
+      const r = 250 + Math.random() * 400;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos((Math.random() * 2) - 1);
       starsPositions[i] = Math.sin(phi) * Math.cos(theta) * r;
@@ -334,218 +304,184 @@
       starsPositions[i+2] = Math.cos(phi) * r;
     }
     starsGeometry.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
-    const starsMaterial = new THREE.PointsMaterial({color: 0xffffff, size: 0.2, transparent: true});
+    const starsMaterial = new THREE.PointsMaterial({color: 0xffffff, size: 0.4, transparent: true});
     const stars = new THREE.Points(starsGeometry, starsMaterial);
     scene.add(stars);
-    
-    const dustGeo = new THREE.BufferGeometry();
-    const dustPos = new Float32Array(2000 * 3);
-    for (let i = 0; i < 2000 * 3; i+=3) {
-      dustPos[i] = (Math.random() - 0.5) * 350;
-      dustPos[i+1] = (Math.random() - 0.5) * 350;
-      dustPos[i+2] = (Math.random() - 0.5) * 350;
-    }
-    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-    const dustMat = new THREE.PointsMaterial({color: 0xd0b0c0, size: 0.1, transparent: true});
-    const dust = new THREE.Points(dustGeo, dustMat);
-    scene.add(dust);
 
-    // --- Основная группа (смещена влево) ---
-    const mainGroup = new THREE.Group();
-    mainGroup.position.set(-4, 0.5, -2);
-    scene.add(mainGroup);
-
-    // --- Земля ---
+    // --- Земля (с усиленным свечением атмосферы) ---
     const earthGroup = new THREE.Group();
     const textureLoader = new THREE.TextureLoader();
-    
     const earthMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
     const earthSpecularMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg');
     const earthNormalMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');
     const cloudMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
     
     const earthMaterial = new THREE.MeshPhongMaterial({
-      map: earthMap,
-      specularMap: earthSpecularMap,
-      specular: new THREE.Color(0x333333),
-      shininess: 10,
-      normalMap: earthNormalMap,
-      normalScale: new THREE.Vector2(1.8, 1.8),
+      map: earthMap, specularMap: earthSpecularMap, specular: new THREE.Color(0x333333),
+      shininess: 10, normalMap: earthNormalMap, normalScale: new THREE.Vector2(1.5, 1.5)
     });
-    const earthMesh = new THREE.Mesh(new THREE.SphereGeometry(2.4, 64, 64), earthMaterial);
-    earthMesh.castShadow = true;
-    earthMesh.receiveShadow = true;
+    const earthMesh = new THREE.Mesh(new THREE.SphereGeometry(3.2, 64, 64), earthMaterial);
+    earthMesh.castShadow = true; earthMesh.receiveShadow = true;
     earthGroup.add(earthMesh);
     
     const cloudMaterial = new THREE.MeshPhongMaterial({
-      map: cloudMap,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide
+      map: cloudMap, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending,
+      depthWrite: false, side: THREE.DoubleSide
     });
-    const cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(2.43, 64, 64), cloudMaterial);
+    const cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(3.23, 64, 64), cloudMaterial);
     earthGroup.add(cloudMesh);
     
-    const atmosGeo = new THREE.SphereGeometry(2.6, 64, 64);
-    const atmosMat = new THREE.MeshPhongMaterial({
-      color: 0x88aacc,
-      transparent: true,
-      opacity: 0.12,
-      side: THREE.BackSide
+    // Атмосфера с голубым эмиссивным свечением
+    const atmosGeo = new THREE.SphereGeometry(3.5, 64, 64);
+    const atmosMat = new THREE.MeshPhongMaterial({ 
+      color: 0x88aacc, 
+      transparent: true, 
+      opacity: 0.25, 
+      side: THREE.BackSide,
+      emissive: new THREE.Color(0x4488ff),
+      emissiveIntensity: 0.8
     });
     const atmosphere = new THREE.Mesh(atmosGeo, atmosMat);
     earthGroup.add(atmosphere);
     
-    earthGroup.position.set(0, 0.6, 0);
-    mainGroup.add(earthGroup);
+    // Дополнительный слой для яркости
+    const glowGeo = new THREE.SphereGeometry(3.6, 48, 48);
+    const glowMat = new THREE.MeshPhongMaterial({
+      color: 0x88ccff,
+      transparent: true,
+      opacity: 0.15,
+      side: THREE.BackSide,
+      emissive: new THREE.Color(0x88aaff),
+      emissiveIntensity: 0.6
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    earthGroup.add(glow);
+    
+    earthGroup.position.set(-12, 1.8, -8);
+    scene.add(earthGroup);
 
-    // --- Спутник (голубые тона, сфера + 2 панели, без полусферы) ---
+    // --- Спутник ---
     const satellite = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.8, metalness: 0.05 });
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), bodyMat);
+    body.castShadow = true; body.receiveShadow = true;
+    satellite.add(body);
     
-    // Основная сфера (голубой оттенок)
-    const coreSphere = new THREE.Mesh(new THREE.SphereGeometry(1.0, 32, 16), 
-      new THREE.MeshStandardMaterial({ color: 0x7aa5c0, roughness: 0.4, metalness: 0.3, emissive: new THREE.Color(0x112233), emissiveIntensity: 0.1 }));
-    coreSphere.castShadow = true;
-    coreSphere.receiveShadow = true;
-    satellite.add(coreSphere);
+    const detailMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.7 });
+    const cyl1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.25), detailMat);
+    cyl1.position.set(0.25, 0.35, 0.35); cyl1.rotation.x = 0.3; cyl1.castShadow = true;
+    satellite.add(cyl1);
+    const cyl2 = cyl1.clone();
+    cyl2.position.set(-0.25, 0.35, -0.35); cyl2.rotation.x = -0.2;
+    satellite.add(cyl2);
     
-    // Декоративные кольца (серебристые)
-    const ringGeo = new THREE.TorusGeometry(0.95, 0.06, 16, 32);
-    const ringMat = new THREE.MeshStandardMaterial({ color: 0xaaccdd, roughness: 0.5, metalness: 0.4 });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI/2;
-    ring.rotation.z = 0.3;
-    ring.castShadow = true;
-    ring.receiveShadow = true;
-    satellite.add(ring);
+    const antennaMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.5 });
+    const antennaBase = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.4), antennaMat);
+    antennaBase.position.set(0.35, 0.6, 0.25); antennaBase.rotation.z = 0.1; antennaBase.rotation.x = -0.2; antennaBase.castShadow = true;
+    satellite.add(antennaBase);
+    const antennaBall = new THREE.Mesh(new THREE.SphereGeometry(0.07), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: new THREE.Color(0x335577), emissiveIntensity: 0.3 }));
+    antennaBall.position.set(0.55, 0.8, 0.4); antennaBall.castShadow = true;
+    satellite.add(antennaBall);
     
-    const ring2 = ring.clone();
-    ring2.rotation.z = -0.2;
-    ring2.rotation.x = 0.7;
-    satellite.add(ring2);
-    
-    // Антенна (небольшая штыревая, без тарелки)
-    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8), new THREE.MeshStandardMaterial({ color: 0xbbccdd, roughness: 0.3 }));
-    antenna.position.set(0.8, 0.5, 0.5);
-    antenna.rotation.z = 0.2;
-    antenna.rotation.x = -0.3;
-    antenna.castShadow = true;
-    satellite.add(antenna);
-    const antennaTip = new THREE.Mesh(new THREE.SphereGeometry(0.08), new THREE.MeshStandardMaterial({ color: 0x88aacc, emissive: new THREE.Color(0x224466), emissiveIntensity: 0.3 }));
-    antennaTip.position.set(1.2, 0.8, 0.7);
-    antennaTip.castShadow = true;
-    satellite.add(antennaTip);
-    
-    // Солнечные панели (две большие)
-    function createPanel(sign) {
-      const panelGroup = new THREE.Group();
-      const frameMat = new THREE.MeshStandardMaterial({ color: 0x8aaccc, roughness: 0.5 });
-      const cellMat = new THREE.MeshStandardMaterial({ color: 0x3a6a9c, roughness: 0.7, emissive: new THREE.Color(0x112233), emissiveIntensity: 0.2 });
-      
-      const frame = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.05, 1.2), frameMat);
-      frame.castShadow = true;
-      frame.receiveShadow = true;
-      panelGroup.add(frame);
-      
-      for (let i = -1.0; i <= 1.0; i+=0.7) {
-        for (let j = -0.3; j <= 0.3; j+=0.6) {
-          const cell = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.02, 0.45), cellMat);
-          cell.position.set(i, 0.04, j);
-          cell.castShadow = true;
-          cell.receiveShadow = true;
-          panelGroup.add(cell);
+    function createSolarPanel(sign) {
+      const group = new THREE.Group();
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.7 });
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.03, 0.9), frameMat);
+      frame.castShadow = true; frame.receiveShadow = true;
+      group.add(frame);
+      const cellMat = new THREE.MeshStandardMaterial({ color: 0x99aacc, roughness: 0.8, emissive: new THREE.Color(0x224466), emissiveIntensity: 0.1 });
+      const cellWidth = 0.4; const cellDepth = 0.35; const gap = 0.06;
+      for (let i = -1; i <= 1; i+=2) {
+        for (let j = -0.6; j <= 0.6; j+=0.6) {
+          const cell = new THREE.Mesh(new THREE.BoxGeometry(cellWidth, 0.02, cellDepth), cellMat);
+          cell.position.set(i * (cellWidth/2 + gap), 0.03, j * (cellDepth/2 + gap*0.5));
+          cell.castShadow = true; cell.receiveShadow = true;
+          group.add(cell);
         }
       }
-      
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.0), new THREE.MeshStandardMaterial({ color: 0x99aacc }));
-      arm.rotation.z = Math.PI/2;
-      arm.position.set(sign * 1.2, 0.0, 0);
-      arm.castShadow = true;
-      arm.receiveShadow = true;
-      panelGroup.add(arm);
-      
-      panelGroup.position.set(sign * 2.0, 0.2, 0);
-      return panelGroup;
+      const armMat = new THREE.MeshStandardMaterial({ color: 0xbbbbbb, roughness: 0.6 });
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.7), armMat);
+      arm.rotation.z = Math.PI/2; arm.position.set(sign * 0.7, 0.0, 0); arm.castShadow = true; arm.receiveShadow = true;
+      group.add(arm);
+      group.position.set(sign * 1.2, 0.15, 0);
+      return group;
     }
-    
-    satellite.add(createPanel(-1));
-    satellite.add(createPanel(1));
-    
-    satellite.position.set(4.5, 1.5, 1.5); // дальше от Земли
-    satellite.rotation.y = 0.5;
-    satellite.rotation.x = 0.1;
-    satellite.rotation.z = 0.05;
-    mainGroup.add(satellite);
+    satellite.add(createSolarPanel(-1));
+    satellite.add(createSolarPanel(1));
+    satellite.position.set(-6, 3.5, 2.5);
+    satellite.rotation.y = 0.5; satellite.rotation.x = 0.1;
+    scene.add(satellite);
 
-    // --- Обломки (малиновые) ---
-    const debrisGroup = new THREE.Group();
-    const debrisMat = new THREE.MeshStandardMaterial({ 
-      color: 0xb05070, 
-      roughness: 0.7,
-      emissive: new THREE.Color(0x331122),
-      emissiveIntensity: 0.15
-    });
+    // --- Луна ---
+    const moonMap = textureLoader.load('https://threejs.org/examples/textures/planets/moon_1024.jpg');
+    const moon = new THREE.Mesh(new THREE.SphereGeometry(1.2, 48, 32), new THREE.MeshStandardMaterial({ map: moonMap, roughness: 0.95 }));
+    moon.castShadow = true; moon.receiveShadow = true;
+    scene.add(moon);
+
+    // --- Планеты (движение по орбитам, без пересечения с Землёй) ---
+    const mercuryMap = textureLoader.load('https://threejs.org/examples/textures/planets/mercury.jpg');
+    const venusMap = textureLoader.load('https://threejs.org/examples/textures/planets/venus.jpg');
+    const marsMap = textureLoader.load('https://threejs.org/examples/textures/planets/mars.jpg');
+    const jupiterMap = textureLoader.load('https://threejs.org/examples/textures/planets/jupiter.jpg');
+    const saturnMap = textureLoader.load('https://threejs.org/examples/textures/planets/saturn.jpg');
+    const uranusMap = textureLoader.load('https://threejs.org/examples/textures/planets/uranus.jpg');
+    const neptuneMap = textureLoader.load('https://threejs.org/examples/textures/planets/neptune.jpg');
     
-    for (let i = 0; i < 50; i++) {
-      let mesh;
-      const shape = Math.random();
-      if (shape < 0.4) {
-        mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.15 + Math.random()*0.2), debrisMat);
-      } else if (shape < 0.7) {
-        mesh = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.2, 0.3), debrisMat);
-      } else {
-        mesh = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.3, 4), debrisMat);
+    function createEmissivePlanet(radius, map, baseColor, hasRing = false, ringColor = 0xc0b0a0) {
+      const mat = new THREE.MeshPhongMaterial({
+        map, emissive: new THREE.Color(baseColor), emissiveIntensity: 0.6,
+        shininess: 5, specular: new THREE.Color(0x222222)
+      });
+      const planet = new THREE.Mesh(new THREE.SphereGeometry(radius, 64, 48), mat);
+      planet.castShadow = true; planet.receiveShadow = true;
+      
+      if (hasRing) {
+        const ringGroup = new THREE.Group();
+        const ring1Geo = new THREE.TorusGeometry(radius * 1.7, radius * 0.12, 32, 128);
+        const ring1Mat = new THREE.MeshPhongMaterial({ color: ringColor, side: THREE.DoubleSide, transparent: true, opacity: 0.5, emissive: new THREE.Color(0x332211), emissiveIntensity: 0.2 });
+        const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
+        ring1.rotation.x = Math.PI/2 + 0.1; ring1.rotation.z = 0.2; ring1.castShadow = true; ring1.receiveShadow = true;
+        ringGroup.add(ring1);
+        
+        const ring2Geo = new THREE.TorusGeometry(radius * 1.4, radius * 0.06, 16, 128);
+        const ring2Mat = new THREE.MeshPhongMaterial({ color: 0xd0c0b0, side: THREE.DoubleSide, transparent: true, opacity: 0.6, emissive: new THREE.Color(0x442211), emissiveIntensity: 0.2 });
+        const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+        ring2.rotation.x = Math.PI/2 + 0.15; ring2.rotation.z = 0.25; ring2.castShadow = true; ring2.receiveShadow = true;
+        ringGroup.add(ring2);
+        
+        const ring3Geo = new THREE.TorusGeometry(radius * 2.0, radius * 0.04, 16, 128);
+        const ring3Mat = new THREE.MeshPhongMaterial({ color: 0xb0a090, side: THREE.DoubleSide, transparent: true, opacity: 0.4, emissive: new THREE.Color(0x331100), emissiveIntensity: 0.2 });
+        const ring3 = new THREE.Mesh(ring3Geo, ring3Mat);
+        ring3.rotation.x = Math.PI/2 + 0.05; ring3.rotation.z = 0.15; ring3.castShadow = true; ring3.receiveShadow = true;
+        ringGroup.add(ring3);
+        
+        planet.userData.ring = ringGroup;
+        scene.add(ringGroup);
       }
       
-      mesh.position.set(
-        (Math.random() - 0.5) * 22,
-        (Math.random() - 0.2) * 12,
-        (Math.random() - 0.5) * 22 - 4
-      );
-      mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      debrisGroup.add(mesh);
-    }
-    mainGroup.add(debrisGroup);
-    
-    // --- Малые планеты ---
-    function createSmallPlanet(radius, color, pos, mapType = null) {
-      const geo = new THREE.SphereGeometry(radius, 32, 16);
-      let mat;
-      if (mapType === 'moon') {
-        const moonMap = textureLoader.load('https://threejs.org/examples/textures/planets/moon_1024.jpg');
-        mat = new THREE.MeshStandardMaterial({ map: moonMap, roughness: 0.9, color: 0xc0a0b0 });
-      } else {
-        mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.6, emissive: new THREE.Color(0x221122), emissiveIntensity: 0.2 });
-      }
-      const planet = new THREE.Mesh(geo, mat);
-      planet.position.set(pos[0], pos[1], pos[2]);
-      planet.castShadow = true;
-      planet.receiveShadow = true;
       return planet;
     }
     
-    const smallPlanet1 = createSmallPlanet(1.0, 0xb06080, [-18, 2, -22]);
-    const smallPlanet2 = createSmallPlanet(0.7, 0xa05070, [16, 2.5, -28]);
-    const smallPlanet3 = createSmallPlanet(1.3, 0xc07090, [22, 0.5, -18], 'moon');
-    const smallPlanet4 = createSmallPlanet(0.8, 0xd080a0, [-22, 3.5, 12]);
+    // Увеличены радиусы орбит для внутренних планет, чтобы не задевали Землю (Земля на ~14.4 от центра)
+    const planets = [
+      { mesh: createEmissivePlanet(1.0, mercuryMap, 0xaaaaaa), radius: 18, speed: 0.5, offsetY: 0.2 },
+      { mesh: createEmissivePlanet(1.2, venusMap, 0xe6b800), radius: 24, speed: 0.35, offsetY: 0.5 },
+      { mesh: createEmissivePlanet(1.1, marsMap, 0xc1440e), radius: 30, speed: 0.25, offsetY: -0.3 },
+      { mesh: createEmissivePlanet(2.8, jupiterMap, 0xd8a27a), radius: 42, speed: 0.15, offsetY: 1.0 },
+      { mesh: createEmissivePlanet(2.4, saturnMap, 0xe0d0b0, true, 0xd0c0a0), radius: 52, speed: 0.1, offsetY: -0.8 },
+      { mesh: createEmissivePlanet(1.9, uranusMap, 0x4fd0e7), radius: 62, speed: 0.07, offsetY: 1.2 },
+      { mesh: createEmissivePlanet(1.9, neptuneMap, 0x4169e1), radius: 72, speed: 0.05, offsetY: -1.0 }
+    ];
     
-    scene.add(smallPlanet1);
-    scene.add(smallPlanet2);
-    scene.add(smallPlanet3);
-    scene.add(smallPlanet4);
+    planets.forEach(p => scene.add(p.mesh));
     
-    const ringPlanetGeo = new THREE.TorusGeometry(1.8, 0.1, 16, 100);
-    const ringPlanetMat = new THREE.MeshStandardMaterial({ color: 0xd07090, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
-    const ringPlanet = new THREE.Mesh(ringPlanetGeo, ringPlanetMat);
-    ringPlanet.rotation.x = Math.PI/2;
-    ringPlanet.rotation.z = 0.5;
-    ringPlanet.position.copy(smallPlanet3.position);
-    scene.add(ringPlanet);
-    
+    // Плутон
+    const plutoMat = new THREE.MeshPhongMaterial({ color: 0xccbb99, emissive: 0x332211, emissiveIntensity: 0.5 });
+    const pluto = new THREE.Mesh(new THREE.SphereGeometry(0.8, 24, 16), plutoMat);
+    pluto.castShadow = true; pluto.receiveShadow = true;
+    scene.add(pluto);
+    const plutoData = { mesh: pluto, radius: 82, speed: 0.03, offsetY: 0.0 };
+
     // --- Анимация ---
     const clock = new THREE.Clock();
     
@@ -553,30 +489,46 @@
       const delta = clock.getDelta();
       const elapsedTime = performance.now() * 0.001;
       
-      earthGroup.rotation.y += 0.001;
-      earthGroup.children[1].rotation.y += 0.0012;
+      earthGroup.rotation.y += 0.0012;
+      earthGroup.children[1].rotation.y += 0.0018;
       
-      // Орбита спутника (увеличен радиус)
-      const orbitRadius = 5.5;
-      const orbitSpeed = 0.08;
-      satellite.position.x = Math.cos(elapsedTime * orbitSpeed) * orbitRadius;
-      satellite.position.z = Math.sin(elapsedTime * orbitSpeed) * orbitRadius * 0.6 + 1.5;
-      satellite.position.y = 1.5 + Math.sin(elapsedTime * 0.4) * 0.3;
+      const earthPos = earthGroup.position;
       
+      const satOrbitRadius = 11.0;
+      const satOrbitSpeed = 0.12;
+      satellite.position.x = earthPos.x + Math.cos(elapsedTime * satOrbitSpeed) * satOrbitRadius;
+      satellite.position.z = earthPos.z + Math.sin(elapsedTime * satOrbitSpeed) * satOrbitRadius * 0.7;
+      satellite.position.y = earthPos.y + 1.5 + Math.sin(elapsedTime * 0.5) * 0.8;
       satellite.rotation.y = elapsedTime * 0.1;
-      satellite.rotation.x = 0.1 + Math.sin(elapsedTime * 0.2) * 0.05;
+      satellite.rotation.x = 0.15 + Math.sin(elapsedTime * 0.25) * 0.05;
       
-      debrisGroup.rotation.y += 0.001;
-      debrisGroup.rotation.x += 0.0005;
+      const moonOrbitRadius = 15.0;
+      const moonOrbitSpeed = 0.035;
+      moon.position.x = earthPos.x + Math.cos(elapsedTime * moonOrbitSpeed) * moonOrbitRadius;
+      moon.position.z = earthPos.z + Math.sin(elapsedTime * moonOrbitSpeed) * moonOrbitRadius * 0.8;
+      moon.position.y = earthPos.y + 1.0 + Math.sin(elapsedTime * 0.08) * 0.5;
+      moon.rotation.y += 0.002;
       
-      nebula.rotation.y += 0.0001;
-      stars.rotation.y -= 0.00005;
+      planets.forEach((p) => {
+        const angle = elapsedTime * p.speed;
+        p.mesh.position.x = Math.cos(angle) * p.radius;
+        p.mesh.position.z = Math.sin(angle) * p.radius;
+        p.mesh.position.y = p.offsetY;
+        p.mesh.rotation.y += 0.005;
+        if (p.mesh.userData.ring) {
+          p.mesh.userData.ring.position.copy(p.mesh.position);
+          p.mesh.userData.ring.rotation.y += 0.001;
+        }
+      });
       
-      smallPlanet1.rotation.y += 0.001;
-      smallPlanet2.rotation.y += 0.0015;
-      smallPlanet3.rotation.y += 0.002;
-      smallPlanet4.rotation.y += 0.001;
-      ringPlanet.rotation.y += 0.001;
+      const plutoAngle = elapsedTime * plutoData.speed;
+      pluto.position.x = Math.cos(plutoAngle) * plutoData.radius;
+      pluto.position.z = Math.sin(plutoAngle) * plutoData.radius;
+      pluto.position.y = plutoData.offsetY;
+      pluto.rotation.y += 0.002;
+      
+      galaxy.rotation.y += 0.0001;
+      stars.rotation.y -= 0.0001;
       
       controls.update();
       renderer.render(scene, camera);
@@ -594,7 +546,6 @@
     // --- Логика входа ---
     const roleButtons = document.querySelectorAll('.role-btn');
     let selectedRole = 'engineer';
-    
     roleButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         roleButtons.forEach(b => b.classList.remove('active'));
