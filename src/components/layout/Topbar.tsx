@@ -26,16 +26,13 @@ export const Topbar: React.FC = () => {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <NavLink to="/dashboard" className="logo">
+        <NavLink to="/" className="logo">
           <i className="fas fa-broadcast-tower" style={{ marginRight: 8 }}></i>
           Sputnik Studio
         </NavLink>
       </div>
 
       <nav className="topbar-nav">
-        <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>
-          <i className="fas fa-chart-pie"></i> Дашборд
-        </NavLink>
         <NavLink to="/projects" className={({ isActive }) => isActive ? 'active' : ''}>
           <i className="fas fa-folder-open"></i> Проекты
         </NavLink>
