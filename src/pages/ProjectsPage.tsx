@@ -6,6 +6,7 @@ import { useProjectsDb } from '../hooks/useProjectsDb';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import { ProjectDetail } from '../components/projects/ProjectDetail';
 import { Project } from '../store/projectsSlice';
+import './ProjectsPage.css';
 
 export const ProjectsPage: React.FC = () => {
   const projects = useSelector((state: RootState) => state.projects.list);
