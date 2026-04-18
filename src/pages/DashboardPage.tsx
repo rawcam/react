@@ -23,12 +23,8 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="dashboard-page" style={{ padding: '20px', maxWidth: '1600px', margin: '0 auto' }}>
-      <div className={`dashboard-grid ${displayMode}`} style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '20px',
-      }}>
+    <div className="dashboard-page">
+      <div className={`dashboard-grid ${displayMode}`}>
         {visibleWidgets.map(id => widgetMap[id])}
       </div>
       <WidgetConfigDrawer />
