@@ -27,7 +27,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
   const handleProjectClick = (project: Project) => {
     if (onSelectProject) onSelectProject(project);
-    else navigate(`/projects?id=${project.id}`);
+    else navigate(`/projects/${project.id}`);
   };
 
   const scroll = (direction: 'left' | 'right') => {
