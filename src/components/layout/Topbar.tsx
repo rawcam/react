@@ -1,6 +1,6 @@
 // src/components/layout/Topbar.tsx
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setRole } from '../../store/authSlice';
@@ -9,7 +9,6 @@ import { useAuth } from '../../hooks/useAuth';
 
 export const Topbar: React.FC = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { user, hasRole } = useAuth();
   const widgetConfigOpen = useSelector((state: RootState) => state.ui.widgetConfigOpen);
 
