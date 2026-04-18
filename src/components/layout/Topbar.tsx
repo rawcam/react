@@ -1,6 +1,6 @@
 // src/components/layout/Topbar.tsx
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setRole } from '../../store/authSlice';
@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 export const Topbar: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user, hasRole } = useAuth();
   const widgetConfigOpen = useSelector((state: RootState) => state.ui.widgetConfigOpen);
 
@@ -26,23 +27,23 @@ export const Topbar: React.FC = () => {
     <header className="topbar">
       <div className="topbar-left">
         <NavLink to="/" className="logo">
-          <i className="fas fa-broadcast-tower" style={{ marginRight: 8 }}></i>
+          <i className="fas fa-broadcast-tower"></i>
           Sputnik Studio
         </NavLink>
       </div>
 
       <nav className="topbar-nav">
         <NavLink to="/projects" className={({ isActive }) => isActive ? 'active' : ''}>
-          <i className="fas fa-folder-open"></i> Проекты
+          <i className="fas fa-folder-open"></i>Проекты
         </NavLink>
         <NavLink to="/calculations" className={({ isActive }) => isActive ? 'active' : ''}>
-          <i className="fas fa-calculator"></i> Расчёты
+          <i className="fas fa-calculator"></i>Расчёты
         </NavLink>
         <NavLink to="/specifications" className={({ isActive }) => isActive ? 'active' : ''}>
-          <i className="fas fa-table"></i> Спецификации
+          <i className="fas fa-table"></i>Спецификации
         </NavLink>
         <NavLink to="/flow-editor" className={({ isActive }) => isActive ? 'active' : ''}>
-          <i className="fas fa-project-diagram"></i> Редактор схем
+          <i className="fas fa-project-diagram"></i>Редактор
         </NavLink>
       </nav>
 
