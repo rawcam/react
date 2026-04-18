@@ -41,45 +41,28 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'presale':
-        return '#d97a0c';
-      case 'design':
-        return '#2c6e9e';
-      case 'ready':
-        return '#6aa9d9';
-      case 'construction':
-        return '#2a7f49';
-      case 'done':
-        return '#6c7e9e';
-      default:
-        return 'var(--text-muted)';
+      case 'presale': return '#d97a0c';
+      case 'design': return '#2c6e9e';
+      case 'ready': return '#6aa9d9';
+      case 'construction': return '#2a7f49';
+      case 'done': return '#6c7e9e';
+      default: return 'var(--text-muted)';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'presale':
-        return 'пресейл';
-      case 'design':
-        return 'проект';
-      case 'ready':
-        return 'готов';
-      case 'construction':
-        return 'стройка';
-      case 'done':
-        return 'завершён';
-      default:
-        return status;
+      case 'presale': return 'пресейл';
+      case 'design': return 'проект';
+      case 'ready': return 'готов';
+      case 'construction': return 'стройка';
+      case 'done': return 'завершён';
+      default: return status;
     }
   };
 
@@ -109,9 +92,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
       {viewMode === 'carousel' && (
         <div className="carousel-wrapper">
-          <button className="carousel-arrow prev" onClick={() => scroll('left')}>
-            ‹
-          </button>
+          <button className="carousel-arrow prev" onClick={() => scroll('left')}>‹</button>
           <div className="carousel-container" ref={carouselRef}>
             <div className="carousel-track">
               {sortedProjects.map(project => (
@@ -131,9 +112,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
                   </div>
                   <div className="carousel-card-stats">
                     <span>{formatCurrency(project.contractAmount)}</span>
-                    <span>
-                      {project.engineer} / {project.projectManager}
-                    </span>
+                    <span>{project.engineer} / {project.projectManager}</span>
                   </div>
                   <div className="carousel-card-progress">
                     <div className="dashboard-progress-bg">
@@ -145,9 +124,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
               ))}
             </div>
           </div>
-          <button className="carousel-arrow next" onClick={() => scroll('right')}>
-            ›
-          </button>
+          <button className="carousel-arrow next" onClick={() => scroll('right')}>›</button>
         </div>
       )}
 
@@ -168,9 +145,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
                 </div>
                 <div className="row-cell row-name">{project.name}</div>
                 <div className="row-cell row-budget">{formatCurrency(project.contractAmount)}</div>
-                <div className="row-cell row-responsible">
-                  {project.engineer} / {project.projectManager}
-                </div>
+                <div className="row-cell row-responsible">{project.engineer} / {project.projectManager}</div>
                 <div className="row-cell row-progress">
                   <div className="row-progress-wrapper">
                     <div className="dashboard-progress-bg">
