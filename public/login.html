@@ -242,8 +242,8 @@
     controls.maxDistance = 180;
     controls.target.set(0, 0, 0);
 
-    // --- ОСВЕЩЕНИЕ: источник в центре (невидимый) ---
-    const sunLight = new THREE.PointLight(0xffdd99, 1.8, 0, 0);
+    // --- ОСВЕЩЕНИЕ: центральный тёплый (невидимый) только для дальних планет, Землю освещает холодный направленный ---
+    const sunLight = new THREE.PointLight(0xffdd99, 0.8, 0, 0);
     sunLight.position.set(0, 0, 0);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
@@ -251,7 +251,28 @@
     sunLight.shadow.bias = -0.0001;
     scene.add(sunLight);
     
-    const ambientLight = new THREE.AmbientLight(0x404c66, 0.6);
+    // Холодный направленный свет, который делает Землю голубой и яркой
+    const coldLight = new THREE.DirectionalLight(0xccddff, 1.2);
+    coldLight.position.set(-15, 20, 10);
+    coldLight.castShadow = true;
+    coldLight.receiveShadow = true;
+    coldLight.shadow.mapSize.width = 1024;
+    coldLight.shadow.mapSize.height = 1024;
+    const d = 30;
+    coldLight.shadow.camera.left = -d;
+    coldLight.shadow.camera.right = d;
+    coldLight.shadow.camera.top = d;
+    coldLight.shadow.camera.bottom = -d;
+    coldLight.shadow.camera.near = 1;
+    coldLight.shadow.camera.far = 100;
+    scene.add(coldLight);
+    
+    // Дополнительный синеватый подсвет с другой стороны
+    const blueFillLight = new THREE.DirectionalLight(0xaaccff, 0.6);
+    blueFillLight.position.set(10, 5, -20);
+    scene.add(blueFillLight);
+    
+    const ambientLight = new THREE.AmbientLight(0x404c66, 0.7);
     scene.add(ambientLight);
     
     const backLight = new THREE.DirectionalLight(0x99aacc, 0.3);
@@ -308,7 +329,7 @@
     const stars = new THREE.Points(starsGeometry, starsMaterial);
     scene.add(stars);
 
-    // --- Земля (с усиленным свечением атмосферы) ---
+    // --- Земля (яркая, голубая, лёгкая атмосфера) ---
     const earthGroup = new THREE.Group();
     const textureLoader = new THREE.TextureLoader();
     const earthMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
@@ -318,44 +339,31 @@
     
     const earthMaterial = new THREE.MeshPhongMaterial({
       map: earthMap, specularMap: earthSpecularMap, specular: new THREE.Color(0x333333),
-      shininess: 10, normalMap: earthNormalMap, normalScale: new THREE.Vector2(1.5, 1.5)
+      shininess: 15, normalMap: earthNormalMap, normalScale: new THREE.Vector2(1.8, 1.8)
     });
     const earthMesh = new THREE.Mesh(new THREE.SphereGeometry(3.2, 64, 64), earthMaterial);
     earthMesh.castShadow = true; earthMesh.receiveShadow = true;
     earthGroup.add(earthMesh);
     
     const cloudMaterial = new THREE.MeshPhongMaterial({
-      map: cloudMap, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending,
+      map: cloudMap, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending,
       depthWrite: false, side: THREE.DoubleSide
     });
     const cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(3.23, 64, 64), cloudMaterial);
     earthGroup.add(cloudMesh);
     
-    // Атмосфера с голубым эмиссивным свечением
-    const atmosGeo = new THREE.SphereGeometry(3.5, 64, 64);
+    // Лёгкая атмосфера (почти прозрачная, воздушная)
+    const atmosGeo = new THREE.SphereGeometry(3.45, 64, 64);
     const atmosMat = new THREE.MeshPhongMaterial({ 
-      color: 0x88aacc, 
+      color: 0xaaccff, 
       transparent: true, 
-      opacity: 0.25, 
+      opacity: 0.15, 
       side: THREE.BackSide,
-      emissive: new THREE.Color(0x4488ff),
-      emissiveIntensity: 0.8
+      emissive: new THREE.Color(0x88aaff),
+      emissiveIntensity: 0.5
     });
     const atmosphere = new THREE.Mesh(atmosGeo, atmosMat);
     earthGroup.add(atmosphere);
-    
-    // Дополнительный слой для яркости
-    const glowGeo = new THREE.SphereGeometry(3.6, 48, 48);
-    const glowMat = new THREE.MeshPhongMaterial({
-      color: 0x88ccff,
-      transparent: true,
-      opacity: 0.15,
-      side: THREE.BackSide,
-      emissive: new THREE.Color(0x88aaff),
-      emissiveIntensity: 0.6
-    });
-    const glow = new THREE.Mesh(glowGeo, glowMat);
-    earthGroup.add(glow);
     
     earthGroup.position.set(-12, 1.8, -8);
     scene.add(earthGroup);
@@ -418,7 +426,7 @@
     moon.castShadow = true; moon.receiveShadow = true;
     scene.add(moon);
 
-    // --- Планеты (движение по орбитам, без пересечения с Землёй) ---
+    // --- Планеты (движение по орбитам) ---
     const mercuryMap = textureLoader.load('https://threejs.org/examples/textures/planets/mercury.jpg');
     const venusMap = textureLoader.load('https://threejs.org/examples/textures/planets/venus.jpg');
     const marsMap = textureLoader.load('https://threejs.org/examples/textures/planets/mars.jpg');
@@ -462,7 +470,6 @@
       return planet;
     }
     
-    // Увеличены радиусы орбит для внутренних планет, чтобы не задевали Землю (Земля на ~14.4 от центра)
     const planets = [
       { mesh: createEmissivePlanet(1.0, mercuryMap, 0xaaaaaa), radius: 18, speed: 0.5, offsetY: 0.2 },
       { mesh: createEmissivePlanet(1.2, venusMap, 0xe6b800), radius: 24, speed: 0.35, offsetY: 0.5 },
@@ -475,7 +482,6 @@
     
     planets.forEach(p => scene.add(p.mesh));
     
-    // Плутон
     const plutoMat = new THREE.MeshPhongMaterial({ color: 0xccbb99, emissive: 0x332211, emissiveIntensity: 0.5 });
     const pluto = new THREE.Mesh(new THREE.SphereGeometry(0.8, 24, 16), plutoMat);
     pluto.castShadow = true; pluto.receiveShadow = true;
