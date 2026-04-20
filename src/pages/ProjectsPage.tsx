@@ -7,12 +7,11 @@ import { ProjectList } from '../components/projects/ProjectList';
 import { ProjectDetail } from '../features/projects/ProjectDetail';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import { useAuth } from '../hooks/useAuth';
-import { useProjectsDb } from '../hooks/useProjectsDb';
-
+import { useProjectsSupabase } from '../hooks/useProjectsSupabase';
 
 export const ProjectsPage = () => {
   const { hasRole } = useAuth();
-  const { loadProjects, addProjectToDb } = useProjectsDb();
+  const { loadProjects, addProjectToDb } = useProjectsSupabase();
   const projects = useSelector((state: RootState) => state.projects.list);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -35,7 +34,7 @@ export const ProjectsPage = () => {
       setLoading(false);
     };
     init();
-  }, []);
+  }, [loadProjects]);
 
   useEffect(() => {
     const projectId = window.location.hash.match(/[?&]id=([^&]+)/)?.[1];
