@@ -18,15 +18,12 @@ export const useProjectsSupabase = () => {
       const { data, error } = await supabase
         .from('projects')
         .select('*')
-        .eq('user_id', user.id);
-      
+        .eq('user_id', user.id)
+        .timeout(10000); // 10 секунд таймаут
       if (error) {
-        console.error('[useProjectsSupabase] Load error:', error.message, error.details, error.hint);
-        // Важно: всё равно ставим пустой массив, чтобы интерфейс не висел
-        dispatch(setProjects([]));
-        return;
+        console.error('[useProjectsSupabase] Load error:', error.message);
+        throw error;
       }
-      
       console.log('[useProjectsSupabase] Loaded', data?.length, 'projects');
       const projects = data.map((item: any) => ({
         id: item.id,
@@ -56,13 +53,8 @@ export const useProjectsSupabase = () => {
       dispatch(setProjects(projects));
     } catch (err) {
       console.error('[useProjectsSupabase] Unexpected error:', err);
-      dispatch(setProjects([]));
     }
   };
-
-  // ... остальные функции (addProjectToDb, updateProjectInDb, deleteProjectFromDb) без изменений ...
-  // (возьмите их из предыдущей версии, они уже рабочие)
-};
 
   const addProjectToDb = async (project: Omit<Project, 'id' | 'shortId'>) => {
     console.log('[useProjectsSupabase] addProjectToDb called');
