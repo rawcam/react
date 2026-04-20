@@ -15,19 +15,24 @@ export const useProjectsSupabase = () => {
       console.warn('[useProjectsSupabase] No user, skipping load');
       return;
     }
+
+    // Проверим, что клиент Supabase инициализирован
+    console.log('[useProjectsSupabase] Supabase client:', supabase);
+
     try {
+      console.log('[useProjectsSupabase] Sending query...');
       const { data, error } = await supabase
         .from('projects')
         .select('*')
         .eq('user_id', user.id);
-      
+
       console.log('[useProjectsSupabase] Response received:', { data, error });
-      
+
       if (error) {
         console.error('[useProjectsSupabase] Load error:', error.message);
         return;
       }
-      
+
       console.log('[useProjectsSupabase] Loaded', data?.length, 'projects');
       const projects = data.map((item: any) => ({
         id: item.id,
