@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Project, ProjectStatus, ProjectCategory, IncomeItem, ExpenseItem } from '../../store/projectsSlice';
 import { useFinance } from '../../hooks/useFinance';
-import { useProjectsDb } from '../../hooks/useProjectsDb';
+import { useProjectsSupabase } from '../../hooks/useProjectsSupabase';
 import { RootState } from '../../store';
 import { updateSpecification, deleteSpecification, addSpecification } from '../../store/specificationsSlice';
 import { getSpecTotalRub } from '../../utils/specificationUtils';
@@ -15,7 +15,7 @@ interface ProjectDetailProps {
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
-  const { updateProjectInDb } = useProjectsDb();
+  const { updateProjectInDb } = useProjectsSupabase();
   const { getProjectMetrics } = useFinance();
   const metrics = getProjectMetrics(project.id);
   const [activeTab, setActiveTab] = useState<'info' | 'finances' | 'service' | 'roadmap' | 'specs'>('info');
@@ -93,7 +93,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateProjectInDb(editedProject);
+      await updateProjectInDb(editedProject.id, editedProject);
       alert('Сохранено');
     } catch (err) {
       console.error(err);
