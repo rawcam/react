@@ -1,4 +1,5 @@
 // src/hooks/useProjectsSupabase.ts
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { supabase } from '../lib/supabaseClient';
@@ -8,7 +9,7 @@ export const useProjectsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
 
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     console.log('[useProjectsSupabase] loadProjects called, user:', user?.id);
     if (!user) {
       console.warn('[useProjectsSupabase] No user, skipping load');
@@ -19,10 +20,14 @@ export const useProjectsSupabase = () => {
         .from('projects')
         .select('*')
         .eq('user_id', user.id);
+      
+      console.log('[useProjectsSupabase] Response received:', { data, error });
+      
       if (error) {
         console.error('[useProjectsSupabase] Load error:', error.message);
         return;
       }
+      
       console.log('[useProjectsSupabase] Loaded', data?.length, 'projects');
       const projects = data.map((item: any) => ({
         id: item.id,
@@ -51,11 +56,11 @@ export const useProjectsSupabase = () => {
       }));
       dispatch(setProjects(projects));
     } catch (err: any) {
-      console.error('[useProjectsSupabase] Unexpected error:', err);
+      console.error('[useProjectsSupabase] Network or unexpected error:', err);
     }
-  };
+  }, [user, dispatch]);
 
-  const addProjectToDb = async (project: Omit<Project, 'id' | 'shortId'>) => {
+  const addProjectToDb = useCallback(async (project: Omit<Project, 'id' | 'shortId'>) => {
     console.log('[useProjectsSupabase] addProjectToDb called');
     if (!user) return;
     const newId = Date.now().toString();
@@ -97,9 +102,9 @@ export const useProjectsSupabase = () => {
     } catch (err: any) {
       console.error('[useProjectsSupabase] Add unexpected error:', err);
     }
-  };
+  }, [user, loadProjects]);
 
-  const updateProjectInDb = async (id: string, updates: Partial<Project>) => {
+  const updateProjectInDb = useCallback(async (id: string, updates: Partial<Project>) => {
     console.log('[useProjectsSupabase] updateProjectInDb called for id:', id);
     if (!user) return;
     const dbUpdates: any = {};
@@ -139,9 +144,9 @@ export const useProjectsSupabase = () => {
     } catch (err: any) {
       console.error('[useProjectsSupabase] Update unexpected error:', err);
     }
-  };
+  }, [user, loadProjects]);
 
-  const deleteProjectFromDb = async (id: string) => {
+  const deleteProjectFromDb = useCallback(async (id: string) => {
     console.log('[useProjectsSupabase] deleteProjectFromDb called for id:', id);
     if (!user) return;
     try {
@@ -158,7 +163,7 @@ export const useProjectsSupabase = () => {
     } catch (err: any) {
       console.error('[useProjectsSupabase] Delete unexpected error:', err);
     }
-  };
+  }, [user, loadProjects]);
 
   return {
     loadProjects,
