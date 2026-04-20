@@ -1,59 +1,43 @@
 // src/store/authSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Session, User } from '@supabase/supabase-js';
 
-export interface User {
-  name: string;
-  role: 'director' | 'pm' | 'engineer' | 'designer' | 'logist';
-}
-
-interface AuthState {
+export interface AuthState {
+  session: Session | null;
   user: User | null;
-  isAuthenticated: boolean;
+  role: 'director' | 'pm' | 'engineer' | 'designer' | 'logist' | null;
+  isLoading: boolean;
 }
-
-const loadUserFromStorage = (): User | null => {
-  const savedRole = localStorage.getItem('userRole') as User['role'] | null;
-  if (savedRole) {
-    const savedName = localStorage.getItem('userName') || 'Пользователь';
-    return { name: savedName, role: savedRole };
-  }
-  return null;
-};
 
 const initialState: AuthState = {
-  user: loadUserFromStorage(),
-  isAuthenticated: !!loadUserFromStorage(),
+  session: null,
+  user: null,
+  role: null,
+  isLoading: true,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<User>) => {
-      state.user = action.payload;
-      state.isAuthenticated = true;
-      localStorage.setItem('userRole', action.payload.role);
-      localStorage.setItem('userName', action.payload.name);
+    setSession: (state, action: PayloadAction<Session | null>) => {
+      state.session = action.payload;
+      state.user = action.payload?.user ?? null;
+      // Роль будем загружать отдельно из таблицы user_roles
+    },
+    setRole: (state, action: PayloadAction<AuthState['role']>) => {
+      state.role = action.payload;
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
     },
     logout: (state) => {
+      state.session = null;
       state.user = null;
-      state.isAuthenticated = false;
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userName');
-    },
-    setRole: (state, action: PayloadAction<User['role']>) => {
-      if (state.user) {
-        state.user.role = action.payload;
-        localStorage.setItem('userRole', action.payload);
-      } else {
-        state.user = { name: 'Пользователь', role: action.payload };
-        state.isAuthenticated = true;
-        localStorage.setItem('userRole', action.payload);
-        localStorage.setItem('userName', 'Пользователь');
-      }
+      state.role = null;
     },
   },
 });
 
-export const { login, logout, setRole } = authSlice.actions;
+export const { setSession, setRole, setLoading, logout } = authSlice.actions;
 export default authSlice.reducer;
