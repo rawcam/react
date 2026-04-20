@@ -28,6 +28,14 @@ export const ProjectsPage = () => {
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'priority' | 'normal'>('all');
 
   useEffect(() => {
+    let isMounted = true;
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('[ProjectsPage] Load timeout — forcing loading to false');
+        setLoading(false);
+      }
+    }, 15000); // 15 секунд
+
     const init = async () => {
       console.log('[ProjectsPage] Starting load...');
       setLoading(true);
@@ -37,10 +45,16 @@ export const ProjectsPage = () => {
       } catch (err) {
         console.error('[ProjectsPage] Load error:', err);
       } finally {
-        setLoading(false);
+        clearTimeout(timeoutId);
+        if (isMounted) setLoading(false);
       }
     };
     init();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [loadProjects]);
 
   useEffect(() => {
@@ -109,6 +123,7 @@ export const ProjectsPage = () => {
         <div className="empty-state">
           <i className="fas fa-spinner fa-pulse" style={{ fontSize: '2rem' }}></i>
           <p>Загрузка проектов...</p>
+          <p style={{ fontSize: 12, marginTop: 10, opacity: 0.7 }}>Если загрузка длится долго, обновите страницу</p>
         </div>
       </div>
     );
