@@ -1,19 +1,20 @@
 // src/pages/SpecificationsListPage.tsx
-import React, { useState, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { addSpecification, deleteSpecification, updateSpecification } from '../store/specificationsSlice';
+import { useSpecificationsSupabase } from '../hooks/useSpecificationsSupabase';
 import { getSpecTotalRub } from '../utils/specificationUtils';
 
 type ViewMode = 'grid' | 'list';
 
 export const SpecificationsListPage: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const { loadSpecifications, addSpecificationToDb, updateSpecificationInDb, deleteSpecificationFromDb } = useSpecificationsSupabase();
   const specifications = useSelector((state: RootState) => state.specifications.list);
   const projects = useSelector((state: RootState) => state.projects.list);
   const { usdRate, eurRate } = useSelector((state: RootState) => state.currency);
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,6 +22,17 @@ export const SpecificationsListPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [newProjectId, setNewProjectId] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const init = async () => {
+      if (user) {
+        await loadSpecifications();
+      }
+      setLoading(false);
+    };
+    init();
+  }, [user, loadSpecifications]);
 
   const getProjectName = (projectId: string | null) => {
     if (!projectId) return '— не привязан —';
@@ -54,50 +66,53 @@ export const SpecificationsListPage: React.FC = () => {
 
   const handleOpen = (id: string) => navigate(`/specification/${id}`);
 
-  const handleDuplicate = (spec: any) => {
-    const newId = Date.now().toString();
-    const now = new Date().toISOString();
-    dispatch(addSpecification({
-      ...spec,
-      id: newId,
+  const handleDuplicate = async (spec: any) => {
+    const newId = await addSpecificationToDb({
       name: `${spec.name} (копия)`,
       projectId: null,
-      createdAt: now,
-      updatedAt: now,
-    }));
-    navigate(`/specification/${newId}`);
+      rows: spec.rows,
+    });
+    if (newId) navigate(`/specification/${newId}`);
   };
 
   const handleUnlink = (id: string) => {
     if (confirm('Открепить спецификацию от проекта?')) {
-      dispatch(updateSpecification({ id, updates: { projectId: null } }));
+      updateSpecificationInDb(id, { projectId: null });
     }
   };
 
   const handleDelete = (id: string) => {
     if (confirm('Удалить спецификацию?')) {
-      dispatch(deleteSpecification(id));
+      deleteSpecificationFromDb(id);
     }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newName.trim()) {
       alert('Введите название спецификации');
       return;
     }
-    const now = new Date().toISOString();
-    dispatch(addSpecification({
-      id: Date.now().toString(),
+    const newId = await addSpecificationToDb({
       name: newName.trim(),
       projectId: newProjectId || null,
-      createdAt: now,
-      updatedAt: now,
       rows: [],
-    }));
+    });
     setShowModal(false);
     setNewName('');
     setNewProjectId('');
+    if (newId) navigate(`/specification/${newId}`);
   };
+
+  if (loading) {
+    return (
+      <div className="spec-page">
+        <div className="empty-state">
+          <i className="fas fa-spinner fa-pulse"></i>
+          <p>Загрузка спецификаций...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="spec-page">
