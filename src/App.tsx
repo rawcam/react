@@ -2,8 +2,8 @@
 import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
-import { Provider, useSelector } from 'react-redux';
-import { store, RootState } from './store';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import { Topbar } from './components/layout/Topbar';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectsPage } from './pages/ProjectsPage';
@@ -13,9 +13,7 @@ import { SpecificationPage } from './pages/SpecificationPage';
 import FlowEditorPage from './pages/FlowEditorPage';
 import './index.css';
 
-const AppContent = () => {
-  const theme = useSelector((state: RootState) => state.theme.mode);
-
+function App() {
   useEffect(() => {
     const userRole = localStorage.getItem('userRole');
     if (!userRole) {
@@ -23,43 +21,29 @@ const AppContent = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
-  }, [theme]);
-
-  return (
-    <ReactFlowProvider>
-      <HashRouter>
-        <div className="app">
-          <Topbar />
-          <div className="app-layout">
-            <main className="main-content">
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/projects" element={<ProjectsPage />} />
-                <Route path="/calculations" element={<CalculationsPage />} />
-                <Route path="/specifications" element={<SpecificationsListPage />} />
-                <Route path="/specification/:id" element={<SpecificationPage />} />
-                <Route path="/specification" element={<SpecificationPage />} />
-                <Route path="/flow-editor" element={<FlowEditorPage />} />
-              </Routes>
-            </main>
-          </div>
-        </div>
-      </HashRouter>
-    </ReactFlowProvider>
-  );
-};
-
-function App() {
   return (
     <Provider store={store}>
-      <AppContent />
+      <ReactFlowProvider>
+        <HashRouter>
+          <div className="app">
+            <Topbar />
+            <div className="app-layout">
+              <main className="main-content">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/projects" element={<ProjectsPage />} />
+                  <Route path="/calculations" element={<CalculationsPage />} />
+                  <Route path="/specifications" element={<SpecificationsListPage />} />
+                  <Route path="/specification/:id" element={<SpecificationPage />} />
+                  <Route path="/specification" element={<SpecificationPage />} />
+                  <Route path="/flow-editor" element={<FlowEditorPage />} />
+                </Routes>
+              </main>
+            </div>
+          </div>
+        </HashRouter>
+      </ReactFlowProvider>
     </Provider>
   );
 }
