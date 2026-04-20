@@ -144,31 +144,17 @@ export const SpecificationsListPage: React.FC = () => {
             <div key={spec.id} className="spec-card" onClick={() => handleOpen(spec.id)}>
               <i className="fas fa-file-alt"></i>
               <h3>{spec.name}</h3>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                {spec.itemsCount} позиций
-              </div>
-              <div style={{ fontSize: '1rem', fontWeight: 600, margin: '12px 0' }}>
-                {Math.round(spec.totalSum).toLocaleString()} ₽
-              </div>
+              <div className="spec-items">{spec.itemsCount} позиций</div>
+              <div className="spec-sum">{Math.round(spec.totalSum).toLocaleString()} ₽</div>
               <div className="spec-card-meta">
                 <span>{getProjectName(spec.projectId)}</span>
                 <span>{new Date(spec.createdAt).toLocaleDateString('ru-RU')}</span>
               </div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'flex-end' }}>
-                <button className="spec-button" onClick={(e) => { e.stopPropagation(); handleOpen(spec.id); }} title="Открыть">
-                  <i className="fas fa-eye"></i>
-                </button>
-                <button className="spec-button" onClick={(e) => { e.stopPropagation(); handleDuplicate(spec); }} title="Дублировать">
-                  <i className="fas fa-copy"></i>
-                </button>
-                {spec.projectId && (
-                  <button className="spec-button" onClick={(e) => { e.stopPropagation(); handleUnlink(spec.id); }} title="Открепить">
-                    <i className="fas fa-unlink"></i>
-                  </button>
-                )}
-                <button className="spec-button spec-button-danger" onClick={(e) => { e.stopPropagation(); handleDelete(spec.id); }} title="Удалить">
-                  <i className="fas fa-trash-alt"></i>
-                </button>
+              <div className="spec-actions" onClick={e => e.stopPropagation()}>
+                <button onClick={() => handleOpen(spec.id)} title="Открыть"><i className="fas fa-eye"></i></button>
+                <button onClick={() => handleDuplicate(spec)} title="Дублировать"><i className="fas fa-copy"></i></button>
+                {spec.projectId && <button onClick={() => handleUnlink(spec.id)} title="Открепить"><i className="fas fa-unlink"></i></button>}
+                <button onClick={() => handleDelete(spec.id)} title="Удалить"><i className="fas fa-trash-alt"></i></button>
               </div>
             </div>
           ))}
