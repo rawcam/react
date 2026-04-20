@@ -2,13 +2,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { supabase } from '../lib/supabaseClient';
-import {
-  setProjects,
-  addProject,
-  updateProject,
-  deleteProject,
-  Project
-} from '../store/projectsSlice';
+import { setProjects, Project } from '../store/projectsSlice';
 
 export const useProjectsSupabase = () => {
   const dispatch = useDispatch();
@@ -87,7 +81,8 @@ export const useProjectsSupabase = () => {
       console.error('Failed to add project:', error);
       return;
     }
-    dispatch(addProject({ ...project, id: newId, shortId }));
+    // Перезагружаем проекты, чтобы Redux получил актуальный список
+    await loadProjects();
     return newId;
   };
 
@@ -125,7 +120,7 @@ export const useProjectsSupabase = () => {
       console.error('Failed to update project:', error);
       return;
     }
-    dispatch(updateProject({ ...updates, id } as Project));
+    await loadProjects();
   };
 
   const deleteProjectFromDb = async (id: string) => {
@@ -139,7 +134,7 @@ export const useProjectsSupabase = () => {
       console.error('Failed to delete project:', error);
       return;
     }
-    dispatch(deleteProject(id));
+    await loadProjects();
   };
 
   return {
