@@ -5,13 +5,11 @@
   margin: 0 auto;
 }
 
-/* Убираем звёзды для страницы спецификаций */
 .specs-page::before,
 .spec-page::before {
   display: none !important;
 }
 
-/* Тулбар спецификаций */
 .specs-toolbar {
   display: flex;
   justify-content: space-between;
@@ -42,106 +40,96 @@
   color: transparent;
 }
 
-/* Сетка карточек спецификаций */
 .specs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
 }
 
-/* Карточка спецификации — исправленная версия */
+/* Карточка спецификации */
 .spec-card {
-  background: var(--card-bg) !important;
-  backdrop-filter: blur(12px) !important;
-  border-radius: 28px !important;
-  padding: 20px !important;
-  border: 1px solid var(--border-light) !important;
-  box-shadow: var(--shadow) !important;
-  transition: var(--transition) !important;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 28px;
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
   cursor: pointer;
-  display: flex !important;
-  flex-direction: column !important;
-  height: auto !important;
-  aspect-ratio: auto !important;
+  display: flex;
+  flex-direction: column;
 }
 
 .spec-card:hover {
-  transform: translateY(-4px) !important;
-  box-shadow: var(--shadow-hover) !important;
-  border-color: var(--accent) !important;
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
 }
 
 .spec-card i {
-  font-size: 1.8rem !important;
-  color: var(--accent) !important;
-  margin-bottom: 12px !important;
+  font-size: 1.8rem;
+  color: var(--accent);
+  margin-bottom: 12px;
 }
 
 .spec-card h3 {
-  font-size: 1.1rem !important;
-  font-weight: 600 !important;
-  margin: 0 0 8px 0 !important;
-  color: var(--text-primary) !important;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
 }
 
-/* Количество позиций */
-.spec-card .spec-items {
-  font-size: 0.8rem !important;
-  color: var(--text-secondary) !important;
-  margin-bottom: 8px !important;
+.spec-items {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
 }
 
-/* Сумма */
-.spec-card .spec-sum {
-  font-size: 1rem !important;
-  font-weight: 600 !important;
-  margin: 8px 0 !important;
-  color: var(--text-primary) !important;
+.spec-sum {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 8px 0;
+  color: var(--text-primary);
 }
 
-/* Мета-информация */
 .spec-card-meta {
-  font-size: 0.75rem !important;
-  color: var(--text-muted) !important;
-  margin-top: 8px !important;
-  display: flex !important;
-  justify-content: space-between !important;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
 }
 
-/* Блок с кнопками действий */
 .spec-actions {
-  display: flex !important;
-  gap: 6px !important;
-  margin-top: 12px !important;
-  justify-content: flex-end !important;
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  justify-content: flex-end;
 }
 
-/* Кнопки действий */
 .spec-actions button {
-  background: transparent !important;
-  border: 1px solid var(--border-light) !important;
-  border-radius: 40px !important;
-  padding: 4px 10px !important;
-  font-size: 0.75rem !important;
-  cursor: pointer !important;
-  color: var(--text-secondary) !important;
-  transition: var(--transition) !important;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
 }
 
 .spec-actions button:hover {
-  background: var(--accent) !important;
-  color: white !important;
-  border-color: var(--accent) !important;
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
 }
 
-/* Кнопка удаления — красная только при наведении */
 .spec-actions button:last-child:hover {
-  background: var(--danger) !important;
-  border-color: var(--danger) !important;
-  color: white !important;
+  background: var(--danger);
+  border-color: var(--danger);
+  color: white;
 }
 
-/* Переключатель вида */
 .view-toggle {
   display: flex;
   gap: 8px;
@@ -180,7 +168,6 @@ body.light .view-toggle {
   color: var(--text-primary);
 }
 
-/* Таблица спецификации (режим списка) */
 .specs-table {
   width: 100%;
   border-collapse: collapse;
@@ -217,13 +204,11 @@ body.light .view-toggle {
   background: var(--accent-glow);
 }
 
-/* Кнопки в таблице */
 .specs-table .spec-actions button {
   padding: 4px 8px;
   font-size: 0.7rem;
 }
 
-/* Пустое состояние */
 .empty-state {
   text-align: center;
   padding: 60px 20px;
