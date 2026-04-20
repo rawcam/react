@@ -1,5 +1,5 @@
 // src/pages/ProjectsPage.tsx
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
@@ -13,10 +13,12 @@ export const ProjectsPage = () => {
   const { hasRole } = useAuth();
   const { loadProjects, addProjectToDb } = useProjectsSupabase();
   const projects = useSelector((state: RootState) => state.projects.list);
+  const user = useSelector((state: RootState) => state.auth.user);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const hasLoadedRef = useRef(false);
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     const saved = localStorage.getItem('projectsViewMode');
@@ -28,13 +30,12 @@ export const ProjectsPage = () => {
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'priority' | 'normal'>('all');
 
   useEffect(() => {
-    let isMounted = true;
-    const timeoutId = setTimeout(() => {
-      if (isMounted) {
-        console.warn('[ProjectsPage] Load timeout — forcing loading to false');
-        setLoading(false);
-      }
-    }, 15000); // 15 секунд
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
 
     const init = async () => {
       console.log('[ProjectsPage] Starting load...');
@@ -45,17 +46,11 @@ export const ProjectsPage = () => {
       } catch (err) {
         console.error('[ProjectsPage] Load error:', err);
       } finally {
-        clearTimeout(timeoutId);
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
     };
     init();
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, [loadProjects]);
+  }, [user, loadProjects]); // user добавлен для перезагрузки при смене пользователя
 
   useEffect(() => {
     const projectId = window.location.hash.match(/[?&]id=([^&]+)/)?.[1];
@@ -123,7 +118,6 @@ export const ProjectsPage = () => {
         <div className="empty-state">
           <i className="fas fa-spinner fa-pulse" style={{ fontSize: '2rem' }}></i>
           <p>Загрузка проектов...</p>
-          <p style={{ fontSize: 12, marginTop: 10, opacity: 0.7 }}>Если загрузка длится долго, обновите страницу</p>
         </div>
       </div>
     );
