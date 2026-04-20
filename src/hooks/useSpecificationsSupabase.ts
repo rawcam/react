@@ -6,32 +6,33 @@ import { setSpecifications, Specification } from '../store/specificationsSlice';
 
 export const useSpecificationsSupabase = () => {
   const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.auth.user); // ← добавлена эта строка
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const loadSpecifications = async () => {
     console.log('[useSpecificationsSupabase] loadSpecifications called, user:', user?.id);
-    if (!user) {
-      console.warn('[useSpecificationsSupabase] No user, skipping load');
-      return;
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('specifications')
+        .select('*')
+        .eq('user_id', user.id);
+      if (error) {
+        console.error('[useSpecificationsSupabase] Load error:', error.message);
+        return;
+      }
+      console.log('[useSpecificationsSupabase] Loaded', data?.length, 'specifications');
+      const specs = data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        projectId: item.project_id,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+        rows: item.rows || [],
+      }));
+      dispatch(setSpecifications(specs));
+    } catch (err: any) {
+      console.error('[useSpecificationsSupabase] Unexpected error:', err);
     }
-    const { data, error } = await supabase
-      .from('specifications')
-      .select('*')
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('[useSpecificationsSupabase] Load error:', error.message, error.details, error.hint);
-      return;
-    }
-    console.log('[useSpecificationsSupabase] Loaded', data?.length, 'specifications');
-    const specs = data.map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      projectId: item.project_id,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
-      rows: item.rows || [],
-    }));
-    dispatch(setSpecifications(specs));
   };
 
   const addSpecificationToDb = async (spec: Omit<Specification, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -48,13 +49,17 @@ export const useSpecificationsSupabase = () => {
       created_at: now,
       updated_at: now,
     };
-    const { error } = await supabase.from('specifications').insert(newSpec);
-    if (error) {
-      console.error('[useSpecificationsSupabase] Add error:', error);
-      return;
+    try {
+      const { error } = await supabase.from('specifications').insert(newSpec);
+      if (error) {
+        console.error('[useSpecificationsSupabase] Add error:', error.message);
+        return;
+      }
+      await loadSpecifications();
+      return newId;
+    } catch (err: any) {
+      console.error('[useSpecificationsSupabase] Add unexpected error:', err);
     }
-    await loadSpecifications();
-    return newId;
   };
 
   const updateSpecificationInDb = async (id: string, updates: Partial<Specification>) => {
@@ -66,31 +71,39 @@ export const useSpecificationsSupabase = () => {
     if (updates.rows !== undefined) dbUpdates.rows = updates.rows;
     dbUpdates.updated_at = new Date().toISOString();
 
-    const { error } = await supabase
-      .from('specifications')
-      .update(dbUpdates)
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('[useSpecificationsSupabase] Update error:', error);
-      return;
+    try {
+      const { error } = await supabase
+        .from('specifications')
+        .update(dbUpdates)
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) {
+        console.error('[useSpecificationsSupabase] Update error:', error.message);
+        return;
+      }
+      await loadSpecifications();
+    } catch (err: any) {
+      console.error('[useSpecificationsSupabase] Update unexpected error:', err);
     }
-    await loadSpecifications();
   };
 
   const deleteSpecificationFromDb = async (id: string) => {
     console.log('[useSpecificationsSupabase] deleteSpecificationFromDb called for id:', id);
     if (!user) return;
-    const { error } = await supabase
-      .from('specifications')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('[useSpecificationsSupabase] Delete error:', error);
-      return;
+    try {
+      const { error } = await supabase
+        .from('specifications')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) {
+        console.error('[useSpecificationsSupabase] Delete error:', error.message);
+        return;
+      }
+      await loadSpecifications();
+    } catch (err: any) {
+      console.error('[useSpecificationsSupabase] Delete unexpected error:', err);
     }
-    await loadSpecifications();
   };
 
   return {
