@@ -71,10 +71,10 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ margin: 0 }}>Активные проекты</h3>
-        <div className="projects-view-toggle">
+    <div className="carousel-section">
+      <div className="carousel-header">
+        <h3>Активные проекты</h3>
+        <div className="view-toggle">
           <button
             className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
             onClick={() => setViewMode('carousel')}
@@ -98,27 +98,28 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
               {sortedProjects.map(project => (
                 <div
                   key={project.id}
-                  className={`carousel-card ${project.priority ? 'priority-card' : ''}`}
+                  className={`project-card ${project.priority ? 'priority-card' : ''}`}
                   onClick={() => handleProjectClick(project)}
                 >
-                  <div className="carousel-card-title">
+                  <div className="project-title">
                     <span>
                       {project.priority && <i className="fas fa-star" style={{ color: '#f5b042', marginRight: '6px' }}></i>}
-                      {project.name}
+                      [{project.shortId}] {project.name}
                     </span>
-                    <span className="carousel-card-status" style={{ background: getStatusColor(project.status) }}>
+                    <span className="project-status" style={{ background: getStatusColor(project.status) }}>
                       {getStatusLabel(project.status)}
                     </span>
                   </div>
-                  <div className="carousel-card-stats">
+                  <div className="project-stats">
                     <span>{formatCurrency(project.contractAmount)}</span>
                     <span>{project.engineer} / {project.projectManager}</span>
                   </div>
-                  <div className="carousel-card-progress">
-                    <div className="dashboard-progress-bg">
-                      <div className="dashboard-progress-fill normal" style={{ width: `${project.progress}%` }}></div>
-                    </div>
-                    <div className="carousel-card-percent">{project.progress}%</div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${project.progress}%` }}></div>
+                  </div>
+                  <div className="project-footer">
+                    <span>Прогресс {project.progress}%</span>
+                    <i className="fas fa-chevron-right" style={{ color: 'var(--accent)' }}></i>
                   </div>
                 </div>
               ))}
@@ -129,37 +130,35 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
       )}
 
       {viewMode === 'list' && (
-        <div className="projects-list">
+        <div className="projects-list-vertical">
           {sortedProjects.map(project => (
             <div
               key={project.id}
-              className={`project-row ${project.priority ? 'priority-row' : ''}`}
+              className={`list-row ${project.priority ? 'priority-list-row' : ''}`}
               onClick={() => handleProjectClick(project)}
             >
-              <div className="project-row-grid">
-                <div className="row-cell row-icon">
-                  {project.priority && <i className="fas fa-star" style={{ color: '#f5b042' }}></i>}
-                </div>
-                <div className="row-cell row-id">
-                  <span className="project-shortid">{project.shortId}</span>
-                </div>
-                <div className="row-cell row-name">{project.name}</div>
-                <div className="row-cell row-budget">{formatCurrency(project.contractAmount)}</div>
-                <div className="row-cell row-responsible">{project.engineer} / {project.projectManager}</div>
-                <div className="row-cell row-progress">
-                  <div className="row-progress-wrapper">
-                    <div className="dashboard-progress-bg">
-                      <div className="dashboard-progress-fill normal" style={{ width: `${project.progress}%` }}></div>
-                    </div>
-                    <span className="row-percent">{project.progress}%</span>
-                  </div>
-                </div>
-                <div className="row-cell row-status">
-                  <span className="project-row-status" style={{ background: getStatusColor(project.status) }}>
+              <div className="list-info">
+                <span className="list-name">
+                  {project.priority && <i className="fas fa-star" style={{ color: '#f5b042', marginRight: '6px' }}></i>}
+                  [{project.shortId}] {project.name}
+                </span>
+                <div className="list-stats">
+                  <span>{formatCurrency(project.contractAmount)}</span>
+                  <span>{project.engineer}</span>
+                  <span style={{ background: getStatusColor(project.status), padding: '2px 8px', borderRadius: 20, color: 'white', fontSize: 11 }}>
                     {getStatusLabel(project.status)}
                   </span>
                 </div>
+                <div className="list-progress">
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${project.progress}%` }}></div>
+                  </div>
+                </div>
+                <span className="list-percent">{project.progress}%</span>
               </div>
+              <button className="list-detail-btn" onClick={(e) => { e.stopPropagation(); handleProjectClick(project); }}>
+                <i className="fas fa-arrow-right"></i>
+              </button>
             </div>
           ))}
         </div>
