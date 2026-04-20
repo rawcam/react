@@ -2,13 +2,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { supabase } from '../lib/supabaseClient';
-import {
-  setSpecifications,
-  addSpecification,
-  updateSpecification,
-  deleteSpecification,
-  Specification
-} from '../store/specificationsSlice';
+import { setSpecifications, Specification } from '../store/specificationsSlice';
 
 export const useSpecificationsSupabase = () => {
   const dispatch = useDispatch();
@@ -24,7 +18,6 @@ export const useSpecificationsSupabase = () => {
       console.error('Failed to load specifications:', error);
       return;
     }
-    // Преобразуем поля из БД в формат Redux
     const specs = data.map((item: any) => ({
       id: item.id,
       name: item.name,
@@ -54,12 +47,7 @@ export const useSpecificationsSupabase = () => {
       console.error('Failed to add specification:', error);
       return;
     }
-    dispatch(addSpecification({
-      ...spec,
-      id: newId,
-      createdAt: now,
-      updatedAt: now,
-    }));
+    await loadSpecifications();
     return newId;
   };
 
@@ -80,7 +68,7 @@ export const useSpecificationsSupabase = () => {
       console.error('Failed to update specification:', error);
       return;
     }
-    dispatch(updateSpecification({ id, updates }));
+    await loadSpecifications();
   };
 
   const deleteSpecificationFromDb = async (id: string) => {
@@ -94,7 +82,7 @@ export const useSpecificationsSupabase = () => {
       console.error('Failed to delete specification:', error);
       return;
     }
-    dispatch(deleteSpecification(id));
+    await loadSpecifications();
   };
 
   return {
