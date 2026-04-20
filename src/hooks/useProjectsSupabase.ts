@@ -1,3 +1,9 @@
+const loadProjects = async () => {
+  console.log('[useProjectsSupabase] loadProjects called, user:', user?.id);
+  if (!user) return;
+  // ... остальной код
+};
+
 // src/hooks/useProjectsSupabase.ts
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
