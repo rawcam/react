@@ -23,40 +23,56 @@ const AppContent = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let timeoutId: number;
+
     const initAuth = async () => {
       try {
-        console.log('Checking session...');
+        console.log('[Auth] Checking session...');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
-        
+
         dispatch(setSession(session));
+        console.log('[Auth] Session:', session ? 'exists' : 'null');
+
         if (session?.user) {
-          console.log('User found:', session.user.email);
+          console.log('[Auth] User:', session.user.email);
           const { data, error: roleError } = await supabase
             .from('user_roles')
             .select('role')
             .eq('id', session.user.id)
             .single();
+
           if (roleError) {
-            console.warn('Role fetch error:', roleError);
-            // Даже если роль не получена, считаем пользователя инженером по умолчанию
-            dispatch(setRole('engineer'));
+            console.warn('[Auth] Role fetch error:', roleError);
+            dispatch(setRole('engineer')); // fallback
           } else if (data) {
+            console.log('[Auth] Role:', data.role);
             dispatch(setRole(data.role));
+          } else {
+            console.warn('[Auth] No role found, using engineer');
+            dispatch(setRole('engineer'));
           }
         }
       } catch (err: any) {
-        console.error('Auth init error:', err);
+        console.error('[Auth] Init error:', err);
         setError(err.message);
       } finally {
+        clearTimeout(timeoutId);
         setIsLoading(false);
+        console.log('[Auth] Initialization complete');
       }
     };
+
+    // Защитный таймаут — если инициализация зависла, всё равно показываем приложение
+    timeoutId = window.setTimeout(() => {
+      console.warn('[Auth] Initialization timeout — forcing ready state');
+      setIsLoading(false);
+    }, 5000);
 
     initAuth();
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('Auth state changed:', _event);
+      console.log('[Auth] State changed:', _event);
       dispatch(setSession(session));
       if (session?.user) {
         const { data } = await supabase
@@ -64,14 +80,14 @@ const AppContent = () => {
           .select('role')
           .eq('id', session.user.id)
           .single();
-        if (data) dispatch(setRole(data.role));
-        else dispatch(setRole('engineer'));
+        dispatch(setRole(data?.role || 'engineer'));
       } else {
         dispatch(setRole(null));
       }
     });
 
     return () => {
+      clearTimeout(timeoutId);
       listener?.subscription.unsubscribe();
     };
   }, [dispatch]);
@@ -84,6 +100,7 @@ const AppContent = () => {
       }}>
         <h2>Загрузка...</h2>
         {error && <p style={{ color: '#f87171', marginTop: 16 }}>Ошибка: {error}</p>}
+        <p style={{ fontSize: 12, marginTop: 20, opacity: 0.7 }}>Если загрузка длится долго, обновите страницу</p>
       </div>
     );
   }
