@@ -1,9 +1,60 @@
-/* Карточка спецификации — теперь похожа на карточку проекта */
+/* src/styles/specifications.css */
+.specs-page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Убираем звёзды для страницы спецификаций */
+.specs-page::before,
+.spec-page::before {
+  display: none !important;
+}
+
+/* Тулбар спецификаций */
+.specs-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 60px;
+  padding: 12px 24px;
+  border: 1px solid var(--border-light);
+}
+
+.specs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.specs-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Сетка карточек спецификаций */
+.specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* Карточка спецификации — в стиле карточки проекта */
 .spec-card {
   background: var(--card-bg);
   backdrop-filter: blur(12px);
   border-radius: 28px;
-  padding: 20px;                /* как у проекта */
+  padding: 20px;
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow);
   transition: var(--transition);
@@ -18,15 +69,14 @@
   border-color: var(--accent);
 }
 
-/* Иконка — уменьшаем, чтобы не растягивать карточку */
 .spec-card i {
-  font-size: 1.8rem;            /* было 2.5rem */
+  font-size: 1.8rem;
   color: var(--accent);
   margin-bottom: 12px;
 }
 
 .spec-card h3 {
-  font-size: 1.1rem;            /* как название проекта */
+  font-size: 1.1rem;
   font-weight: 600;
   margin: 0 0 8px 0;
   color: var(--text-primary);
@@ -47,7 +97,7 @@
   color: var(--text-primary);
 }
 
-/* Мета-информация (проект и дата) */
+/* Мета-информация */
 .spec-card-meta {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -64,12 +114,12 @@
   justify-content: flex-end;
 }
 
-/* Кнопки — как в проектах, но меньше */
+/* Кнопки действий */
 .spec-actions button {
   background: transparent;
   border: 1px solid var(--border-light);
   border-radius: 40px;
-  padding: 4px 10px;            /* компактнее */
+  padding: 4px 10px;
   font-size: 0.75rem;
   cursor: pointer;
   color: var(--text-secondary);
@@ -82,9 +132,114 @@
   border-color: var(--accent);
 }
 
-/* Кнопка удаления — красная обводка только при наведении */
+/* Кнопка удаления — красная только при наведении */
 .spec-actions button:last-child:hover {
   background: var(--danger);
   border-color: var(--danger);
   color: white;
+}
+
+/* Переключатель вида */
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 40px;
+  padding: 4px;
+}
+
+body.light .view-toggle {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.view-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: var(--transition);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-btn.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.view-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+/* Таблица спецификации (режим списка) */
+.specs-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+.specs-table th {
+  text-align: left;
+  padding: 16px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.specs-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.specs-table tr:last-child td {
+  border-bottom: none;
+}
+
+.specs-table tr:hover td {
+  background: var(--accent-glow);
+}
+
+/* Кнопки в таблице */
+.specs-table .spec-actions button {
+  padding: 4px 8px;
+  font-size: 0.7rem;
+}
+
+/* Пустое состояние */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  color: var(--text-secondary);
 }
