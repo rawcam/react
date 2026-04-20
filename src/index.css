@@ -111,3 +111,48 @@
 .flow-editor::before {
   display: none !important;
 }
+/* Исправление белых фонов в тёмной теме */
+select,
+input[type="number"],
+input[type="text"],
+input[type="date"] {
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+/* Кнопки со стрелками в number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  background-color: var(--bg-panel-solid);
+  color: var(--text-primary);
+}
+
+/* Мини-карта и контролы React Flow */
+.react-flow__minimap {
+  background: var(--bg-panel-solid) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 12px !important;
+}
+
+.react-flow__minimap-node {
+  fill: var(--accent) !important;
+  stroke: var(--text-primary) !important;
+}
+
+.react-flow__controls {
+  background: var(--bg-panel-solid) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.react-flow__controls button {
+  background: var(--bg-panel-solid) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-light) !important;
+}
+
+.react-flow__controls button:hover {
+  background: var(--accent-glow) !important;
+}
