@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { updateSpecificationRows, updateSpecification } from '../store/specificationsSlice';
+import { updateSpecification } from '../store/specificationsSlice';
 import { setUsdRate, setEurRate } from '../store/currencySlice';
 import Sortable from 'sortablejs';
 import * as XLSX from 'xlsx';
@@ -73,10 +73,16 @@ export const SpecificationPage: React.FC = () => {
   // Загрузка спецификации
   useEffect(() => {
     if (currentSpec) {
-      setRows(currentSpec.rows);
+      // Приведение типов: предполагаем, что currentSpec.rows совместим с Row[]
+      // Если id могут быть строками, преобразуем их в числа
+      const loadedRows = (currentSpec.rows as any[]).map((r: any) => ({
+        ...r,
+        id: typeof r.id === 'string' ? parseInt(r.id, 10) : r.id,
+      })) as Row[];
+      setRows(loadedRows);
       setTableName(currentSpec.name);
       setSelectedProjectId(currentSpec.projectId);
-      const maxId = currentSpec.rows.reduce((max, row) => Math.max(max, row.id), 0);
+      const maxId = loadedRows.reduce((max, row) => Math.max(max, Number(row.id)), 0);
       setNextId(maxId + 1);
     } else if (id === undefined) {
       resetDemo();
@@ -85,26 +91,29 @@ export const SpecificationPage: React.FC = () => {
     } else {
       navigate('/specifications');
     }
-  }, [currentSpec, id]);
+  }, [currentSpec, id, navigate]);
 
-  // Автосохранение
+  // Автосохранение: вместо updateSpecificationRows используем updateSpecification
   useEffect(() => {
     if (currentSpec && rows.length > 0) {
-      dispatch(updateSpecificationRows({ id: currentSpec.id, rows }));
+      dispatch(updateSpecification({
+        id: currentSpec.id,
+        updates: { rows }
+      }));
     }
-  }, [rows, currentSpec]);
+  }, [rows, currentSpec, dispatch]);
 
   useEffect(() => {
     if (currentSpec && tableName !== currentSpec.name) {
       dispatch(updateSpecification({ id: currentSpec.id, updates: { name: tableName } }));
     }
-  }, [tableName, currentSpec]);
+  }, [tableName, currentSpec, dispatch]);
 
   useEffect(() => {
     if (currentSpec && selectedProjectId !== currentSpec.projectId) {
       dispatch(updateSpecification({ id: currentSpec.id, updates: { projectId: selectedProjectId } }));
     }
-  }, [selectedProjectId, currentSpec]);
+  }, [selectedProjectId, currentSpec, dispatch]);
 
   useEffect(() => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
@@ -413,6 +422,7 @@ export const SpecificationPage: React.FC = () => {
 
   return (
     <div className="spec-page" onKeyDown={handleTableKeyDown} onWheel={handleWheelPrevent}>
+      {/* Остальная JSX-разметка без изменений */}
       <div className="spec-toolbar">
         <div className="spec-toolbar-row">
           <input
