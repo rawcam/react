@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import './SpecificationPage.css';
 
 export interface DataRow {
-  id: number;
+  id: string;
   type: 'data';
   vendor: string;
   sku: string;
@@ -26,7 +26,7 @@ export interface DataRow {
 }
 
 export interface SectionRow {
-  id: number;
+  id: string;
   type: 'section';
   title: string;
   collapsed: boolean;
@@ -51,10 +51,9 @@ export const SpecificationPage: React.FC = () => {
   const currentSpec = id ? specifications.find(s => s.id === id) : null;
 
   const [rows, setRows] = useState<Row[]>([]);
-  const [nextId, setNextId] = useState(105);
   const [tableName, setTableName] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filterVendor, setFilterVendor] = useState('');
   const [filterSku, setFilterSku] = useState('');
 
@@ -70,20 +69,16 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
+  // Генерация уникального строкового id
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
   // Загрузка спецификации
   useEffect(() => {
     if (currentSpec) {
-      // Приведение типов: предполагаем, что currentSpec.rows совместим с Row[]
-      // Если id могут быть строками, преобразуем их в числа
-      const loadedRows = (currentSpec.rows as any[]).map((r: any) => ({
-        ...r,
-        id: typeof r.id === 'string' ? parseInt(r.id, 10) : r.id,
-      })) as Row[];
+      const loadedRows = currentSpec.rows as Row[];
       setRows(loadedRows);
       setTableName(currentSpec.name);
       setSelectedProjectId(currentSpec.projectId);
-      const maxId = loadedRows.reduce((max, row) => Math.max(max, Number(row.id)), 0);
-      setNextId(maxId + 1);
     } else if (id === undefined) {
       resetDemo();
       setSelectedProjectId(null);
@@ -93,7 +88,7 @@ export const SpecificationPage: React.FC = () => {
     }
   }, [currentSpec, id, navigate]);
 
-  // Автосохранение: вместо updateSpecificationRows используем updateSpecification
+  // Автосохранение
   useEffect(() => {
     if (currentSpec && rows.length > 0) {
       dispatch(updateSpecification({
@@ -138,7 +133,7 @@ export const SpecificationPage: React.FC = () => {
               const domRows = Array.from(tableBodyRef.current.children);
               const newRowsOrder: Row[] = [];
               for (const dom of domRows) {
-                const id = Number(dom.getAttribute('data-id'));
+                const id = dom.getAttribute('data-id');
                 const found = rows.find(r => r.id === id);
                 if (found) newRowsOrder.push(found);
               }
@@ -222,11 +217,10 @@ export const SpecificationPage: React.FC = () => {
   };
 
   // Операции с данными
-  const addDataRowAfterId = (afterId: number) => {
+  const addDataRowAfterId = (afterId: string) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
-    const newId = nextId;
-    setNextId(nextId + 1);
+    const newId = generateId();
     const newRow: DataRow = {
       id: newId, type: 'data', vendor: '', sku: '', name: '', quantity: 0, unit: 'шт', currency: 'RUB',
       price: 0, discount: 0, discountAmount: 0, priceAfter: 0, supplier: '', status: 'Замена'
@@ -238,17 +232,15 @@ export const SpecificationPage: React.FC = () => {
   };
 
   const addSection = () => {
-    const newId = nextId;
-    setNextId(nextId + 1);
+    const newId = generateId();
     setRows([...rows, { id: newId, type: 'section', title: 'Новый раздел', collapsed: false }]);
   };
 
-  const duplicateRow = (id: number) => {
+  const duplicateRow = (id: string) => {
     const index = rows.findIndex(r => r.id === id);
     if (index === -1 || rows[index].type !== 'data') return;
     const original = rows[index] as DataRow;
-    const newId = nextId;
-    setNextId(nextId + 1);
+    const newId = generateId();
     const clone = { ...original, id: newId, name: original.name + ' (копия)' };
     const newRows = [...rows];
     newRows.splice(index + 1, 0, clone);
@@ -256,20 +248,20 @@ export const SpecificationPage: React.FC = () => {
     setTimeout(() => updateCalculations(), 0);
   };
 
-  const deleteRow = (id: number) => {
+  const deleteRow = (id: string) => {
     setRows(rows.filter(r => r.id !== id));
     setSelectedIds(prev => prev.filter(pid => pid !== id));
   };
 
-  const toggleSection = (id: number) => {
+  const toggleSection = (id: string) => {
     setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, collapsed: !r.collapsed } : r));
   };
 
-  const updateSectionTitle = (id: number, title: string) => {
+  const updateSectionTitle = (id: string, title: string) => {
     setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, title } : r));
   };
 
-  const updateDataField = (id: number, field: keyof DataRow, value: any) => {
+  const updateDataField = (id: string, field: keyof DataRow, value: any) => {
     setRows(prev => prev.map(r => {
       if (r.type === 'data' && r.id === id) {
         const updated = { ...r, [field]: value };
@@ -290,13 +282,12 @@ export const SpecificationPage: React.FC = () => {
 
   const resetDemo = () => {
     setRows([
-      { id: 100, type: 'data', vendor: 'Siemens', sku: 'ABC-123', name: 'Контактор 3RT2015', quantity: 10, unit: 'шт', currency: 'RUB', price: 2500, discount: 5, discountAmount: 125, priceAfter: 2375, supplier: 'ООО "Электроснаб"', status: 'Закуплено' },
-      { id: 101, type: 'data', vendor: 'Schneider', sku: 'GV2ME07', name: 'Автоматический выключатель', quantity: 5, unit: 'шт', currency: 'USD', price: 45, discount: 10, discountAmount: 4.5, priceAfter: 40.5, supplier: 'Schneider Electric', status: 'Получено КП' },
-      { id: 102, type: 'section', title: 'Освещение', collapsed: false },
-      { id: 103, type: 'data', vendor: 'Philips', sku: 'LED-9W', name: 'Лампа светодиодная 9W 4000K', quantity: 100, unit: 'шт', currency: 'RUB', price: 120, discount: 0, discountAmount: 0, priceAfter: 120, supplier: 'ООО "Световые решения"', status: 'Замена' },
-      { id: 104, type: 'data', vendor: 'Legrand', sku: 'Valena', name: 'Розетка двойная', quantity: 20, unit: 'шт', currency: 'EUR', price: 8.5, discount: 15, discountAmount: 1.275, priceAfter: 7.225, supplier: 'Legrand Rus', status: 'Закуплено' },
+      { id: '100', type: 'data', vendor: 'Siemens', sku: 'ABC-123', name: 'Контактор 3RT2015', quantity: 10, unit: 'шт', currency: 'RUB', price: 2500, discount: 5, discountAmount: 125, priceAfter: 2375, supplier: 'ООО "Электроснаб"', status: 'Закуплено' },
+      { id: '101', type: 'data', vendor: 'Schneider', sku: 'GV2ME07', name: 'Автоматический выключатель', quantity: 5, unit: 'шт', currency: 'USD', price: 45, discount: 10, discountAmount: 4.5, priceAfter: 40.5, supplier: 'Schneider Electric', status: 'Получено КП' },
+      { id: '102', type: 'section', title: 'Освещение', collapsed: false },
+      { id: '103', type: 'data', vendor: 'Philips', sku: 'LED-9W', name: 'Лампа светодиодная 9W 4000K', quantity: 100, unit: 'шт', currency: 'RUB', price: 120, discount: 0, discountAmount: 0, priceAfter: 120, supplier: 'ООО "Световые решения"', status: 'Замена' },
+      { id: '104', type: 'data', vendor: 'Legrand', sku: 'Valena', name: 'Розетка двойная', quantity: 20, unit: 'шт', currency: 'EUR', price: 8.5, discount: 15, discountAmount: 1.275, priceAfter: 7.225, supplier: 'Legrand Rus', status: 'Закуплено' },
     ]);
-    setNextId(105);
     setTableName('');
     setSelectedProjectId(null);
   };
@@ -422,7 +413,6 @@ export const SpecificationPage: React.FC = () => {
 
   return (
     <div className="spec-page" onKeyDown={handleTableKeyDown} onWheel={handleWheelPrevent}>
-      {/* Остальная JSX-разметка без изменений */}
       <div className="spec-toolbar">
         <div className="spec-toolbar-row">
           <input
