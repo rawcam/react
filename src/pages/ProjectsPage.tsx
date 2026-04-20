@@ -29,9 +29,16 @@ export const ProjectsPage = () => {
 
   useEffect(() => {
     const init = async () => {
+      console.log('[ProjectsPage] Starting load...');
       setLoading(true);
-      await loadProjects();
-      setLoading(false);
+      try {
+        await loadProjects();
+        console.log('[ProjectsPage] Load completed');
+      } catch (err) {
+        console.error('[ProjectsPage] Load error:', err);
+      } finally {
+        setLoading(false);
+      }
     };
     init();
   }, [loadProjects]);
@@ -85,6 +92,7 @@ export const ProjectsPage = () => {
   };
 
   const handleCreate = async (projectData: any) => {
+    console.log('[ProjectsPage] Creating project:', projectData.name);
     await addProjectToDb(projectData);
     setShowCreateModal(false);
   };
