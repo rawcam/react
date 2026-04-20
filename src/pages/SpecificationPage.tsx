@@ -8,6 +8,7 @@ import Sortable from 'sortablejs';
 import * as XLSX from 'xlsx';
 import './SpecificationPage.css';
 
+// Локальные типы – теперь полностью совместимы с SpecRow из слайса
 export interface DataRow {
   id: string;
   type: 'data';
@@ -69,14 +70,12 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
-  // Генерация уникального строкового id
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
-  // Загрузка спецификации
+  // Загрузка спецификации – теперь типы совместимы
   useEffect(() => {
     if (currentSpec) {
-      const loadedRows = currentSpec.rows as Row[];
-      setRows(loadedRows);
+      setRows(currentSpec.rows as Row[]);
       setTableName(currentSpec.name);
       setSelectedProjectId(currentSpec.projectId);
     } else if (id === undefined) {
@@ -154,7 +153,6 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
-  // Глобальный обработчик для отключения изменения значений колёсиком мыши на числовых полях
   const handleWheelPrevent = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest('input[type="number"]')) {
@@ -162,7 +160,6 @@ export const SpecificationPage: React.FC = () => {
     }
   }, []);
 
-  // ========== Вспомогательные функции ==========
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
     if (currency === 'EUR') return eurRate;
@@ -216,7 +213,6 @@ export const SpecificationPage: React.FC = () => {
     return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
 
-  // Операции с данными
   const addDataRowAfterId = (afterId: string) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -328,7 +324,6 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Клавиатурная навигация
   const getFocusableElements = useCallback(() => {
     if (!tableBodyRef.current) return [];
     return Array.from(
