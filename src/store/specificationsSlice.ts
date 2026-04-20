@@ -1,16 +1,29 @@
 // src/store/specificationsSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+// Полный тип, совместимый с Row из SpecificationPage
 export interface SpecRow {
   id: string;
-  type: 'data' | 'header';
-  name: string;
+  type: 'data' | 'section';
+  name: string;                  // обязательное поле
   vendor?: string;
+  sku?: string;
+  quantity?: number;
   unit?: string;
+  currency?: string;             // ← добавлено
+  price?: number;
+  discount?: number;
+  discountAmount?: number;
+  priceAfter?: number;           // ← добавлено
+  supplier?: string;
+  status?: string;
+  // поля секций
+  title?: string;
+  collapsed?: boolean;
+  // устаревшие поля (оставлены для совместимости со старыми данными)
   priceUsd?: number;
   priceRub?: number;
   priceEur?: number;
-  quantity?: number;
   level?: number;
 }
 
