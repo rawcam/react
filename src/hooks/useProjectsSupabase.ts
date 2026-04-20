@@ -14,42 +14,55 @@ export const useProjectsSupabase = () => {
       console.warn('[useProjectsSupabase] No user, skipping load');
       return;
     }
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('[useProjectsSupabase] Load error:', error.message, error.details, error.hint);
-      return;
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('[useProjectsSupabase] Load error:', error.message, error.details, error.hint);
+        // Важно: всё равно ставим пустой массив, чтобы интерфейс не висел
+        dispatch(setProjects([]));
+        return;
+      }
+      
+      console.log('[useProjectsSupabase] Loaded', data?.length, 'projects');
+      const projects = data.map((item: any) => ({
+        id: item.id,
+        shortId: item.short_id,
+        name: item.name,
+        category: item.category,
+        status: item.status,
+        statusStartDate: item.status_start_date,
+        startDate: item.start_date,
+        progress: item.progress,
+        contractAmount: item.contract_amount,
+        engineer: item.engineer,
+        projectManager: item.project_manager,
+        priority: item.priority,
+        meetings: item.meetings,
+        purchases: item.purchases,
+        incomeSchedule: item.income_schedule,
+        expenseSchedule: item.expense_schedule,
+        serviceVisits: item.service_visits,
+        actualIncome: item.actual_income,
+        actualExpenses: item.actual_expenses,
+        nextStatus: item.next_status,
+        nextStatusDate: item.next_status_date,
+        roadmapPlanned: item.roadmap_planned,
+        roadmapActual: item.roadmap_actual,
+      }));
+      dispatch(setProjects(projects));
+    } catch (err) {
+      console.error('[useProjectsSupabase] Unexpected error:', err);
+      dispatch(setProjects([]));
     }
-    console.log('[useProjectsSupabase] Loaded', data?.length, 'projects');
-    const projects = data.map((item: any) => ({
-      id: item.id,
-      shortId: item.short_id,
-      name: item.name,
-      category: item.category,
-      status: item.status,
-      statusStartDate: item.status_start_date,
-      startDate: item.start_date,
-      progress: item.progress,
-      contractAmount: item.contract_amount,
-      engineer: item.engineer,
-      projectManager: item.project_manager,
-      priority: item.priority,
-      meetings: item.meetings,
-      purchases: item.purchases,
-      incomeSchedule: item.income_schedule,
-      expenseSchedule: item.expense_schedule,
-      serviceVisits: item.service_visits,
-      actualIncome: item.actual_income,
-      actualExpenses: item.actual_expenses,
-      nextStatus: item.next_status,
-      nextStatusDate: item.next_status_date,
-      roadmapPlanned: item.roadmap_planned,
-      roadmapActual: item.roadmap_actual,
-    }));
-    dispatch(setProjects(projects));
   };
+
+  // ... остальные функции (addProjectToDb, updateProjectInDb, deleteProjectFromDb) без изменений ...
+  // (возьмите их из предыдущей версии, они уже рабочие)
+};
 
   const addProjectToDb = async (project: Omit<Project, 'id' | 'shortId'>) => {
     console.log('[useProjectsSupabase] addProjectToDb called');
