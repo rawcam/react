@@ -1,9 +1,8 @@
-// src/pages/SpecificationPage.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { updateSpecification } from '../store/specificationsSlice';
+import { updateSpecificationRows, updateSpecification } from '../store/specificationsSlice';
 import { setUsdRate, setEurRate } from '../store/currencySlice';
 import Sortable from 'sortablejs';
 import * as XLSX from 'xlsx';
@@ -71,12 +70,13 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
+  // Загрузка спецификации
   useEffect(() => {
     if (currentSpec) {
-      setRows(currentSpec.rows as unknown as Row[]);
+      setRows(currentSpec.rows);
       setTableName(currentSpec.name);
       setSelectedProjectId(currentSpec.projectId);
-      const maxId = currentSpec.rows.reduce((max, row) => Math.max(max, Number(row.id)), 0);
+      const maxId = currentSpec.rows.reduce((max, row) => Math.max(max, row.id), 0);
       setNextId(maxId + 1);
     } else if (id === undefined) {
       resetDemo();
@@ -87,9 +87,10 @@ export const SpecificationPage: React.FC = () => {
     }
   }, [currentSpec, id]);
 
+  // Автосохранение
   useEffect(() => {
     if (currentSpec && rows.length > 0) {
-      dispatch(updateSpecification({ id: currentSpec.id, updates: { rows: rows as any } }));
+      dispatch(updateSpecificationRows({ id: currentSpec.id, rows }));
     }
   }, [rows, currentSpec]);
 
@@ -109,6 +110,7 @@ export const SpecificationPage: React.FC = () => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
 
+  // Drag-and-drop (SortableJS)
   useEffect(() => {
     if (!tableBodyRef.current) return;
     if (sortableRef.current) {
@@ -148,6 +150,7 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
+  // Глобальный обработчик для отключения изменения значений колёсиком мыши на числовых полях
   const handleWheelPrevent = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest('input[type="number"]')) {
@@ -155,6 +158,7 @@ export const SpecificationPage: React.FC = () => {
     }
   }, []);
 
+  // ========== Вспомогательные функции ==========
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
     if (currency === 'EUR') return eurRate;
@@ -208,6 +212,7 @@ export const SpecificationPage: React.FC = () => {
     return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
 
+  // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -323,6 +328,7 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
+  // Клавиатурная навигация
   const getFocusableElements = useCallback(() => {
     if (!tableBodyRef.current) return [];
     return Array.from(
@@ -597,7 +603,11 @@ export const SpecificationPage: React.FC = () => {
                         type="number"
                         value={row.quantity}
                         onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)}
-                        onFocus={(e) => { if (row.quantity === 0) e.target.select(); }}
+                        onFocus={(e) => {
+                          if (row.quantity === 0) {
+                            e.target.select();
+                          }
+                        }}
                         style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
@@ -625,7 +635,11 @@ export const SpecificationPage: React.FC = () => {
                         step="any"
                         value={row.price}
                         onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)}
-                        onFocus={(e) => { if (row.price === 0) e.target.select(); }}
+                        onFocus={(e) => {
+                          if (row.price === 0) {
+                            e.target.select();
+                          }
+                        }}
                         style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
@@ -635,7 +649,11 @@ export const SpecificationPage: React.FC = () => {
                         step="any"
                         value={row.discount}
                         onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)}
-                        onFocus={(e) => { if (row.discount === 0) e.target.select(); }}
+                        onFocus={(e) => {
+                          if (row.discount === 0) {
+                            e.target.select();
+                          }
+                        }}
                         style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
