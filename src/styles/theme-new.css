@@ -1,0 +1,89 @@
+/* src/styles/theme-new.css */
+:root {
+  --bg-page: radial-gradient(circle at 20% 30%, #0a1120, #03060b);
+  --bg-panel: rgba(15, 25, 40, 0.45);
+  --bg-panel-solid: #1e293b;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0c8e0;
+  --text-muted: #8a9cb0;
+  --border-light: rgba(100, 150, 255, 0.25);
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.3);
+  --accent-hover: #2563eb;
+  --card-bg: rgba(15, 25, 40, 0.35);
+  --shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 30px 50px rgba(0, 0, 0, 0.5);
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #10b981;
+  --sidebar-width: 340px;
+  --sidebar-collapsed-width: 70px;
+  --transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  --border-radius-card: 28px;
+  --border-radius-element: 24px;
+  --border-radius-small: 16px;
+}
+
+body.light {
+  --bg-page: radial-gradient(circle at 20% 30%, #e6f0ff, #d0e0ff);
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --bg-panel-solid: #ffffff;
+  --text-primary: #1a2c3e;
+  --text-secondary: #4b6a8a;
+  --text-muted: #6c7e97;
+  --border-light: rgba(59, 130, 246, 0.2);
+  --accent: #2563eb;
+  --accent-glow: rgba(37, 99, 235, 0.3);
+  --accent-hover: #1d4ed8;
+  --card-bg: rgba(255, 255, 255, 0.6);
+  --shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+/* Звёзды / точки на фоне */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 160px 120px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 230px 80px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 300px 30px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 400px 150px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 500px 50px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 600px 200px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 700px 80px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 800px 40px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 900px 120px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 1000px 60px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 1100px 160px, #fff, rgba(0,0,0,0));
+  background-size: 200px 200px;
+  background-repeat: repeat;
+  transition: opacity 0.3s;
+}
+
+body.light::before {
+  opacity: 0.15;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #3b82f6, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 40px 70px, #2563eb, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 90px 40px, #60a5fa, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 160px 120px, #3b82f6, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 230px 80px, #2563eb, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 300px 30px, #60a5fa, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 400px 150px, #3b82f6, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 500px 50px, #2563eb, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 600px 200px, #60a5fa, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 700px 80px, #3b82f6, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 800px 40px, #2563eb, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 900px 120px, #60a5fa, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 1000px 60px, #3b82f6, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 1100px 160px, #2563eb, rgba(0,0,0,0));
+}
