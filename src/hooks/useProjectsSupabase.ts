@@ -1,9 +1,3 @@
-const loadProjects = async () => {
-  console.log('[useProjectsSupabase] loadProjects called, user:', user?.id);
-  if (!user) return;
-  // ... остальной код
-};
-
 // src/hooks/useProjectsSupabase.ts
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -15,15 +9,20 @@ export const useProjectsSupabase = () => {
   const user = useSelector((state: RootState) => state.auth.user);
 
   const loadProjects = async () => {
-    if (!user) return;
+    console.log('[useProjectsSupabase] loadProjects called, user:', user?.id);
+    if (!user) {
+      console.warn('[useProjectsSupabase] No user, skipping load');
+      return;
+    }
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .eq('user_id', user.id);
     if (error) {
-      console.error('Failed to load projects:', error);
+      console.error('[useProjectsSupabase] Load error:', error.message, error.details, error.hint);
       return;
     }
+    console.log('[useProjectsSupabase] Loaded', data?.length, 'projects');
     const projects = data.map((item: any) => ({
       id: item.id,
       shortId: item.short_id,
@@ -53,6 +52,7 @@ export const useProjectsSupabase = () => {
   };
 
   const addProjectToDb = async (project: Omit<Project, 'id' | 'shortId'>) => {
+    console.log('[useProjectsSupabase] addProjectToDb called');
     if (!user) return;
     const newId = Date.now().toString();
     const shortId = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
@@ -84,7 +84,7 @@ export const useProjectsSupabase = () => {
     };
     const { error } = await supabase.from('projects').insert(dbProject);
     if (error) {
-      console.error('Failed to add project:', error);
+      console.error('[useProjectsSupabase] Add error:', error);
       return;
     }
     await loadProjects();
@@ -92,6 +92,7 @@ export const useProjectsSupabase = () => {
   };
 
   const updateProjectInDb = async (id: string, updates: Partial<Project>) => {
+    console.log('[useProjectsSupabase] updateProjectInDb called for id:', id);
     if (!user) return;
     const dbUpdates: any = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -122,13 +123,14 @@ export const useProjectsSupabase = () => {
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) {
-      console.error('Failed to update project:', error);
+      console.error('[useProjectsSupabase] Update error:', error);
       return;
     }
     await loadProjects();
   };
 
   const deleteProjectFromDb = async (id: string) => {
+    console.log('[useProjectsSupabase] deleteProjectFromDb called for id:', id);
     if (!user) return;
     const { error } = await supabase
       .from('projects')
@@ -136,7 +138,7 @@ export const useProjectsSupabase = () => {
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) {
-      console.error('Failed to delete project:', error);
+      console.error('[useProjectsSupabase] Delete error:', error);
       return;
     }
     await loadProjects();
