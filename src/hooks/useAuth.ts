@@ -4,14 +4,15 @@ import { RootState } from '../store';
 
 export const useAuth = () => {
   const user = useSelector((state: RootState) => state.auth.user);
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const role = useSelector((state: RootState) => state.auth.role);
+
+  const isAuthenticated = !!user;
 
   const hasRole = (roles: string | string[]) => {
-    if (!user) return false;
-    const role = user.role;
+    if (!user || !role) return false;
     if (Array.isArray(roles)) return roles.includes(role);
     return role === roles;
   };
 
-  return { user, isAuthenticated, hasRole };
+  return { user, role, isAuthenticated, hasRole };
 };
