@@ -1,9 +1,3 @@
-const loadProjects = async () => {
-  console.log('[useProjectsSupabase] loadProjects called, user:', user?.id);
-  if (!user) return;
-  // ... остальной код
-};
-
 // src/hooks/useSpecificationsSupabase.ts
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -12,18 +6,23 @@ import { setSpecifications, Specification } from '../store/specificationsSlice';
 
 export const useSpecificationsSupabase = () => {
   const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user); // ← добавлена эта строка
 
   const loadSpecifications = async () => {
-    if (!user) return;
+    console.log('[useSpecificationsSupabase] loadSpecifications called, user:', user?.id);
+    if (!user) {
+      console.warn('[useSpecificationsSupabase] No user, skipping load');
+      return;
+    }
     const { data, error } = await supabase
       .from('specifications')
       .select('*')
       .eq('user_id', user.id);
     if (error) {
-      console.error('Failed to load specifications:', error);
+      console.error('[useSpecificationsSupabase] Load error:', error.message, error.details, error.hint);
       return;
     }
+    console.log('[useSpecificationsSupabase] Loaded', data?.length, 'specifications');
     const specs = data.map((item: any) => ({
       id: item.id,
       name: item.name,
@@ -36,6 +35,7 @@ export const useSpecificationsSupabase = () => {
   };
 
   const addSpecificationToDb = async (spec: Omit<Specification, 'id' | 'createdAt' | 'updatedAt'>) => {
+    console.log('[useSpecificationsSupabase] addSpecificationToDb called');
     if (!user) return;
     const newId = Date.now().toString();
     const now = new Date().toISOString();
@@ -50,7 +50,7 @@ export const useSpecificationsSupabase = () => {
     };
     const { error } = await supabase.from('specifications').insert(newSpec);
     if (error) {
-      console.error('Failed to add specification:', error);
+      console.error('[useSpecificationsSupabase] Add error:', error);
       return;
     }
     await loadSpecifications();
@@ -58,6 +58,7 @@ export const useSpecificationsSupabase = () => {
   };
 
   const updateSpecificationInDb = async (id: string, updates: Partial<Specification>) => {
+    console.log('[useSpecificationsSupabase] updateSpecificationInDb called for id:', id);
     if (!user) return;
     const dbUpdates: any = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -71,13 +72,14 @@ export const useSpecificationsSupabase = () => {
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) {
-      console.error('Failed to update specification:', error);
+      console.error('[useSpecificationsSupabase] Update error:', error);
       return;
     }
     await loadSpecifications();
   };
 
   const deleteSpecificationFromDb = async (id: string) => {
+    console.log('[useSpecificationsSupabase] deleteSpecificationFromDb called for id:', id);
     if (!user) return;
     const { error } = await supabase
       .from('specifications')
@@ -85,7 +87,7 @@ export const useSpecificationsSupabase = () => {
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) {
-      console.error('Failed to delete specification:', error);
+      console.error('[useSpecificationsSupabase] Delete error:', error);
       return;
     }
     await loadSpecifications();
