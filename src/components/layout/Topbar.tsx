@@ -32,6 +32,10 @@ export const Topbar: React.FC = () => {
     }
   };
 
+  const handleThemeToggle = () => {
+    dispatch(toggleTheme());
+  };
+
   return (
     <div className="topbar">
       <div className="logo" onClick={() => navigate('/dashboard')}>
@@ -52,7 +56,7 @@ export const Topbar: React.FC = () => {
         <button className="icon-btn" onClick={() => dispatch(openWidgetConfig())}>
           <i className="fas fa-sliders-h"></i>
         </button>
-        <button className="icon-btn" onClick={() => dispatch(toggleTheme())}>
+        <button className="icon-btn" onClick={handleThemeToggle}>
           <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
         </button>
         <span className="role-badge">
