@@ -4,6 +4,22 @@ import { RootState } from '../store';
 import { supabase } from '../lib/supabaseClient';
 import { setProjects, Project } from '../store/projectsSlice';
 
+// Вспомогательная функция для запроса с таймаутом
+const fetchWithTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+  let timeoutId: number;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error('Request timeout')), timeoutMs);
+  });
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timeoutId!);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId!);
+    throw error;
+  }
+};
+
 export const useProjectsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
@@ -15,14 +31,12 @@ export const useProjectsSupabase = () => {
       return;
     }
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id)
-        .timeout(10000); // 10 секунд таймаут
+      const query = supabase.from('projects').select('*').eq('user_id', user.id);
+      console.log('[useProjectsSupabase] Sending request...');
+      const { data, error } = await fetchWithTimeout(query, 10000);
       if (error) {
         console.error('[useProjectsSupabase] Load error:', error.message);
-        throw error;
+        return;
       }
       console.log('[useProjectsSupabase] Loaded', data?.length, 'projects');
       const projects = data.map((item: any) => ({
@@ -51,8 +65,8 @@ export const useProjectsSupabase = () => {
         roadmapActual: item.roadmap_actual,
       }));
       dispatch(setProjects(projects));
-    } catch (err) {
-      console.error('[useProjectsSupabase] Unexpected error:', err);
+    } catch (err: any) {
+      console.error('[useProjectsSupabase] Request failed:', err.message);
     }
   };
 
@@ -87,13 +101,17 @@ export const useProjectsSupabase = () => {
       roadmap_actual: project.roadmapActual,
       user_id: user.id,
     };
-    const { error } = await supabase.from('projects').insert(dbProject);
-    if (error) {
-      console.error('[useProjectsSupabase] Add error:', error);
-      return;
+    try {
+      const { error } = await fetchWithTimeout(supabase.from('projects').insert(dbProject), 10000);
+      if (error) {
+        console.error('[useProjectsSupabase] Add error:', error.message);
+        return;
+      }
+      await loadProjects();
+      return newId;
+    } catch (err: any) {
+      console.error('[useProjectsSupabase] Add request failed:', err.message);
     }
-    await loadProjects();
-    return newId;
   };
 
   const updateProjectInDb = async (id: string, updates: Partial<Project>) => {
@@ -122,31 +140,37 @@ export const useProjectsSupabase = () => {
     if (updates.roadmapPlanned !== undefined) dbUpdates.roadmap_planned = updates.roadmapPlanned;
     if (updates.roadmapActual !== undefined) dbUpdates.roadmap_actual = updates.roadmapActual;
 
-    const { error } = await supabase
-      .from('projects')
-      .update(dbUpdates)
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('[useProjectsSupabase] Update error:', error);
-      return;
+    try {
+      const { error } = await fetchWithTimeout(
+        supabase.from('projects').update(dbUpdates).eq('id', id).eq('user_id', user.id),
+        10000
+      );
+      if (error) {
+        console.error('[useProjectsSupabase] Update error:', error.message);
+        return;
+      }
+      await loadProjects();
+    } catch (err: any) {
+      console.error('[useProjectsSupabase] Update request failed:', err.message);
     }
-    await loadProjects();
   };
 
   const deleteProjectFromDb = async (id: string) => {
     console.log('[useProjectsSupabase] deleteProjectFromDb called for id:', id);
     if (!user) return;
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('[useProjectsSupabase] Delete error:', error);
-      return;
+    try {
+      const { error } = await fetchWithTimeout(
+        supabase.from('projects').delete().eq('id', id).eq('user_id', user.id),
+        10000
+      );
+      if (error) {
+        console.error('[useProjectsSupabase] Delete error:', error.message);
+        return;
+      }
+      await loadProjects();
+    } catch (err: any) {
+      console.error('[useProjectsSupabase] Delete request failed:', err.message);
     }
-    await loadProjects();
   };
 
   return {
