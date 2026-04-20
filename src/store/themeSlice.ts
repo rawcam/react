@@ -5,8 +5,20 @@ interface ThemeState {
   mode: 'light' | 'dark';
 }
 
+// При инициализации сразу применяем класс к body
+const getInitialTheme = (): 'light' | 'dark' => {
+  const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
+  const initial = saved || 'light';
+  if (initial === 'dark') {
+    document.body.classList.add('dark');
+  } else {
+    document.body.classList.remove('dark');
+  }
+  return initial;
+};
+
 const initialState: ThemeState = {
-  mode: (localStorage.getItem('theme') as 'light' | 'dark') || 'light',
+  mode: getInitialTheme(),
 };
 
 const themeSlice = createSlice({
