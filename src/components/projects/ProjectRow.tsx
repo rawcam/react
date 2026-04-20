@@ -52,8 +52,8 @@ export const ProjectRow: React.FC<ProjectRowProps> = ({ project, onClick }) => {
         <div className="row-cell row-responsible">{project.engineer} / {project.projectManager}</div>
         <div className="row-cell row-progress">
           <div className="row-progress-wrapper">
-            <div className="dashboard-progress-bg">
-              <div className="dashboard-progress-fill normal" style={{ width: `${project.progress}%` }}></div>
+            <div className="project-card-progress" style={{ width: '100%', margin: 0 }}>
+              <div className="project-card-progress-fill" style={{ width: `${project.progress}%` }}></div>
             </div>
             <span className="row-percent">{project.progress}%</span>
           </div>
