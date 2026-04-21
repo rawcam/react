@@ -23,7 +23,6 @@ const authSlice = createSlice({
     setSession: (state, action: PayloadAction<Session | null>) => {
       state.session = action.payload;
       state.user = action.payload?.user ?? null;
-      // Роль будем загружать отдельно из таблицы user_roles
     },
     setRole: (state, action: PayloadAction<AuthState['role']>) => {
       state.role = action.payload;
