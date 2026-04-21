@@ -3,7 +3,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { closeWidgetConfig } from '../../store/uiSlice';
-import { toggleWidget, setDisplayMode, resetToRolePreset, setVisibleWidgets, WidgetId, DisplayMode } from '../../store/widgetsSlice';
+import { toggleWidget, setDisplayMode, WidgetId, DisplayMode } from '../../store/widgetsSlice';
 import { useAuth } from '../../hooks/useAuth';
 
 export const WidgetConfigDrawer: React.FC = () => {
@@ -25,7 +25,6 @@ export const WidgetConfigDrawer: React.FC = () => {
   const handleClose = () => dispatch(closeWidgetConfig());
   const handleToggle = (id: WidgetId) => dispatch(toggleWidget(id));
   const handleModeChange = (mode: DisplayMode) => dispatch(setDisplayMode(mode));
-  const handleReset = () => role && dispatch(resetToRolePreset(role as any));
 
   if (!isOpen) return null;
 
@@ -64,12 +63,11 @@ export const WidgetConfigDrawer: React.FC = () => {
         </div>
 
         <div className="drawer-section">
-          <h4>Предустановки</h4>
-          <div className="preset-buttons">
-            <button className="preset-btn" onClick={handleReset}>По роли ({role})</button>
-            <button className="preset-btn" onClick={() => dispatch(setVisibleWidgets(['companyFinance', 'projectsFinance', 'service', 'workload', 'risks', 'carousel']))}>Все</button>
-            <button className="preset-btn" onClick={() => dispatch(setVisibleWidgets(['carousel']))}>Минимум</button>
+          <h4>Текущая роль</h4>
+          <div className="role-info" style={{ padding: '8px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+            <i className="fas fa-user-tag"></i> {role || 'не выбрана'}
           </div>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Роль можно изменить на странице входа (демо).</p>
         </div>
       </div>
     </>
