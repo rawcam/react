@@ -357,6 +357,7 @@ body.light .toggle-btn {
   padding: 4px 0;
 }
 
+/* Стрелки карусели */
 .carousel-arrow {
   background: var(--bg-panel-solid);
   border: 1px solid var(--border-light);
@@ -370,6 +371,20 @@ body.light .toggle-btn {
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
+  line-height: 1;
+}
+
+/* Активная кнопка переключения вида */
+.toggle-btn.active {
+  background: var(--accent);
+  color: white !important;
+  border-color: var(--accent);
+}
+
+/* Ховер для кнопок переключения */
+.toggle-btn:hover:not(.active) {
+  background: var(--accent-glow);
+  color: var(--accent);
 }
 
 .carousel-arrow:hover {
