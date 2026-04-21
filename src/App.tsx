@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -13,16 +13,8 @@ import { CalculationsPage } from './pages/CalculationsPage';
 import { SpecificationsListPage } from './pages/SpecificationsListPage';
 import { SpecificationPage } from './pages/SpecificationPage';
 import FlowEditorPage from './pages/FlowEditorPage';
+import { LoginPage } from './pages/LoginPage';
 import './index.css';
-
-const LoadingScreen = () => (
-  <div className="loading-screen" style={{
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    height: '100vh', background: '#0a1120', color: 'white'
-  }}>
-    <h2>Загрузка...</h2>
-  </div>
-);
 
 const AppContent = () => {
   const dispatch = useDispatch();
@@ -68,34 +60,43 @@ const AppContent = () => {
   }, [dispatch]);
 
   if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (!user) {
-    window.location.href = '/reactflow/login.html';
-    return null;
+    return (
+      <div className="loading-screen" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100vh', background: '#0a1120', color: 'white'
+      }}>
+        <h2>Загрузка...</h2>
+      </div>
+    );
   }
 
   return (
     <ReactFlowProvider>
       <HashRouter>
-        <div className="app">
-          <Topbar />
-          <div className="app-layout">
-            <main className="main-content">
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/projects" element={<ProjectsPage />} />
-                <Route path="/calculations" element={<CalculationsPage />} />
-                <Route path="/specifications" element={<SpecificationsListPage />} />
-                <Route path="/specification/:id" element={<SpecificationPage />} />
-                <Route path="/specification" element={<SpecificationPage />} />
-                <Route path="/flow-editor" element={<FlowEditorPage />} />
-              </Routes>
-            </main>
+        {user ? (
+          <div className="app">
+            <Topbar />
+            <div className="app-layout">
+              <main className="main-content">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/projects" element={<ProjectsPage />} />
+                  <Route path="/calculations" element={<CalculationsPage />} />
+                  <Route path="/specifications" element={<SpecificationsListPage />} />
+                  <Route path="/specification/:id" element={<SpecificationPage />} />
+                  <Route path="/specification" element={<SpecificationPage />} />
+                  <Route path="/flow-editor" element={<FlowEditorPage />} />
+                </Routes>
+              </main>
+            </div>
           </div>
-        </div>
+        ) : (
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        )}
       </HashRouter>
     </ReactFlowProvider>
   );
