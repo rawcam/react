@@ -35,8 +35,15 @@ const authSlice = createSlice({
       state.user = null;
       state.role = null;
     },
+    // Новый экшен для принудительной очистки старых данных при старте
+    clearLocalStorageOnStartup: (state) => {
+      // Удаляем старые ключи, которые могли вызвать конфликт
+      const keysToRemove = ['userRole', 'userName', 'theme'];
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      console.log('[Startup] Old localStorage keys cleared.');
+    },
   },
 });
 
-export const { setSession, setRole, setLoading, logout } = authSlice.actions;
+export const { setSession, setRole, setLoading, logout, clearLocalStorageOnStartup } = authSlice.actions;
 export default authSlice.reducer;
