@@ -8,7 +8,7 @@
   --text-muted: #8a9cb0;
   --border-light: rgba(100, 150, 255, 0.25);
   --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.15);  /* светлый ховер для тёмной темы */
+  --accent-glow: #1e3a5f;  /* тёмно-голубой ховер для тёмной темы */
   --accent-hover: #2563eb;
   --card-bg: rgba(15, 25, 40, 0.35);
   --shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
@@ -33,7 +33,7 @@ body.light {
   --text-muted: #6c7e97;
   --border-light: rgba(59, 130, 246, 0.2);
   --accent: #2563eb;
-  --accent-glow: rgba(37, 99, 235, 0.15);  /* светлый ховер для светлой темы */
+  --accent-glow: #bae6fd;  /* выбранный голубой ховер для светлой темы */
   --accent-hover: #1d4ed8;
   --card-bg: rgba(255, 255, 255, 0.6);
   --shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
@@ -105,4 +105,19 @@ body {
 .flow-editor::before,
 .calculations-page::before {
   display: none !important;
+}
+/* Общий стиль ховера для всех кликабельных элементов */
+.project-card:hover,
+.spec-card:hover,
+.list-row:hover,
+.project-row:hover,
+.specs-table tbody tr:hover td,
+button:hover,
+.btn-secondary:hover,
+.spec-button:hover,
+.toggle-btn:hover:not(.active),
+.carousel-card:hover {
+  background: var(--accent-glow) !important;
+  color: inherit !important;
+  border-color: var(--accent) !important;
 }
