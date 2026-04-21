@@ -9,25 +9,29 @@ export const useSpecificationsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
 
-  const loadSpecifications = useCallback(async () => {
+  const loadSpecifications = useCallback(async (): Promise<void> => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from('specifications')
-      .select('*')
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('Failed to load specifications:', error.message);
-      return;
+    try {
+      const { data, error } = await supabase
+        .from('specifications')
+        .select('*')
+        .eq('user_id', user.id);
+      if (error) {
+        console.error('loadSpecifications error:', error.message);
+        return;
+      }
+      const specs = data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        projectId: item.project_id,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+        rows: item.rows || [],
+      }));
+      dispatch(setSpecifications(specs));
+    } catch (err) {
+      console.error('loadSpecifications unexpected error:', err);
     }
-    const specs = data.map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      projectId: item.project_id,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
-      rows: item.rows || [],
-    }));
-    dispatch(setSpecifications(specs));
   }, [user, dispatch]);
 
   const addSpecificationToDb = useCallback(async (spec: Omit<Specification, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -45,8 +49,8 @@ export const useSpecificationsSupabase = () => {
     };
     const { error } = await supabase.from('specifications').insert(newSpec);
     if (error) {
-      console.error('Failed to add specification:', error.message);
-      return;
+      console.error('addSpecificationToDb error:', error.message);
+      throw error;
     }
     await loadSpecifications();
     return newId;
@@ -66,8 +70,8 @@ export const useSpecificationsSupabase = () => {
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) {
-      console.error('Failed to update specification:', error.message);
-      return;
+      console.error('updateSpecificationInDb error:', error.message);
+      throw error;
     }
     await loadSpecifications();
   }, [user, loadSpecifications]);
@@ -80,8 +84,8 @@ export const useSpecificationsSupabase = () => {
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) {
-      console.error('Failed to delete specification:', error.message);
-      return;
+      console.error('deleteSpecificationFromDb error:', error.message);
+      throw error;
     }
     await loadSpecifications();
   }, [user, loadSpecifications]);
