@@ -32,8 +32,25 @@ const widgetsSlice = createSlice({
         state.visibleWidgets.splice(index, 1);
       }
     },
+    resetToRolePreset: (state, action: PayloadAction<'director' | 'pm' | 'engineer' | 'designer' | 'logist'>) => {
+      switch (action.payload) {
+        case 'director':
+          state.visibleWidgets = ['companyFinance', 'projectsFinance', 'service', 'workload', 'risks', 'carousel'];
+          break;
+        case 'pm':
+          state.visibleWidgets = ['projectsFinance', 'service', 'workload', 'risks', 'carousel'];
+          break;
+        case 'engineer':
+        case 'designer':
+        case 'logist':
+          state.visibleWidgets = ['projectsFinance', 'carousel'];
+          break;
+        default:
+          break;
+      }
+    },
   },
 });
 
-export const { setVisibleWidgets, setDisplayMode, toggleWidget } = widgetsSlice.actions;
+export const { setVisibleWidgets, setDisplayMode, toggleWidget, resetToRolePreset } = widgetsSlice.actions;
 export default widgetsSlice.reducer;
