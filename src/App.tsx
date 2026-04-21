@@ -33,7 +33,6 @@ const AppContent = () => {
         const { data: { session } } = await supabase.auth.getSession();
         dispatch(setSession(session));
         if (session?.user) {
-          // Загружаем роль пользователя
           const { data, error } = await supabase
             .from('user_roles')
             .select('role')
@@ -42,7 +41,7 @@ const AppContent = () => {
           if (!error && data) {
             dispatch(setRole(data.role));
           } else {
-            dispatch(setRole('engineer')); // роль по умолчанию
+            dispatch(setRole('engineer'));
           }
         }
       } catch (err) {
