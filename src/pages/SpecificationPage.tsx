@@ -62,6 +62,8 @@ export const SpecificationPage: React.FC = () => {
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
   const sortableRef = useRef<Sortable | null>(null);
   const prevRowsRef = useRef<string>('');
+  const saveNameTimeoutRef = useRef<number>();
+  const saveProjectTimeoutRef = useRef<number>();
 
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem('spec_column_widths');
@@ -94,24 +96,31 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (!currentSpec || rows.length === 0) return;
-
     const rowsJSON = JSON.stringify(rows);
     if (rowsJSON === prevRowsRef.current) return;
-
     prevRowsRef.current = rowsJSON;
     updateSpecificationInDb(currentSpec.id, { rows });
   }, [rows, currentSpec, updateSpecificationInDb]);
 
   useEffect(() => {
     if (currentSpec && tableName !== currentSpec.name) {
-      updateSpecificationInDb(currentSpec.id, { name: tableName });
+      if (tableName.trim() === currentSpec.name) return;
+      clearTimeout(saveNameTimeoutRef.current);
+      saveNameTimeoutRef.current = window.setTimeout(() => {
+        updateSpecificationInDb(currentSpec.id, { name: tableName });
+      }, 500);
     }
+    return () => clearTimeout(saveNameTimeoutRef.current);
   }, [tableName, currentSpec, updateSpecificationInDb]);
 
   useEffect(() => {
     if (currentSpec && selectedProjectId !== currentSpec.projectId) {
-      updateSpecificationInDb(currentSpec.id, { projectId: selectedProjectId });
+      clearTimeout(saveProjectTimeoutRef.current);
+      saveProjectTimeoutRef.current = window.setTimeout(() => {
+        updateSpecificationInDb(currentSpec.id, { projectId: selectedProjectId });
+      }, 500);
     }
+    return () => clearTimeout(saveProjectTimeoutRef.current);
   }, [selectedProjectId, currentSpec, updateSpecificationInDb]);
 
   useEffect(() => {
@@ -172,19 +181,6 @@ export const SpecificationPage: React.FC = () => {
   const getGrossRub = (row: DataRow) => row.price * row.quantity * getRate(row.currency);
   const getTotalRub = (row: DataRow) => (row.priceAfter || 0) * row.quantity * getRate(row.currency);
   const formatNumber = (num: number): string => Math.round(num).toLocaleString('ru-RU');
-
-  const updateCalculations = () => {
-    setRows(prev =>
-      prev.map(row => {
-        if (row.type === 'data') {
-          const discountAmount = (row.price * row.discount) / 100;
-          const priceAfter = row.price - discountAmount;
-          return { ...row, discountAmount, priceAfter };
-        }
-        return row;
-      })
-    );
-  };
 
   const isDataRowVisible = (row: DataRow) => {
     const vendorMatch = filterVendor === '' || row.vendor.toLowerCase().includes(filterVendor.toLowerCase());
