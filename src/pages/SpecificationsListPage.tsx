@@ -25,10 +25,13 @@ export const SpecificationsListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     const init = async () => {
-      if (user) {
-        await loadSpecifications();
-      }
+      setLoading(true);
+      await loadSpecifications();
       setLoading(false);
     };
     init();
