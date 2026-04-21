@@ -1,6 +1,7 @@
 // src/hooks/useFinanceData.ts
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 
 interface FinanceData {
   revenue: string;
@@ -38,7 +39,6 @@ interface FinanceData {
   isDemo: boolean;
 }
 
-// Демо-данные (эмуляция ответа от 1С)
 const DEMO_DATA: FinanceData = {
   revenue: '12.4M',
   revenueTrend: 8.2,
@@ -80,33 +80,31 @@ const DEMO_DATA: FinanceData = {
 export const useFinanceData = () => {
   const [data, setData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const userRole = useSelector((state: RootState) => state.auth.role);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
+    if (userRole !== 'director') {
+      setLoading(false);
+      return;
+    }
     try {
-      // В будущем здесь будет запрос к Supabase (данные, загруженные из 1С)
-      // const { data: financeData, error } = await supabase.from('finance_1c').select('*').single();
-      // if (error) throw error;
-      // setData(financeData);
-      
-      // Пока используем демо-данные
-      await new Promise(resolve => setTimeout(resolve, 500)); // имитация задержки
+      // Имитация запроса
+      await new Promise(resolve => setTimeout(resolve, 300));
       setData(DEMO_DATA);
     } catch (err) {
       console.error('Failed to load finance data:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userRole]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const syncWith1C = useCallback(async () => {
-    alert('Запрос на синхронизацию с 1С (демо). В реальности здесь будет вызов Edge Function.');
-    // В реальности: await supabase.functions.invoke('sync-1c');
-    await loadData(); // перезагружаем демо-данные
+    alert('Запрос на синхронизацию с 1С (демо).');
+    await loadData();
   }, [loadData]);
 
   return { data, loading, syncWith1C };
