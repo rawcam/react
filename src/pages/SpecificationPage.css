@@ -323,3 +323,19 @@
   gap: 12px;
   margin-top: 24px;
 }
+.spec-action-buttons {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.spec-data-row:hover .spec-action-buttons {
+  opacity: 1;
+}
+.spec-action-buttons button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+}
+.spec-action-buttons button:hover {
+  background: transparent !important;
+  color: var(--accent) !important;
+}
