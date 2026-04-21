@@ -1814,3 +1814,10 @@ input:checked + .slider:before {
   color: var(--text-muted);
   font-size: 0.75rem;
 }
+button:hover,
+.btn-secondary:hover,
+.spec-button:hover {
+  background: var(--accent-glow) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
