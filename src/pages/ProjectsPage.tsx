@@ -33,11 +33,18 @@ export const ProjectsPage = () => {
   }, [user, loadProjects]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.split('?')[1]);
+    const hash = window.location.hash;
+    console.log('[ProjectsPage] Current hash:', hash);
+    const params = new URLSearchParams(hash.split('?')[1] || '');
     const projectId = params.get('id');
+    console.log('[ProjectsPage] Parsed projectId from URL:', projectId);
     if (projectId && projects.length > 0) {
       const project = projects.find(p => p.id === projectId);
+      console.log('[ProjectsPage] Found project:', project?.id, project?.name);
       setSelectedProject(project || null);
+    } else {
+      // Если нет id, сбрасываем выбранный проект
+      setSelectedProject(null);
     }
   }, [projects]);
 
@@ -59,9 +66,11 @@ export const ProjectsPage = () => {
   }, [projects, sortBy, statusFilter, priorityFilter]);
 
   const handleSelectProject = (project: any) => {
+    console.log('[ProjectsPage] handleSelectProject called with project:', project.id, project.name);
     navigate(`/projects?id=${project.id}`, { replace: true });
   };
   const handleBack = () => {
+    console.log('[ProjectsPage] handleBack called');
     navigate('/projects', { replace: true });
     setSelectedProject(null);
   };
@@ -77,8 +86,10 @@ export const ProjectsPage = () => {
     return <div className="projects-page"><div className="empty-state"><i className="fas fa-spinner fa-pulse"></i><p>Загрузка проектов...</p></div></div>;
   }
   if (selectedProject) {
+    console.log('[ProjectsPage] Rendering ProjectDetail for:', selectedProject.id);
     return <ProjectDetail project={selectedProject} onBack={handleBack} />;
   }
+  console.log('[ProjectsPage] Rendering project list. Projects count:', projects.length);
   return (
     <div className="projects-page">
       <div className="projects-toolbar">
