@@ -1,5 +1,4 @@
 /* src/styles/theme-new.css */
-/* Базовые переменные (тёмная тема по умолчанию) */
 :root {
   --bg-page: radial-gradient(circle at 20% 30%, #0a1120, #03060b);
   --bg-panel: rgba(15, 25, 40, 0.45);
@@ -9,7 +8,7 @@
   --text-muted: #8a9cb0;
   --border-light: rgba(100, 150, 255, 0.25);
   --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.3);
+  --accent-glow: rgba(59, 130, 246, 0.15);  /* светлый ховер для тёмной темы */
   --accent-hover: #2563eb;
   --card-bg: rgba(15, 25, 40, 0.35);
   --shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
@@ -25,7 +24,6 @@
   --border-radius-small: 16px;
 }
 
-/* Светлая тема */
 body.light {
   --bg-page: radial-gradient(circle at 20% 30%, #e6f0ff, #d0e0ff);
   --bg-panel: rgba(255, 255, 255, 0.7);
@@ -35,14 +33,14 @@ body.light {
   --text-muted: #6c7e97;
   --border-light: rgba(59, 130, 246, 0.2);
   --accent: #2563eb;
-  --accent-glow: rgba(37, 99, 235, 0.3);
+  --accent-glow: rgba(37, 99, 235, 0.15);  /* светлый ховер для светлой темы */
   --accent-hover: #1d4ed8;
   --card-bg: rgba(255, 255, 255, 0.6);
   --shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
   --shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.1);
 }
 
-/* Звёздный фон (только для body, не для изолированных рабочих областей) */
+/* Звёзды (только для body) */
 body::before {
   content: '';
   position: fixed;
@@ -102,7 +100,7 @@ body {
   z-index: 1;
 }
 
-/* Убираем звёзды в рабочих областях, где нужна точность */
+/* Убираем звёзды в рабочих областях */
 .spec-page::before,
 .flow-editor::before,
 .calculations-page::before {
