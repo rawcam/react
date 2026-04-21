@@ -156,3 +156,25 @@ input[type="number"]::-webkit-outer-spin-button {
 .react-flow__controls button:hover {
   background: var(--accent-glow) !important;
 }
+/* Принудительное обновление стилей */
+.carousel-arrow {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+.toggle-btn.active {
+  background: var(--accent) !important;
+  color: white !important;
+}
+button:hover, .btn-secondary:hover, .spec-button:hover {
+  background: var(--accent-glow) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+.spec-section-actions {
+  opacity: 0 !important;
+}
+.spec-section-row:hover .spec-section-actions {
+  opacity: 1 !important;
+}
