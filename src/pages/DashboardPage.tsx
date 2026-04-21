@@ -28,7 +28,7 @@ export const DashboardPage: React.FC = () => {
 
   // Фильтруем виджеты по видимости и роли
   const topWidgets = allWidgets
-    .filter(w => visibleWidgets.includes(w.id as any) && hasRole(w.roles))
+    .filter(w => visibleWidgets.includes(w.id as any) && hasRole([...w.roles]))
     .map(w => w.component);
 
   const showCarousel = visibleWidgets.includes('carousel' as any);
