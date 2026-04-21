@@ -178,3 +178,10 @@ button:hover, .btn-secondary:hover, .spec-button:hover {
 .spec-section-row:hover .spec-section-actions {
   opacity: 1 !important;
 }
+.carousel-arrow {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  font-size: 24px !important;
+}
