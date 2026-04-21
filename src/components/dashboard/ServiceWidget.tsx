@@ -26,7 +26,8 @@ export const ServiceWidget: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!hasRole('pm') && !hasRole('engineer')) return null;
+  // Добавлен 'director' в список разрешённых ролей
+  if (!hasRole(['director', 'pm', 'engineer'])) return null;
 
   const allVisits = projects.flatMap(p => p.serviceVisits);
   const planned = allVisits.filter(v => v.status === 'planned').length;
