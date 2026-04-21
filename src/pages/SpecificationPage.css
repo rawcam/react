@@ -224,7 +224,23 @@
 
 .spec-data-row:hover .spec-action-buttons,
 .spec-section-row:hover .spec-section-actions {
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.spec-section-row:hover .spec-section-actions {
   opacity: 1;
+}
+.spec-section-actions button {
+  background: transparent !important;  /* убираем фон */
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+.spec-section-actions button:hover {
+  background: transparent !important;  /* при ховере тоже без фона */
 }
 
 .spec-action-buttons button {
