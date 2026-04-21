@@ -15,14 +15,14 @@ export const DashboardPage: React.FC = () => {
   const projects = useAppSelector(state => state.projects.list);
   const activeProjects = projects.filter(p => p.status !== 'done');
 
-  // Все виджеты (без фильтрации по роли — каждый виджет сам решит, показываться ли)
+  // Все виджеты (каждый сам проверяет роль и возвращает null, если нет доступа)
   const allWidgets = [
     { id: 'companyFinance', component: <CompanyFinanceWidget key="companyFinance" /> },
     { id: 'projectsFinance', component: <ProjectsFinanceWidget key="projectsFinance" /> },
     { id: 'service', component: <ServiceWidget key="service" /> },
     { id: 'workload', component: <WorkloadWidget key="workload" /> },
     { id: 'risks', component: <RisksWidget key="risks" /> },
-  ];
+  ] as const;
 
   const topWidgets = allWidgets
     .filter(w => visibleWidgets.includes(w.id as any))
