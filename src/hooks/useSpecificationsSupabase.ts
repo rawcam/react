@@ -8,14 +8,17 @@ import { setSpecifications, Specification } from '../store/specificationsSlice';
 export const useSpecificationsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
+  const role = useSelector((state: RootState) => state.auth.role);
 
   const loadSpecifications = useCallback(async (): Promise<void> => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('specifications')
-        .select('*')
-        .eq('user_id', user.id);
+      let query = supabase.from('specifications').select('*');
+      // Если роль не director и не pm, фильтруем по user_id
+      if (role !== 'director' && role !== 'pm') {
+        query = query.eq('user_id', user.id);
+      }
+      const { data, error } = await query;
       if (error) {
         console.error('loadSpecifications error:', error.message);
         return;
@@ -32,7 +35,7 @@ export const useSpecificationsSupabase = () => {
     } catch (err) {
       console.error('loadSpecifications unexpected error:', err);
     }
-  }, [user, dispatch]);
+  }, [user, role, dispatch]);
 
   const addSpecificationToDb = useCallback(async (spec: Omit<Specification, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
