@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useDispatch } from 'react-redux';
-import { setSession } from '../store/authSlice';
+import { setSession, setRole } from '../store/authSlice';
 import './LoginPage.css';
 
 export const LoginPage: React.FC = () => {
@@ -19,14 +19,16 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (data.session) {
-        // Сохраняем сессию в Redux
         dispatch(setSession(data.session));
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('id', data.session.user.id)
+          .single();
+        dispatch(setRole(roleData?.role || 'engineer'));
         navigate('/dashboard');
       }
     } catch (err: any) {
@@ -68,9 +70,6 @@ export const LoginPage: React.FC = () => {
             {loading ? 'Вход...' : 'Войти'}
           </button>
         </form>
-        <div className="login-footer">
-          <span>Демо-режим временно отключён</span>
-        </div>
       </div>
     </div>
   );
