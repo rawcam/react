@@ -124,8 +124,8 @@ button, .btn-primary, .btn-secondary, .btn-danger, .btn-inactive, .btn-small {
   color: var(--text-primary);
 }
 .btn-secondary:hover {
-  background: var(--accent);
-  color: white;
+  background: var(--accent-glow);
+  color: var(--accent);
   border-color: var(--accent);
 }
 .btn-danger {
@@ -134,6 +134,15 @@ button, .btn-primary, .btn-secondary, .btn-danger, .btn-inactive, .btn-small {
 }
 .btn-danger:hover { background: #b91c1c; transform: translateY(-1px); }
 .btn-small { padding: 4px 12px; font-size: 0.75rem; }
+
+/* Глобальный ховер для всех кнопок */
+button:hover,
+.btn-secondary:hover,
+.spec-button:hover {
+  background: var(--accent-glow) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
 
 /* ========== ПОЛЯ ВВОДА ========== */
 input, select, textarea {
@@ -855,7 +864,7 @@ body.dark .dashboard-widget-menu {
   color: white;
   border-color: var(--accent);
 }
-.toggle-btn:hover:not(.active) { background: var(--accent-light); }
+.toggle-btn:hover:not(.active) { background: var(--accent-glow); }
 .carousel-wrapper {
   display: flex;
   align-items: center;
@@ -936,6 +945,7 @@ body.dark .dashboard-widget-menu {
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
+  line-height: 1;
 }
 .carousel-arrow:hover {
   background: var(--accent);
@@ -964,7 +974,7 @@ body.dark .dashboard-widget-menu {
   background: linear-gradient(90deg, rgba(245,176,66,0.05) 0%, var(--bg-panel-solid) 100%);
 }
 .list-row:hover {
-  background: var(--accent-light);
+  background: var(--accent-glow);
   transform: translateX(4px);
   border-color: var(--accent);
 }
@@ -1251,7 +1261,7 @@ input:checked + .slider:before {
   color: var(--text-primary);
 }
 .btn-sidebar-secondary:hover {
-  background: var(--accent-light);
+  background: var(--accent-glow);
   border-color: var(--accent);
 }
 /* ========== ТОПБАР (восстановление стилей) ========== */
@@ -1293,7 +1303,7 @@ input:checked + .slider:before {
 }
 .nav-buttons button:hover {
   color: var(--accent);
-  background: var(--accent-light);
+  background: var(--accent-glow);
 }
 .topbar-actions {
   display: flex;
@@ -1312,19 +1322,19 @@ input:checked + .slider:before {
 }
 .topbar-actions button:hover {
   color: var(--accent);
-  background: var(--accent-light);
+  background: var(--accent-glow);
 }
 .role-badge {
   font-size: 0.75rem;
   padding: 4px 12px;
-  background: var(--accent-light);
+  background: var(--accent-glow);
   border-radius: 40px;
   color: var(--accent);
   font-weight: 500;
 }
 .nav-buttons button.active {
   color: var(--accent);
-  background: var(--accent-light);
+  background: var(--accent-glow);
   font-weight: 600;
 }
 .mode-btn {
@@ -1424,7 +1434,7 @@ input:checked + .slider:before {
   background: transparent;
 }
 .reset-btn:hover {
-  background: var(--accent-light);
+  background: var(--accent-glow);
   border-color: var(--accent);
 }
 .projects-header {
@@ -1486,7 +1496,7 @@ input:checked + .slider:before {
   border: 1px solid var(--border-light);
 }
 .project-row:hover {
-  background: var(--accent-light);
+  background: var(--accent-glow);
   transform: translateX(4px);
   border-color: var(--accent);
 }
@@ -1582,7 +1592,7 @@ input:checked + .slider:before {
   background: transparent;
 }
 .reset-btn:hover {
-  background: var(--accent-light);
+  background: var(--accent-glow);
 }
 .project-row-grid {
   display: grid;
@@ -1689,7 +1699,7 @@ input:checked + .slider:before {
   color: var(--text-primary);
 }
 .btn-sidebar-secondary:hover {
-  background: var(--accent-light);
+  background: var(--accent-glow);
   border-color: var(--accent);
 }
 .empty-calculations {
@@ -1813,11 +1823,4 @@ input:checked + .slider:before {
 .empty-calculations small {
   color: var(--text-muted);
   font-size: 0.75rem;
-}
-button:hover,
-.btn-secondary:hover,
-.spec-button:hover {
-  background: var(--accent-glow) !important;
-  color: var(--accent) !important;
-  border-color: var(--accent) !important;
 }
