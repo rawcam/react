@@ -33,12 +33,7 @@ export const ProjectsPage = () => {
       setLoading(false);
       return;
     }
-    const init = async () => {
-      setLoading(true);
-      await loadProjects();
-      setLoading(false);
-    };
-    init();
+    loadProjects().finally(() => setLoading(false));
   }, [user, loadProjects]);
 
   useEffect(() => {
