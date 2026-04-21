@@ -8,28 +8,35 @@ import { WorkloadWidget } from '../components/dashboard/WorkloadWidget';
 import { RisksWidget } from '../components/dashboard/RisksWidget';
 import { ProjectsCarousel } from '../components/dashboard/ProjectsCarousel';
 import { WidgetConfigDrawer } from '../components/ui/WidgetConfigDrawer';
+import { useAuth } from '../hooks/useAuth';
 
 export const DashboardPage: React.FC = () => {
   const visibleWidgets = useAppSelector(state => state.widgets.visibleWidgets);
   const displayMode = useAppSelector(state => state.widgets.displayMode);
   const projects = useAppSelector(state => state.projects.list);
   const activeProjects = projects.filter(p => p.status !== 'done');
+  const { hasRole } = useAuth();
 
-  const widgetMap: Record<string, React.ReactNode> = {
-    companyFinance: <CompanyFinanceWidget key="companyFinance" />,
-    projectsFinance: <ProjectsFinanceWidget key="projectsFinance" />,
-    service: <ServiceWidget key="service" />,
-    workload: <WorkloadWidget key="workload" />,
-    risks: <RisksWidget key="risks" />,
-  };
+  // Все возможные виджеты
+  const allWidgets = [
+    { id: 'companyFinance', component: <CompanyFinanceWidget key="companyFinance" />, roles: ['director', 'pm'] },
+    { id: 'projectsFinance', component: <ProjectsFinanceWidget key="projectsFinance" />, roles: ['director', 'pm', 'engineer'] },
+    { id: 'service', component: <ServiceWidget key="service" />, roles: ['pm', 'engineer'] },
+    { id: 'workload', component: <WorkloadWidget key="workload" />, roles: ['pm', 'engineer'] },
+    { id: 'risks', component: <RisksWidget key="risks" />, roles: ['director', 'pm'] },
+  ];
+
+  // Фильтруем виджеты по видимости и роли
+  const topWidgets = allWidgets
+    .filter(w => visibleWidgets.includes(w.id) && hasRole(w.roles))
+    .map(w => w.component);
 
   const showCarousel = visibleWidgets.includes('carousel');
-  const topWidgets = visibleWidgets.filter(id => id !== 'carousel');
 
   return (
     <div className="dashboard-page">
       <div className={`dashboard-grid ${displayMode}`}>
-        {topWidgets.map(id => widgetMap[id])}
+        {topWidgets}
       </div>
       {showCarousel && <ProjectsCarousel projects={activeProjects} />}
       <WidgetConfigDrawer />
