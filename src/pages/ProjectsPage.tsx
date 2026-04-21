@@ -37,7 +37,8 @@ export const ProjectsPage = () => {
   }, [user, loadProjects]);
 
   useEffect(() => {
-    const projectId = window.location.hash.match(/[?&]id=([^&]+)/)?.[1];
+    const params = new URLSearchParams(window.location.hash.split('?')[1]);
+    const projectId = params.get('id');
     if (projectId && projects.length > 0) {
       const project = projects.find(p => p.id === projectId);
       setSelectedProject(project || null);
