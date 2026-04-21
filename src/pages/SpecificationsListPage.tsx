@@ -29,12 +29,7 @@ export const SpecificationsListPage: React.FC = () => {
       setLoading(false);
       return;
     }
-    const init = async () => {
-      setLoading(true);
-      await loadSpecifications();
-      setLoading(false);
-    };
-    init();
+    loadSpecifications().finally(() => setLoading(false));
   }, [user, loadSpecifications]);
 
   const getProjectName = (projectId: string | null) => {
