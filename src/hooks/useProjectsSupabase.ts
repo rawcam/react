@@ -8,49 +8,57 @@ import { setProjects, Project } from '../store/projectsSlice';
 export const useProjectsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
+  const role = useSelector((state: RootState) => state.auth.role);
 
-  const loadProjects = useCallback(async (): Promise<void> => {
+  const loadProjects = useCallback(async () => {
     if (!user) return;
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id);
-      if (error) {
-        console.error('loadProjects error:', error.message);
-        return;
-      }
-      const projects = data.map((item: any) => ({
-        id: item.id,
-        shortId: item.short_id,
-        name: item.name,
-        category: item.category,
-        status: item.status,
-        statusStartDate: item.status_start_date,
-        startDate: item.start_date,
-        progress: item.progress,
-        contractAmount: item.contract_amount,
-        engineer: item.engineer,
-        projectManager: item.project_manager,
-        priority: item.priority,
-        meetings: item.meetings,
-        purchases: item.purchases,
-        incomeSchedule: item.income_schedule,
-        expenseSchedule: item.expense_schedule,
-        serviceVisits: item.service_visits,
-        actualIncome: item.actual_income,
-        actualExpenses: item.actual_expenses,
-        nextStatus: item.next_status,
-        nextStatusDate: item.next_status_date,
-        roadmapPlanned: item.roadmap_planned,
-        roadmapActual: item.roadmap_actual,
-      }));
-      dispatch(setProjects(projects));
-    } catch (err) {
-      console.error('loadProjects unexpected error:', err);
+    
+    let query = supabase.from('projects').select('*');
+    
+    // Если роль director или pm, загружаем все проекты, иначе только свои
+    if (role === 'director' || role === 'pm') {
+      console.log('[loadProjects] Loading ALL projects for director/pm');
+    } else {
+      console.log('[loadProjects] Loading own projects for user:', user.id);
+      query = query.eq('user_id', user.id);
     }
-  }, [user, dispatch]);
+    
+    const { data, error } = await query;
+    if (error) {
+      console.error('Failed to load projects:', error.message);
+      return;
+    }
+    
+    const projects = data.map((item: any) => ({
+      id: item.id,
+      shortId: item.short_id,
+      name: item.name,
+      category: item.category,
+      status: item.status,
+      statusStartDate: item.status_start_date,
+      startDate: item.start_date,
+      progress: item.progress,
+      contractAmount: item.contract_amount,
+      engineer: item.engineer,
+      projectManager: item.project_manager,
+      priority: item.priority,
+      meetings: item.meetings,
+      purchases: item.purchases,
+      incomeSchedule: item.income_schedule,
+      expenseSchedule: item.expense_schedule,
+      serviceVisits: item.service_visits,
+      actualIncome: item.actual_income,
+      actualExpenses: item.actual_expenses,
+      nextStatus: item.next_status,
+      nextStatusDate: item.next_status_date,
+      roadmapPlanned: item.roadmap_planned,
+      roadmapActual: item.roadmap_actual,
+    }));
+    
+    dispatch(setProjects(projects));
+  }, [user, role, dispatch]);
 
+  // Остальные функции (add, update, delete) оставляем без изменений, но их тоже можно адаптировать
   const addProjectToDb = useCallback(async (project: Omit<Project, 'id' | 'shortId'>) => {
     if (!user) return;
     const newId = Date.now().toString();
@@ -83,8 +91,8 @@ export const useProjectsSupabase = () => {
     };
     const { error } = await supabase.from('projects').insert(dbProject);
     if (error) {
-      console.error('addProjectToDb error:', error.message);
-      throw error;
+      console.error('Failed to add project:', error.message);
+      return;
     }
     await loadProjects();
     return newId;
@@ -121,8 +129,8 @@ export const useProjectsSupabase = () => {
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) {
-      console.error('updateProjectInDb error:', error.message);
-      throw error;
+      console.error('Failed to update project:', error.message);
+      return;
     }
     await loadProjects();
   }, [user, loadProjects]);
@@ -135,8 +143,8 @@ export const useProjectsSupabase = () => {
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) {
-      console.error('deleteProjectFromDb error:', error.message);
-      throw error;
+      console.error('Failed to delete project:', error.message);
+      return;
     }
     await loadProjects();
   }, [user, loadProjects]);
