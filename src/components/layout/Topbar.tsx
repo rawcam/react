@@ -15,7 +15,7 @@ export const Topbar: React.FC = () => {
 
   const navItems = [
     { path: '/dashboard', label: 'Главная' },
-    { path: '/finance', label: 'Финансы', roles: ['director'] },
+    { path: '/finance', label: 'Финансы' },
     { path: '/projects', label: 'Проекты' },
     { path: '/calculations', label: 'Расчёты' },
     { path: '/specifications', label: 'Спецификации' },
@@ -33,15 +33,13 @@ export const Topbar: React.FC = () => {
     }
   };
 
-  const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(userRole));
-
   return (
     <div className="topbar">
       <div className="logo" onClick={() => navigate('/dashboard')}>
         Sputnik Studio
       </div>
       <div className="nav-buttons">
-        {filteredNavItems.map(item => (
+        {navItems.map(item => (
           <button
             key={item.path}
             className={`nav-btn ${location.pathname === item.path ? 'active' : ''}`}
