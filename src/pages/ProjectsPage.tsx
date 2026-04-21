@@ -1,7 +1,7 @@
 // src/pages/ProjectsPage.tsx
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { RootState } from '../store';
 import { ProjectList } from '../components/projects/ProjectList';
 import { ProjectDetail } from '../features/projects/ProjectDetail';
@@ -15,9 +15,9 @@ export const ProjectsPage = () => {
   const projects = useSelector((state: RootState) => state.projects.list);
   const user = useSelector((state: RootState) => state.auth.user);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     const saved = localStorage.getItem('projectsViewMode');
@@ -27,26 +27,22 @@ export const ProjectsPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'priority' | 'normal'>('all');
 
+  // Извлекаем projectId из URL
+  const searchParams = new URLSearchParams(location.search);
+  const projectId = searchParams.get('id');
+  const selectedProject = projectId ? projects.find(p => p.id === projectId) : null;
+
+  const navigatingRef = useRef(false);
+
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     loadProjects().finally(() => setLoading(false));
   }, [user, loadProjects]);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    console.log('[ProjectsPage] Current hash:', hash);
-    const params = new URLSearchParams(hash.split('?')[1] || '');
-    const projectId = params.get('id');
-    console.log('[ProjectsPage] Parsed projectId from URL:', projectId);
-    if (projectId && projects.length > 0) {
-      const project = projects.find(p => p.id === projectId);
-      console.log('[ProjectsPage] Found project:', project?.id, project?.name);
-      setSelectedProject(project || null);
-    } else {
-      // Если нет id, сбрасываем выбранный проект
-      setSelectedProject(null);
-    }
-  }, [projects]);
+    console.log('[ProjectsPage] projectId from URL:', projectId);
+    console.log('[ProjectsPage] selectedProject:', selectedProject?.id, selectedProject?.name);
+  }, [projectId, selectedProject]);
 
   useEffect(() => {
     localStorage.setItem('projectsViewMode', viewMode);
@@ -66,18 +62,23 @@ export const ProjectsPage = () => {
   }, [projects, sortBy, statusFilter, priorityFilter]);
 
   const handleSelectProject = (project: any) => {
-    console.log('[ProjectsPage] handleSelectProject called with project:', project.id, project.name);
+    if (navigatingRef.current) return;
+    console.log('[ProjectsPage] handleSelectProject called with:', project.id);
+    navigatingRef.current = true;
     navigate(`/projects?id=${project.id}`, { replace: true });
+    setTimeout(() => { navigatingRef.current = false; }, 100);
   };
+
   const handleBack = () => {
     console.log('[ProjectsPage] handleBack called');
     navigate('/projects', { replace: true });
-    setSelectedProject(null);
   };
+
   const handleCreate = async (projectData: any) => {
     await addProjectToDb(projectData);
     setShowCreateModal(false);
   };
+
   const resetFilters = () => {
     setSortBy('name'); setStatusFilter('all'); setPriorityFilter('all');
   };
@@ -85,11 +86,13 @@ export const ProjectsPage = () => {
   if (loading) {
     return <div className="projects-page"><div className="empty-state"><i className="fas fa-spinner fa-pulse"></i><p>Загрузка проектов...</p></div></div>;
   }
+
   if (selectedProject) {
     console.log('[ProjectsPage] Rendering ProjectDetail for:', selectedProject.id);
     return <ProjectDetail project={selectedProject} onBack={handleBack} />;
   }
-  console.log('[ProjectsPage] Rendering project list. Projects count:', projects.length);
+
+  console.log('[ProjectsPage] Rendering project list. Count:', projects.length);
   return (
     <div className="projects-page">
       <div className="projects-toolbar">
