@@ -25,7 +25,8 @@ export const WorkloadWidget: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!hasRole('pm') && !hasRole('engineer')) return null;
+  // Добавлен 'director' в список разрешённых ролей
+  if (!hasRole(['director', 'pm', 'engineer'])) return null;
 
   const engineers = new Set(projects.map(p => p.engineer).filter(Boolean));
   const activeProjectsByEngineer = Array.from(engineers).map(eng => ({
