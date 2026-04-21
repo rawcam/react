@@ -26,8 +26,11 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
   });
 
   const handleProjectClick = (project: Project) => {
-    if (onSelectProject) onSelectProject(project);
-    else navigate(`/projects/${project.id}`);
+    if (onSelectProject) {
+      onSelectProject(project);
+    } else {
+      navigate(`/projects?id=${project.id}`);
+    }
   };
 
   const scroll = (direction: 'left' | 'right') => {
@@ -75,16 +78,10 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
       <div className="carousel-header">
         <h3>Активные проекты</h3>
         <div className="view-toggle">
-          <button
-            className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
-            onClick={() => setViewMode('carousel')}
-          >
+          <button className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`} onClick={() => setViewMode('carousel')}>
             <i className="fas fa-images"></i> Карусель
           </button>
-          <button
-            className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >
+          <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
             <i className="fas fa-list"></i> Список
           </button>
         </div>
