@@ -2,13 +2,13 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { closeWidgetConfig, setActiveModal } from '../../store/uiSlice';
-import { toggleWidget, setDisplayMode, resetToRolePreset, WidgetId, DisplayMode } from '../../store/widgetsSlice';
+import { closeWidgetConfig } from '../../store/uiSlice';
+import { toggleWidget, setDisplayMode, resetToRolePreset, setVisibleWidgets, WidgetId, DisplayMode } from '../../store/widgetsSlice';
 import { useAuth } from '../../hooks/useAuth';
 
 export const WidgetConfigDrawer: React.FC = () => {
   const dispatch = useDispatch();
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const isOpen = useSelector((state: RootState) => state.ui.widgetConfigOpen);
   const visibleWidgets = useSelector((state: RootState) => state.widgets.visibleWidgets);
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode);
