@@ -1,11 +1,11 @@
 // src/App.tsx
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store, RootState } from './store';
 import { supabase } from './lib/supabaseClient';
-import { setSession, setRole, setLoading } from './store/authSlice';
+import { setSession, setRole, setLoading, clearLocalStorageOnStartup } from './store/authSlice';
 import { Topbar } from './components/layout/Topbar';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectsPage } from './pages/ProjectsPage';
@@ -14,15 +14,8 @@ import { SpecificationsListPage } from './pages/SpecificationsListPage';
 import { SpecificationPage } from './pages/SpecificationPage';
 import FlowEditorPage from './pages/FlowEditorPage';
 import { LoginPage } from './pages/LoginPage';
+import { FinancePage } from './pages/FinancePage';
 import './index.css';
-
-// Ключи, которые могут содержать старые данные и мешать
-const STORAGE_KEYS_TO_CLEAR = [
-  'userRole',
-  'userName',
-  'supabase.auth.token',
-  'sb-' + import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token',
-];
 
 const LoadingScreen = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0a1120', color: 'white' }}>
@@ -34,23 +27,9 @@ const AppContent = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
   const isLoading = useSelector((state: RootState) => state.auth.isLoading);
-  const [shouldReload, setShouldReload] = useState(false);
 
   useEffect(() => {
-    // Очищаем ВСЕ ключи, которые могут хранить старую сессию или роль
-    STORAGE_KEYS_TO_CLEAR.forEach(key => {
-      localStorage.removeItem(key);
-      sessionStorage.removeItem(key);
-    });
-    // Также очищаем всё, что начинается с 'sb-'
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('sb-')) localStorage.removeItem(key);
-    });
-    Object.keys(sessionStorage).forEach(key => {
-      if (key.startsWith('sb-')) sessionStorage.removeItem(key);
-    });
-    console.log('[Startup] Local/session storage cleared.');
-
+    dispatch(clearLocalStorageOnStartup());
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -92,20 +71,7 @@ const AppContent = () => {
     return () => listener?.subscription.unsubscribe();
   }, [dispatch]);
 
-  // Если после очистки хранилища мы не получили сессию, но ранее были залогинены,
-  // принудительно перезагружаем страницу один раз.
-  useEffect(() => {
-    if (!isLoading && !user && !shouldReload) {
-      const hadOldSession = localStorage.getItem('supabase.auth.token') !== null;
-      if (hadOldSession) {
-        console.log('[Startup] Old session detected but no valid user, reloading...');
-        setShouldReload(true);
-        window.location.reload();
-      }
-    }
-  }, [isLoading, user, shouldReload]);
-
-  if (isLoading || shouldReload) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
 
@@ -130,6 +96,7 @@ const AppContent = () => {
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/finance" element={<FinancePage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/calculations" element={<CalculationsPage />} />
                 <Route path="/specifications" element={<SpecificationsListPage />} />
