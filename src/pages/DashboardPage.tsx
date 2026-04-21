@@ -17,21 +17,21 @@ export const DashboardPage: React.FC = () => {
   const activeProjects = projects.filter(p => p.status !== 'done');
   const { hasRole } = useAuth();
 
-  // Все возможные виджеты
+  // Все возможные виджеты с их идентификаторами и условиями отображения
   const allWidgets = [
     { id: 'companyFinance', component: <CompanyFinanceWidget key="companyFinance" />, roles: ['director', 'pm'] },
     { id: 'projectsFinance', component: <ProjectsFinanceWidget key="projectsFinance" />, roles: ['director', 'pm', 'engineer'] },
     { id: 'service', component: <ServiceWidget key="service" />, roles: ['pm', 'engineer'] },
     { id: 'workload', component: <WorkloadWidget key="workload" />, roles: ['pm', 'engineer'] },
     { id: 'risks', component: <RisksWidget key="risks" />, roles: ['director', 'pm'] },
-  ];
+  ] as const;
 
   // Фильтруем виджеты по видимости и роли
   const topWidgets = allWidgets
-    .filter(w => visibleWidgets.includes(w.id) && hasRole(w.roles))
+    .filter(w => visibleWidgets.includes(w.id as any) && hasRole(w.roles))
     .map(w => w.component);
 
-  const showCarousel = visibleWidgets.includes('carousel');
+  const showCarousel = visibleWidgets.includes('carousel' as any);
 
   return (
     <div className="dashboard-page">
