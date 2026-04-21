@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -16,6 +16,12 @@ import FlowEditorPage from './pages/FlowEditorPage';
 import { LoginPage } from './pages/LoginPage';
 import './index.css';
 
+const LoadingScreen = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0a1120', color: 'white' }}>
+    <h2>Загрузка...</h2>
+  </div>
+);
+
 const AppContent = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
@@ -27,12 +33,17 @@ const AppContent = () => {
         const { data: { session } } = await supabase.auth.getSession();
         dispatch(setSession(session));
         if (session?.user) {
-          const { data } = await supabase
+          // Загружаем роль пользователя
+          const { data, error } = await supabase
             .from('user_roles')
             .select('role')
             .eq('id', session.user.id)
             .single();
-          dispatch(setRole(data?.role || 'engineer'));
+          if (!error && data) {
+            dispatch(setRole(data.role));
+          } else {
+            dispatch(setRole('engineer')); // роль по умолчанию
+          }
         }
       } catch (err) {
         console.error('Auth init error:', err);
@@ -60,43 +71,40 @@ const AppContent = () => {
   }, [dispatch]);
 
   if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!user) {
     return (
-      <div className="loading-screen" style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', background: '#0a1120', color: 'white'
-      }}>
-        <h2>Загрузка...</h2>
-      </div>
+      <HashRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </HashRouter>
     );
   }
 
   return (
     <ReactFlowProvider>
       <HashRouter>
-        {user ? (
-          <div className="app">
-            <Topbar />
-            <div className="app-layout">
-              <main className="main-content">
-                <Routes>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/projects" element={<ProjectsPage />} />
-                  <Route path="/calculations" element={<CalculationsPage />} />
-                  <Route path="/specifications" element={<SpecificationsListPage />} />
-                  <Route path="/specification/:id" element={<SpecificationPage />} />
-                  <Route path="/specification" element={<SpecificationPage />} />
-                  <Route path="/flow-editor" element={<FlowEditorPage />} />
-                </Routes>
-              </main>
-            </div>
+        <div className="app">
+          <Topbar />
+          <div className="app-layout">
+            <main className="main-content">
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/projects" element={<ProjectsPage />} />
+                <Route path="/calculations" element={<CalculationsPage />} />
+                <Route path="/specifications" element={<SpecificationsListPage />} />
+                <Route path="/specification/:id" element={<SpecificationPage />} />
+                <Route path="/specification" element={<SpecificationPage />} />
+                <Route path="/flow-editor" element={<FlowEditorPage />} />
+              </Routes>
+            </main>
           </div>
-        ) : (
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        )}
+        </div>
       </HashRouter>
     </ReactFlowProvider>
   );
