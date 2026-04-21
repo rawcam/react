@@ -1,11 +1,11 @@
 // src/App.tsx
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store, RootState } from './store';
 import { supabase } from './lib/supabaseClient';
-import { setSession, setRole, setLoading } from './store/authSlice';
+import { setSession, setRole, setLoading, clearLocalStorageOnStartup } from './store/authSlice';
 import { Topbar } from './components/layout/Topbar';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectsPage } from './pages/ProjectsPage';
@@ -28,6 +28,9 @@ const AppContent = () => {
   const isLoading = useSelector((state: RootState) => state.auth.isLoading);
 
   useEffect(() => {
+    // Первым делом очищаем старые ключи localStorage
+    dispatch(clearLocalStorageOnStartup());
+
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
