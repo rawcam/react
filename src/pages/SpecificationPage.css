@@ -19,7 +19,6 @@
   z-index: 2;
 }
 
-/* Убираем звёзды */
 .spec-page::before {
   display: none !important;
 }
@@ -222,43 +221,45 @@
   transition: opacity 0.2s;
 }
 
-.spec-data-row:hover .spec-action-buttons,
-.spec-section-row:hover .spec-section-actions {
+.spec-data-row:hover .spec-action-buttons {
+  opacity: 1;
+}
+
+.spec-action-buttons button {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: var(--text-muted) !important;
+  transition: color 0.2s;
+}
+
+.spec-action-buttons .btn-add-row:hover { color: var(--success) !important; }
+.spec-action-buttons .btn-duplicate-row:hover { color: var(--warning) !important; }
+.spec-action-buttons .btn-delete-row:hover { color: var(--danger) !important; }
+
+.spec-section-actions {
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.2s;
 }
+
 .spec-section-row:hover .spec-section-actions {
   opacity: 1;
 }
+
 .spec-section-actions button {
-  background: transparent !important;  /* убираем фон */
-  border: none;
+  background: transparent !important;
+  border: none !important;
   cursor: pointer;
   padding: 4px 6px;
-  color: var(--text-muted);
-  transition: color 0.2s;
-}
-.spec-section-actions button:hover {
-  background: transparent !important;  /* при ховере тоже без фона */
-}
-
-.spec-action-buttons button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px 6px;
-  color: var(--text-muted);
+  color: var(--text-muted) !important;
   transition: color 0.2s;
 }
 
-.spec-action-buttons .btn-add-row:hover { color: var(--success); }
-.spec-action-buttons .btn-duplicate-row:hover { color: var(--warning); }
-.spec-action-buttons .btn-delete-row:hover { color: var(--danger); }
-
-.spec-section-actions .btn-collapse:hover { color: var(--accent); }
-.spec-section-actions .btn-add-row:hover { color: var(--success); }
-.spec-section-actions .btn-delete-section:hover { color: var(--danger); }
+.spec-section-actions .btn-collapse:hover { color: var(--accent) !important; }
+.spec-section-actions .btn-add-row:hover { color: var(--success) !important; }
+.spec-section-actions .btn-delete-section:hover { color: var(--danger) !important; }
 
 .resize-handle {
   position: absolute;
@@ -279,7 +280,6 @@
   position: relative;
 }
 
-/* Модальные окна */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -322,20 +322,4 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
-}
-.spec-action-buttons {
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.spec-data-row:hover .spec-action-buttons {
-  opacity: 1;
-}
-.spec-action-buttons button {
-  background: transparent !important;
-  border: none !important;
-  color: var(--text-muted) !important;
-}
-.spec-action-buttons button:hover {
-  background: transparent !important;
-  color: var(--accent) !important;
 }
