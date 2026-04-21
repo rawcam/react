@@ -70,6 +70,9 @@ export const LoginPage: React.FC = () => {
             {loading ? 'Вход...' : 'Войти'}
           </button>
         </form>
+        <div className="login-footer">
+          <span>Нет аккаунта? Обратитесь к администратору</span>
+        </div>
       </div>
     </div>
   );
