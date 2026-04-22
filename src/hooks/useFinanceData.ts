@@ -31,18 +31,19 @@ interface FinanceData {
   equipment: number;
   salary: number;
   rent: number;
-  // Новые агрегаты по сотрудникам
-  staffSalary: number;
-  staffBonus: number;
-  staffVacation: number;
-  staffSickLeave: number;
-  // Общехозяйственные расходы
-  overheadTransport: number;
-  overheadInternet: number;
-  overheadStationery: number;
-  overheadOther: number;
+  overhead: {
+    transport: number;
+    internet: number;
+    stationery: number;
+    other: number;
+  };
+  staff: {
+    salary: number;
+    bonus: number;
+    vacation: number;
+    sickLeave: number;
+  };
   projectsPlanFact: Array<{
-    id: string;
     name: string;
     plan: number;
     fact: number;
@@ -92,7 +93,7 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
     try {
       const { start, end } = getDateRange();
 
-      // 1. Финансовые транзакции (finance_1c)
+      // 1. Транзакции из 1С
       const { data: transactions, error: txError } = await supabase
         .from('finance_1c')
         .select('*')
@@ -101,13 +102,25 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
 
       if (txError) throw txError;
 
-      const txs = transactions || [];
+      const txList = transactions || [];
+
+      // 2. Выплаты сотрудникам
+      const { data: salaryPayments, error: spError } = await supabase
+        .from('salary_payments')
+        .select('amount, type')
+        .gte('date', start)
+        .lte('date', end);
+
+      if (spError) throw spError;
+
+      // 3. Агрегация
       let income = 0, expense = 0, receivables = 0, payables = 0;
       const categorySums: Record<string, number> = {};
 
-      txs.forEach(t => {
+      txList.forEach((t: any) => {
         const cat = t.category;
         categorySums[cat] = (categorySums[cat] || 0) + t.amount;
+
         if (t.type === 'income') {
           income += t.amount;
           if (t.status === 'В обработке') receivables += t.amount;
@@ -123,44 +136,41 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
       const insuranceContributions = categorySums['Страховые взносы'] || 0;
       const totalTaxes = nds + profitTax + insuranceContributions;
 
+      // Зарплата (из выплат)
+      let totalSalary = 0, salaryBase = 0, bonus = 0, vacation = 0, sickLeave = 0;
+      (salaryPayments || []).forEach((p: any) => {
+        totalSalary += p.amount;
+        if (p.type === 'salary') salaryBase += p.amount;
+        else if (p.type === 'bonus') bonus += p.amount;
+        else if (p.type === 'vacation') vacation += p.amount;
+        else if (p.type === 'sick_leave') sickLeave += p.amount;
+      });
+
       // Кредиты
       const creditBody = categorySums['Погашение кредита (тело)'] || 0;
       const creditInterest = categorySums['Проценты по кредиту'] || 0;
       const totalCredits = creditBody + creditInterest;
 
+      // Продажи
       const sales = categorySums['Поступление от клиента'] || 0;
       const advances = income - sales;
       const equipment = categorySums['Закупка оборудования'] || 0;
       const rent = categorySums['Аренда офиса'] || 0;
 
-      // 2. Данные по сотрудникам из salary_payments
-      const { data: payments, error: payError } = await supabase
-        .from('salary_payments')
-        .select('amount, type')
-        .gte('date', start)
-        .lte('date', end);
+      // ОХР
+      const transport = categorySums['Транспортные расходы'] || 0;
+      const internet = categorySums['Интернет/Связь'] || 0;
+      const stationery = categorySums['Канцтовары'] || 0;
+      const other = expense - (equipment + rent + transport + internet + stationery + totalTaxes + totalCredits + totalSalary);
 
-      if (payError) throw payError;
+      // Тренды (заглушки)
+      const revenueTrend = 8.2;
+      const profitTrend = 5.4;
+      const receivablesTrend = -12;
+      const payablesTrend = 3.1;
 
-      let staffSalary = 0, staffBonus = 0, staffVacation = 0, staffSickLeave = 0;
-      payments?.forEach(p => {
-        switch (p.type) {
-          case 'salary': staffSalary += p.amount; break;
-          case 'bonus': staffBonus += p.amount; break;
-          case 'vacation': staffVacation += p.amount; break;
-          case 'sick_leave': staffSickLeave += p.amount; break;
-        }
-      });
-      const totalSalary = staffSalary + staffBonus + staffVacation + staffSickLeave;
-
-      // 3. Общехозяйственные расходы (пока из категорий finance_1c)
-      const overheadTransport = categorySums['Транспортные расходы'] || 0;
-      const overheadInternet = categorySums['Интернет/Связь'] || 0;
-      const overheadStationery = categorySums['Канцтовары'] || 0;
-      const overheadOther = categorySums['Прочее'] || 0;
-
-      // 4. Транзакции для таблицы
-      const latestTransactions = [...txs]
+      // Последние 50 транзакций
+      const latestTransactions = [...txList]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 50)
         .map(t => ({
@@ -172,16 +182,11 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
           hasDocument: t.has_document,
         }));
 
-      const revenueTrend = 8.2;
-      const profitTrend = 5.4;
-      const receivablesTrend = -12;
-      const payablesTrend = 3.1;
-
-      // Заглушки план/факт (пока без изменений, но добавим id)
+      // План/факт по проектам (заглушка, позже заменим реальными данными)
       const projectsPlanFact = [
-        { id: '1776752387056', name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
-        { id: '1776776832084', name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
-        { id: '1776753172095', name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
+        { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
+        { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
+        { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
       ];
 
       setData({
@@ -211,14 +216,8 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         equipment,
         salary: totalSalary,
         rent,
-        staffSalary,
-        staffBonus,
-        staffVacation,
-        staffSickLeave,
-        overheadTransport,
-        overheadInternet,
-        overheadStationery,
-        overheadOther,
+        overhead: { transport, internet, stationery, other },
+        staff: { salary: salaryBase, bonus, vacation, sickLeave },
         projectsPlanFact,
         transactions: latestTransactions,
         lastSync: new Date().toLocaleString('ru-RU'),
