@@ -11,7 +11,7 @@ export const Topbar: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const theme = useSelector((state: RootState) => state.theme.mode);
-  const userRole = useSelector((state: RootState) => state.auth.user?.role) || 'director';
+  const userRole = useSelector((state: RootState) => state.auth.role) || 'director';
 
   const navItems = [
     { path: '/dashboard', label: 'Главная' },
