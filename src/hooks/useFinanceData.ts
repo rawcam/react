@@ -31,7 +31,18 @@ interface FinanceData {
   equipment: number;
   salary: number;
   rent: number;
+  // Новые агрегаты по сотрудникам
+  staffSalary: number;
+  staffBonus: number;
+  staffVacation: number;
+  staffSickLeave: number;
+  // Общехозяйственные расходы
+  overheadTransport: number;
+  overheadInternet: number;
+  overheadStationery: number;
+  overheadOther: number;
   projectsPlanFact: Array<{
+    id: string;
     name: string;
     plan: number;
     fact: number;
@@ -81,8 +92,8 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
     try {
       const { start, end } = getDateRange();
 
-      // 1. Получаем все транзакции за период (для группировки по категориям)
-      const { data: allTransactions, error: txError } = await supabase
+      // 1. Финансовые транзакции (finance_1c)
+      const { data: transactions, error: txError } = await supabase
         .from('finance_1c')
         .select('*')
         .gte('date', start)
@@ -90,16 +101,13 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
 
       if (txError) throw txError;
 
-      const transactions = allTransactions || [];
-
-      // 2. Агрегация сумм
+      const txs = transactions || [];
       let income = 0, expense = 0, receivables = 0, payables = 0;
       const categorySums: Record<string, number> = {};
 
-      transactions.forEach(t => {
+      txs.forEach(t => {
         const cat = t.category;
         categorySums[cat] = (categorySums[cat] || 0) + t.amount;
-
         if (t.type === 'income') {
           income += t.amount;
           if (t.status === 'В обработке') receivables += t.amount;
@@ -109,13 +117,13 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         }
       });
 
-      // 3. Детализация по категориям
+      // Налоги
       const nds = categorySums['НДС'] || 0;
       const profitTax = categorySums['Налог на прибыль'] || 0;
       const insuranceContributions = categorySums['Страховые взносы'] || 0;
       const totalTaxes = nds + profitTax + insuranceContributions;
 
-      const totalSalary = ['Зарплата', 'Премия', 'Отпускные', 'Больничный'].reduce((sum, cat) => sum + (categorySums[cat] || 0), 0);
+      // Кредиты
       const creditBody = categorySums['Погашение кредита (тело)'] || 0;
       const creditInterest = categorySums['Проценты по кредиту'] || 0;
       const totalCredits = creditBody + creditInterest;
@@ -125,8 +133,34 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
       const equipment = categorySums['Закупка оборудования'] || 0;
       const rent = categorySums['Аренда офиса'] || 0;
 
-      // 4. Последние 50 транзакций для таблицы
-      const latestTransactions = [...transactions]
+      // 2. Данные по сотрудникам из salary_payments
+      const { data: payments, error: payError } = await supabase
+        .from('salary_payments')
+        .select('amount, type')
+        .gte('date', start)
+        .lte('date', end);
+
+      if (payError) throw payError;
+
+      let staffSalary = 0, staffBonus = 0, staffVacation = 0, staffSickLeave = 0;
+      payments?.forEach(p => {
+        switch (p.type) {
+          case 'salary': staffSalary += p.amount; break;
+          case 'bonus': staffBonus += p.amount; break;
+          case 'vacation': staffVacation += p.amount; break;
+          case 'sick_leave': staffSickLeave += p.amount; break;
+        }
+      });
+      const totalSalary = staffSalary + staffBonus + staffVacation + staffSickLeave;
+
+      // 3. Общехозяйственные расходы (пока из категорий finance_1c)
+      const overheadTransport = categorySums['Транспортные расходы'] || 0;
+      const overheadInternet = categorySums['Интернет/Связь'] || 0;
+      const overheadStationery = categorySums['Канцтовары'] || 0;
+      const overheadOther = categorySums['Прочее'] || 0;
+
+      // 4. Транзакции для таблицы
+      const latestTransactions = [...txs]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 50)
         .map(t => ({
@@ -143,10 +177,11 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
       const receivablesTrend = -12;
       const payablesTrend = 3.1;
 
+      // Заглушки план/факт (пока без изменений, но добавим id)
       const projectsPlanFact = [
-        { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
-        { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
-        { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
+        { id: '1776752387056', name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
+        { id: '1776776832084', name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
+        { id: '1776753172095', name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
       ];
 
       setData({
@@ -176,6 +211,14 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         equipment,
         salary: totalSalary,
         rent,
+        staffSalary,
+        staffBonus,
+        staffVacation,
+        staffSickLeave,
+        overheadTransport,
+        overheadInternet,
+        overheadStationery,
+        overheadOther,
         projectsPlanFact,
         transactions: latestTransactions,
         lastSync: new Date().toLocaleString('ru-RU'),
