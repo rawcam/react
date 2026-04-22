@@ -11,6 +11,15 @@ interface FinanceKPI {
   receivablesTrend: number;
   payables: number;
   payablesTrend: number;
+  // Новые показатели
+  totalTaxes: number;
+  nds: number;
+  profitTax: number;
+  insuranceContributions: number;
+  totalSalary: number;
+  totalCredits: number;
+  creditBody: number;
+  creditInterest: number;
 }
 
 interface FinanceData {
@@ -73,7 +82,7 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
     try {
       const { start, end } = getDateRange();
 
-      // 1. Агрегатные запросы для сумм (быстро, без загрузки всех строк)
+      // 1. Агрегатные запросы
       const [incomeRes, expenseRes, receivablesRes, payablesRes, categoryRes] = await Promise.all([
         supabase.from('finance_1c').select('amount.sum()').eq('type', 'income').gte('date', start).lte('date', end),
         supabase.from('finance_1c').select('amount.sum()').eq('type', 'expense').gte('date', start).lte('date', end),
@@ -87,17 +96,26 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
       const receivables = receivablesRes.data?.[0]?.sum || 0;
       const payables = payablesRes.data?.[0]?.sum || 0;
 
-      // 2. Детализация по категориям
       const categorySums: Record<string, number> = {};
       (categoryRes.data || []).forEach((row: any) => { categorySums[row.category] = row.sum; });
+
+      // Детализация по налогам и другим категориям
+      const nds = categorySums['НДС'] || 0;
+      const profitTax = categorySums['Налог на прибыль'] || 0;
+      const insuranceContributions = categorySums['Страховые взносы'] || 0;
+      const totalTaxes = nds + profitTax + insuranceContributions;
+
+      const totalSalary = ['Зарплата', 'Премия', 'Отпускные', 'Больничный'].reduce((sum, cat) => sum + (categorySums[cat] || 0), 0);
+      const creditBody = categorySums['Погашение кредита (тело)'] || 0;
+      const creditInterest = categorySums['Проценты по кредиту'] || 0;
+      const totalCredits = creditBody + creditInterest;
 
       const sales = categorySums['Поступление от клиента'] || 0;
       const advances = income - sales;
       const equipment = categorySums['Закупка оборудования'] || 0;
-      const salary = ['Зарплата', 'Премия', 'Отпускные', 'Больничный'].reduce((sum, cat) => sum + (categorySums[cat] || 0), 0);
       const rent = categorySums['Аренда офиса'] || 0;
 
-      // 3. Последние 50 транзакций
+      // Последние 50 транзакций
       const { data: transactions } = await supabase
         .from('finance_1c')
         .select('*')
@@ -115,13 +133,11 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         hasDocument: t.has_document,
       }));
 
-      // 4. Тренды (упрощённо)
       const revenueTrend = 8.2;
       const profitTrend = 5.4;
       const receivablesTrend = -12;
       const payablesTrend = 3.1;
 
-      // 5. План/факт по проектам (заглушка)
       const projectsPlanFact = [
         { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
         { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
@@ -138,6 +154,14 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
           receivablesTrend,
           payables,
           payablesTrend,
+          totalTaxes,
+          nds,
+          profitTax,
+          insuranceContributions,
+          totalSalary,
+          totalCredits,
+          creditBody,
+          creditInterest,
         },
         incoming: income,
         outgoing: expense,
@@ -145,7 +169,7 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         sales,
         advances,
         equipment,
-        salary,
+        salary: totalSalary,
         rent,
         projectsPlanFact,
         transactions: latestTransactions,
@@ -168,5 +192,18 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
     await loadData();
   }, [loadData]);
 
-  return { data, loading, error, syncWith1C, refetch: loadData };
+  const getDetailedTransactions = useCallback(async (category: string) => {
+    const { start, end } = getDateRange();
+    const { data, error } = await supabase
+      .from('finance_1c')
+      .select('*')
+      .eq('category', category)
+      .gte('date', start)
+      .lte('date', end)
+      .order('date', { ascending: false });
+    if (error) throw error;
+    return data;
+  }, [getDateRange]);
+
+  return { data, loading, error, syncWith1C, refetch: loadData, getDetailedTransactions };
 };
