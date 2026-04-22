@@ -61,16 +61,24 @@ interface FinanceData {
   lastSync: string;
 }
 
-// Кэш для периодов
+// Кэш для ускорения повторных запросов
 const cache: Record<string, FinanceData> = {};
 
-export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') => {
+export const useFinanceData = (
+  period: 'month' | 'quarter' | 'year' = 'month',
+  customStart?: string,
+  customEnd?: string
+) => {
   const [data, setData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const getDateRange = useCallback(() => {
+    if (customStart && customEnd) {
+      return { start: customStart, end: customEnd };
+    }
+
     const now = new Date();
     let start: Date, end: Date;
     switch (period) {
@@ -89,10 +97,10 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         break;
     }
     return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] };
-  }, [period]);
+  }, [period, customStart, customEnd]);
 
   const loadData = useCallback(async () => {
-    const cacheKey = period;
+    const cacheKey = customStart && customEnd ? `${customStart}_${customEnd}` : period;
     if (cache[cacheKey]) {
       setData(cache[cacheKey]);
       setLoading(false);
@@ -109,10 +117,7 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
     try {
       const { start, end } = getDateRange();
 
-      const [
-        txRes,
-        salaryRes,
-      ] = await Promise.all([
+      const [txRes, salaryRes] = await Promise.all([
         supabase.from('finance_1c').select('*').gte('date', start).lte('date', end).abortSignal(abortControllerRef.current.signal),
         supabase.from('salary_payments').select('amount, type').gte('date', start).lte('date', end).abortSignal(abortControllerRef.current.signal),
       ]);
@@ -123,7 +128,6 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
       const txList = txRes.data || [];
       const payments = salaryRes.data || [];
 
-      // Агрегация (без изменений)
       let income = 0, expense = 0, receivables = 0, payables = 0;
       const catSums: Record<string, number> = {};
 
@@ -219,7 +223,7 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
     } finally {
       setLoading(false);
     }
-  }, [period, getDateRange]);
+  }, [period, customStart, customEnd, getDateRange]);
 
   useEffect(() => {
     loadData();
@@ -227,9 +231,10 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
   }, [loadData]);
 
   const syncWith1C = useCallback(async () => {
-    delete cache[period];
+    const cacheKey = customStart && customEnd ? `${customStart}_${customEnd}` : period;
+    delete cache[cacheKey];
     await loadData();
-  }, [period, loadData]);
+  }, [period, customStart, customEnd, loadData]);
 
   const getDetailedTransactions = useCallback(async (category: string) => {
     const { start, end } = getDateRange();
