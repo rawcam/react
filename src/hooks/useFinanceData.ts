@@ -1,5 +1,5 @@
 // src/hooks/useFinanceData.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 interface FinanceKPI {
@@ -61,10 +61,14 @@ interface FinanceData {
   lastSync: string;
 }
 
+// Кэш для периодов
+const cache: Record<string, FinanceData> = {};
+
 export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') => {
   const [data, setData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const getDateRange = useCallback(() => {
     const now = new Date();
@@ -88,32 +92,38 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
   }, [period]);
 
   const loadData = useCallback(async () => {
+    const cacheKey = period;
+    if (cache[cacheKey]) {
+      setData(cache[cacheKey]);
+      setLoading(false);
+      return;
+    }
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setLoading(true);
     setError(null);
     try {
       const { start, end } = getDateRange();
 
-      // 1. Транзакции из 1С
-      const { data: transactions, error: txError } = await supabase
-        .from('finance_1c')
-        .select('*')
-        .gte('date', start)
-        .lte('date', end);
+      const [
+        txRes,
+        salaryRes,
+      ] = await Promise.all([
+        supabase.from('finance_1c').select('*').gte('date', start).lte('date', end).abortSignal(abortControllerRef.current.signal),
+        supabase.from('salary_payments').select('amount, type').gte('date', start).lte('date', end).abortSignal(abortControllerRef.current.signal),
+      ]);
 
-      if (txError) throw txError;
-      const txList = transactions || [];
+      if (txRes.error) throw txRes.error;
+      if (salaryRes.error) throw salaryRes.error;
 
-      // 2. Выплаты сотрудникам
-      const { data: salaryPayments, error: spError } = await supabase
-        .from('salary_payments')
-        .select('amount, type')
-        .gte('date', start)
-        .lte('date', end);
+      const txList = txRes.data || [];
+      const payments = salaryRes.data || [];
 
-      if (spError) throw spError;
-      const payments = salaryPayments || [];
-
-      // 3. Агрегация по категориям
+      // Агрегация (без изменений)
       let income = 0, expense = 0, receivables = 0, payables = 0;
       const catSums: Record<string, number> = {};
 
@@ -129,34 +139,25 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         }
       });
 
-      // Налоги
       const nds = catSums['НДС'] || 0;
       const profitTax = catSums['Налог на прибыль'] || 0;
       const insuranceContributions = catSums['Страховые взносы'] || 0;
       const totalTaxes = nds + profitTax + insuranceContributions;
 
-      // Кредиты
       const creditBody = catSums['Погашение кредита (тело)'] || 0;
       const creditInterest = catSums['Проценты по кредиту'] || 0;
       const totalCredits = creditBody + creditInterest;
 
-      // Продажи и авансы
       const sales = catSums['Поступление от клиента'] || 0;
       const advances = income - sales;
-
-      // Оборудование
       const equipment = catSums['Закупка оборудования'] || 0;
-
-      // Аренда
       const rent = catSums['Аренда офиса'] || 0;
 
-      // ОХР
       const transport = catSums['Транспортные расходы'] || 0;
       const internet = catSums['Интернет/Связь'] || 0;
       const stationery = catSums['Канцтовары'] || 0;
       const other = catSums['Прочее'] || 0;
 
-      // Зарплата и связанные выплаты
       let staffSalary = 0, staffBonus = 0, staffVacation = 0, staffSickLeave = 0;
       payments.forEach(p => {
         switch (p.type) {
@@ -168,20 +169,17 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
       });
       const totalSalary = staffSalary + staffBonus + staffVacation + staffSickLeave;
 
-      // Тренды (заглушки)
       const revenueTrend = 8.2;
       const profitTrend = 5.4;
       const receivablesTrend = -12;
       const payablesTrend = 3.1;
 
-      // План/факт по проектам
       const projectsPlanFact = [
         { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
         { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
         { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
       ];
 
-      // Последние 50 транзакций
       const latestTransactions = [...txList]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 50)
@@ -194,60 +192,44 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
           hasDocument: t.has_document,
         }));
 
-      setData({
+      const result: FinanceData = {
         kpi: {
-          revenue: income,
-          revenueTrend,
-          netProfit: income - expense,
-          profitTrend,
-          receivables,
-          receivablesTrend,
-          payables,
-          payablesTrend,
-          totalTaxes,
-          nds,
-          profitTax,
-          insuranceContributions,
-          totalSalary,
-          totalCredits,
-          creditBody,
-          creditInterest,
+          revenue: income, revenueTrend,
+          netProfit: income - expense, profitTrend,
+          receivables, receivablesTrend,
+          payables, payablesTrend,
+          totalTaxes, nds, profitTax, insuranceContributions,
+          totalSalary, totalCredits, creditBody, creditInterest,
         },
-        incoming: income,
-        outgoing: expense,
-        balance: income - expense,
-        sales,
-        advances,
-        equipment,
-        salary: totalSalary,
-        rent,
+        incoming: income, outgoing: expense, balance: income - expense,
+        sales, advances, equipment, salary: totalSalary, rent,
         overhead: { transport, internet, stationery, other },
-        staff: {
-          salary: staffSalary,
-          bonus: staffBonus,
-          vacation: staffVacation,
-          sickLeave: staffSickLeave,
-        },
+        staff: { salary: staffSalary, bonus: staffBonus, vacation: staffVacation, sickLeave: staffSickLeave },
         projectsPlanFact,
         transactions: latestTransactions,
         lastSync: new Date().toLocaleString('ru-RU'),
-      });
+      };
+
+      cache[cacheKey] = result;
+      setData(result);
     } catch (err: any) {
+      if (err.name === 'AbortError') return;
       console.error('Failed to load finance data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [getDateRange]);
+  }, [period, getDateRange]);
 
   useEffect(() => {
     loadData();
+    return () => abortControllerRef.current?.abort();
   }, [loadData]);
 
   const syncWith1C = useCallback(async () => {
-    alert('Запрос на синхронизацию с 1С. В реальности здесь вызов Edge Function.');
+    delete cache[period];
     await loadData();
-  }, [loadData]);
+  }, [period, loadData]);
 
   const getDetailedTransactions = useCallback(async (category: string) => {
     const { start, end } = getDateRange();
