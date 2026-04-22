@@ -101,7 +101,6 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         .lte('date', end);
 
       if (txError) throw txError;
-
       const txList = transactions || [];
 
       // 2. Выплаты сотрудникам
@@ -112,15 +111,15 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         .lte('date', end);
 
       if (spError) throw spError;
+      const payments = salaryPayments || [];
 
-      // 3. Агрегация
+      // 3. Агрегация по категориям
       let income = 0, expense = 0, receivables = 0, payables = 0;
-      const categorySums: Record<string, number> = {};
+      const catSums: Record<string, number> = {};
 
-      txList.forEach((t: any) => {
+      txList.forEach(t => {
         const cat = t.category;
-        categorySums[cat] = (categorySums[cat] || 0) + t.amount;
-
+        catSums[cat] = (catSums[cat] || 0) + t.amount;
         if (t.type === 'income') {
           income += t.amount;
           if (t.status === 'В обработке') receivables += t.amount;
@@ -131,43 +130,56 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
       });
 
       // Налоги
-      const nds = categorySums['НДС'] || 0;
-      const profitTax = categorySums['Налог на прибыль'] || 0;
-      const insuranceContributions = categorySums['Страховые взносы'] || 0;
+      const nds = catSums['НДС'] || 0;
+      const profitTax = catSums['Налог на прибыль'] || 0;
+      const insuranceContributions = catSums['Страховые взносы'] || 0;
       const totalTaxes = nds + profitTax + insuranceContributions;
 
-      // Зарплата (из выплат)
-      let totalSalary = 0, salaryBase = 0, bonus = 0, vacation = 0, sickLeave = 0;
-      (salaryPayments || []).forEach((p: any) => {
-        totalSalary += p.amount;
-        if (p.type === 'salary') salaryBase += p.amount;
-        else if (p.type === 'bonus') bonus += p.amount;
-        else if (p.type === 'vacation') vacation += p.amount;
-        else if (p.type === 'sick_leave') sickLeave += p.amount;
-      });
-
       // Кредиты
-      const creditBody = categorySums['Погашение кредита (тело)'] || 0;
-      const creditInterest = categorySums['Проценты по кредиту'] || 0;
+      const creditBody = catSums['Погашение кредита (тело)'] || 0;
+      const creditInterest = catSums['Проценты по кредиту'] || 0;
       const totalCredits = creditBody + creditInterest;
 
-      // Продажи
-      const sales = categorySums['Поступление от клиента'] || 0;
+      // Продажи и авансы
+      const sales = catSums['Поступление от клиента'] || 0;
       const advances = income - sales;
-      const equipment = categorySums['Закупка оборудования'] || 0;
-      const rent = categorySums['Аренда офиса'] || 0;
+
+      // Оборудование
+      const equipment = catSums['Закупка оборудования'] || 0;
+
+      // Аренда
+      const rent = catSums['Аренда офиса'] || 0;
 
       // ОХР
-      const transport = categorySums['Транспортные расходы'] || 0;
-      const internet = categorySums['Интернет/Связь'] || 0;
-      const stationery = categorySums['Канцтовары'] || 0;
-      const other = expense - (equipment + rent + transport + internet + stationery + totalTaxes + totalCredits + totalSalary);
+      const transport = catSums['Транспортные расходы'] || 0;
+      const internet = catSums['Интернет/Связь'] || 0;
+      const stationery = catSums['Канцтовары'] || 0;
+      const other = catSums['Прочее'] || 0;
+
+      // Зарплата и связанные выплаты
+      let staffSalary = 0, staffBonus = 0, staffVacation = 0, staffSickLeave = 0;
+      payments.forEach(p => {
+        switch (p.type) {
+          case 'salary': staffSalary += p.amount; break;
+          case 'bonus': staffBonus += p.amount; break;
+          case 'vacation': staffVacation += p.amount; break;
+          case 'sick_leave': staffSickLeave += p.amount; break;
+        }
+      });
+      const totalSalary = staffSalary + staffBonus + staffVacation + staffSickLeave;
 
       // Тренды (заглушки)
       const revenueTrend = 8.2;
       const profitTrend = 5.4;
       const receivablesTrend = -12;
       const payablesTrend = 3.1;
+
+      // План/факт по проектам
+      const projectsPlanFact = [
+        { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
+        { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
+        { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
+      ];
 
       // Последние 50 транзакций
       const latestTransactions = [...txList]
@@ -181,13 +193,6 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
           status: t.status,
           hasDocument: t.has_document,
         }));
-
-      // План/факт по проектам (заглушка, позже заменим реальными данными)
-      const projectsPlanFact = [
-        { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
-        { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
-        { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
-      ];
 
       setData({
         kpi: {
@@ -217,7 +222,12 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         salary: totalSalary,
         rent,
         overhead: { transport, internet, stationery, other },
-        staff: { salary: salaryBase, bonus, vacation, sickLeave },
+        staff: {
+          salary: staffSalary,
+          bonus: staffBonus,
+          vacation: staffVacation,
+          sickLeave: staffSickLeave,
+        },
         projectsPlanFact,
         transactions: latestTransactions,
         lastSync: new Date().toLocaleString('ru-RU'),
