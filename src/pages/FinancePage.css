@@ -334,3 +334,12 @@
   background: rgba(239, 68, 68, 0.2);
   color: var(--danger);
 }
+/* Добавьте в конец файла */
+.informer.clickable {
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+.informer.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
