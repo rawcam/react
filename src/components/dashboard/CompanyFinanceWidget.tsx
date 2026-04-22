@@ -3,12 +3,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { useFinance } from '../../hooks/useFinance';
+import { useFinanceData } from '../../hooks/useFinanceData';
 import { useAuth } from '../../hooks/useAuth';
 
 export const CompanyFinanceWidget: React.FC = () => {
   const navigate = useNavigate();
-  const { totalIncome, totalMargin, totalProfitability, nextCompanyGap } = useFinance();
+  const { data, loading } = useFinanceData('month');
   const { hasRole } = useAuth();
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -32,15 +32,9 @@ export const CompanyFinanceWidget: React.FC = () => {
     return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
   };
 
-  const trends = {
-    income: { value: 8.2, positive: true },
-    margin: { value: 5.4, positive: true },
-    profitability: { value: 1.2, positive: true },
-  };
-
   const handleWidgetClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.dashboard-widget-actions')) return;
-    navigate('/finance/company');
+    navigate('/finance');
   };
 
   const handleMenuToggle = (e: React.MouseEvent) => {
@@ -56,12 +50,23 @@ export const CompanyFinanceWidget: React.FC = () => {
     else if (action === 'hide') alert('Используйте панель настроек для скрытия виджета');
   };
 
+  if (loading || !data) {
+    return (
+      <div className="dashboard-widget">
+        <div className="dashboard-widget-header">
+          <div className="dashboard-widget-title"><i className="fas fa-chart-line"></i> Финансы компании</div>
+        </div>
+        <div className="dashboard-widget-content">Загрузка...</div>
+      </div>
+    );
+  }
+
   if (displayMode === 'compact') {
     return (
       <div className="dashboard-widget compact-widget" onClick={handleWidgetClick}>
         <div className="compact-widget-content">
           <i className="fas fa-chart-line"></i>
-          <div className="compact-value">{formatCurrency(totalIncome)}</div>
+          <div className="compact-value">{formatCurrency(data.kpi.revenue)}</div>
           <div className="compact-label">Выручка</div>
         </div>
       </div>
@@ -92,37 +97,31 @@ export const CompanyFinanceWidget: React.FC = () => {
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Выручка (факт)</span>
           <span className="dashboard-finance-value">
-            {formatCurrency(totalIncome)}
-            <span className={`dashboard-trend ${trends.income.positive ? 'up' : 'down'}`}>
-              <i className={`fas fa-arrow-${trends.income.positive ? 'up' : 'down'}`}></i> {Math.abs(trends.income.value)}% за мес.
+            {formatCurrency(data.kpi.revenue)}
+            <span className={`dashboard-trend ${data.kpi.revenueTrend > 0 ? 'up' : 'down'}`}>
+              <i className={`fas fa-arrow-${data.kpi.revenueTrend > 0 ? 'up' : 'down'}`}></i> {Math.abs(data.kpi.revenueTrend)}%
             </span>
           </span>
         </div>
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Маржа (факт)</span>
           <span className="dashboard-finance-value">
-            {formatCurrency(totalMargin)}
-            <span className={`dashboard-trend ${trends.margin.positive ? 'up' : 'down'}`}>
-              <i className={`fas fa-arrow-${trends.margin.positive ? 'up' : 'down'}`}></i> {Math.abs(trends.margin.value)}%
+            {formatCurrency(data.kpi.netProfit)}
+            <span className={`dashboard-trend ${data.kpi.profitTrend > 0 ? 'up' : 'down'}`}>
+              <i className={`fas fa-arrow-${data.kpi.profitTrend > 0 ? 'up' : 'down'}`}></i> {Math.abs(data.kpi.profitTrend)}%
             </span>
           </span>
         </div>
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Рентабельность</span>
           <span className="dashboard-finance-value">
-            {(totalProfitability * 100).toFixed(1)}%
-            <span className={`dashboard-trend ${trends.profitability.positive ? 'up' : 'down'}`}>
-              <i className={`fas fa-arrow-${trends.profitability.positive ? 'up' : 'down'}`}></i> {Math.abs(trends.profitability.value)} п.п.
-            </span>
+            {data.kpi.revenue > 0 ? ((data.kpi.netProfit / data.kpi.revenue) * 100).toFixed(1) : '0.0'}%
           </span>
         </div>
-        {nextCompanyGap && (
+        {data.kpi.payables > 0 && (
           <div className="dashboard-finance-row">
-            <span className="dashboard-finance-label">Кассовый разрыв</span>
-            <span className="dashboard-finance-value" style={{ color: 'var(--danger)' }}>
-              {formatCurrency(nextCompanyGap.deficit)}
-              <span className="dashboard-trend down">до {nextCompanyGap.date}</span>
-            </span>
+            <span className="dashboard-finance-label">Кредиторка</span>
+            <span className="dashboard-finance-value">{formatCurrency(data.kpi.payables)}</span>
           </div>
         )}
       </div>
