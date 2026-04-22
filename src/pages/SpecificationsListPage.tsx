@@ -115,22 +115,8 @@ export const SpecificationsListPage: React.FC = () => {
   return (
     <div className="spec-page">
       <div className="specs-toolbar">
-        <div className="spec-toolbar-row">
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>Спецификации</h1>
-          <button className="spec-button spec-button-primary" onClick={() => setShowModal(true)}>
-            <i className="fas fa-plus"></i> Новая спецификация
-          </button>
-        </div>
-        <div className="spec-toolbar-row">
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div className="view-toggle">
-              <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
-                <i className="fas fa-th"></i> Сетка
-              </button>
-              <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
-                <i className="fas fa-list"></i> Список
-              </button>
-            </div>
+        <div className="toolbar-left">
+          <div className="filter-group">
             <input
               type="text"
               placeholder="Поиск по названию..."
@@ -138,6 +124,8 @@ export const SpecificationsListPage: React.FC = () => {
               onChange={e => setSearchQuery(e.target.value)}
               style={{ padding: '8px 16px', borderRadius: '40px', border: '1px solid var(--border-light)', fontSize: '0.8rem', width: '200px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)' }}
             />
+          </div>
+          <div className="filter-group">
             <select
               value={filterProject}
               onChange={e => setFilterProject(e.target.value)}
@@ -148,6 +136,20 @@ export const SpecificationsListPage: React.FC = () => {
               {projects.map(p => (<option key={p.id} value={p.id}>{p.shortId} {p.name}</option>))}
             </select>
           </div>
+        </div>
+        <button className="btn-primary" onClick={() => setShowModal(true)}>
+          <i className="fas fa-plus"></i> Новая спецификация
+        </button>
+      </div>
+
+      <div className="view-toggle-right">
+        <div className="view-toggle">
+          <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
+            <i className="fas fa-th"></i> Сетка
+          </button>
+          <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
+            <i className="fas fa-list"></i> Список
+          </button>
         </div>
       </div>
 
