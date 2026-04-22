@@ -47,7 +47,7 @@ a:hover {
 .project-card {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 20px;
   border: 1px solid var(--border-light);
   transition: var(--transition);
@@ -102,6 +102,7 @@ button, .btn-primary, .btn-secondary, .btn-danger, .btn-small {
   transition: var(--transition);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   border-radius: 40px;
 }
@@ -217,7 +218,7 @@ input:focus, select:focus, textarea:focus {
 .project-detail-card {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 8px;
+  border-radius: 24px;
   padding: 28px;
   border: 1px solid var(--border-light);
   margin-bottom: 24px;
@@ -879,7 +880,7 @@ body.dark .dashboard-widget-menu {
 .carousel-card {
   flex: 0 0 340px;
   background: var(--bg-panel-solid);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 18px;
   cursor: pointer;
   transition: var(--transition);
@@ -1251,12 +1252,14 @@ input:checked + .slider:before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
+  padding: 8px 20px;
   background: var(--bg-panel);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-light);
+  border-radius: 16px;
+  margin: 20px 24px;
   position: sticky;
-  top: 0;
+  top: 20px;
   z-index: 100;
 }
 .logo {
@@ -1270,7 +1273,13 @@ input:checked + .slider:before {
 }
 .nav-buttons {
   display: flex;
-  gap: 20px;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 40px;
+  padding: 4px;
+}
+body.light .nav-buttons {
+  background: rgba(0, 0, 0, 0.03);
 }
 .nav-buttons button {
   background: none;
@@ -1280,7 +1289,7 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   cursor: pointer;
   transition: var(--transition);
-  padding: 8px 20px;
+  padding: 10px 24px;
   border-radius: 40px;
 }
 .nav-buttons button.active {
@@ -1331,43 +1340,34 @@ input:checked + .slider:before {
   color: var(--text-muted);
   margin-right: 6px;
 }
-.projects-header {
+.projects-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-}
-.projects-header h2 {
-  font-size: 1.4rem;
-  font-weight: 500;
-  background: linear-gradient(135deg, var(--text-primary), var(--accent));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-.filter-bar {
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 24px;
+  border-radius: 16px;
+  padding: 12px 20px;
   border: 1px solid var(--border-light);
-  padding: 16px 24px;
-  margin-bottom: 28px;
+}
+.toolbar-left {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 20px;
+  flex-wrap: wrap;
 }
 .filter-group {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 8px;
 }
 .filter-group label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   color: var(--text-muted);
-  letter-spacing: 0.5px;
 }
 .filter-group select, .reset-btn {
   background: var(--bg-panel-solid);
@@ -1384,25 +1384,6 @@ input:checked + .slider:before {
 .reset-btn:hover {
   background: var(--accent-glow);
   border-color: var(--accent);
-}
-.projects-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 28px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  padding: 12px 20px;
-  border: 1px solid var(--border-light);
-}
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
 }
 .view-toggle {
   display: flex;
@@ -1509,6 +1490,107 @@ input:checked + .slider:before {
   .row-budget, .row-responsible, .row-progress, .row-status {
     grid-column: span 2;
   }
+}
+/* ===== СПЕЦИФИКАЦИИ ===== */
+.specs-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 12px 20px;
+  border: 1px solid var(--border-light);
+}
+.specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+.spec-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+.spec-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+}
+.spec-card i {
+  font-size: 1.8rem;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.spec-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+.spec-card .spec-items {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.spec-card .spec-sum {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 8px 0;
+  color: var(--text-primary);
+}
+.spec-card-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+.spec-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.spec-card:hover .spec-actions {
+  opacity: 1;
+}
+.spec-actions button {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+.spec-actions button:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+/* ===== ФИНАНСЫ ===== */
+.finance-page .page-header h1 {
+  display: none;
+}
+/* ===== РАСЧЁТЫ ===== */
+.calculations-page h1,
+.calculations-layout h1,
+.calculations-main h1 {
+  display: none;
 }
 /* ===== ПУСТЫЕ СОСТОЯНИЯ ===== */
 .empty-calculations {
