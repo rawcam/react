@@ -1,4 +1,18 @@
 /* src/pages/FinancePage.css */
+/* Добавить в начало файла */
+.finance-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.period-filter, .view-toggle {
+  display: flex;
+  gap: 8px;
+}
+
 .finance-page {
   padding: 24px;
   max-width: 1400px;
