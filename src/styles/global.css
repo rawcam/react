@@ -43,16 +43,14 @@ a:hover {
   color: var(--accent-hover);
 }
 
-/* ========== КАРТОЧКИ ПРОЕКТОВ (общие) ========== */
+/* ========== КАРТОЧКИ ПРОЕКТОВ ========== */
 .project-card {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: var(--border-radius-card);
-  padding: 24px;
+  border-radius: 20px;
+  padding: 20px;
   border: 1px solid var(--border-light);
   transition: var(--transition);
-  animation: fadeInUp 0.4s ease-out;
-  margin-bottom: 16px;
   cursor: pointer;
 }
 .project-card:hover {
@@ -96,7 +94,7 @@ a:hover {
 }
 
 /* ========== КНОПКИ ========== */
-button, .btn-primary, .btn-secondary, .btn-danger, .btn-inactive, .btn-small {
+button, .btn-primary, .btn-secondary, .btn-danger, .btn-small {
   font-family: inherit;
   font-weight: 500;
   border: none;
@@ -105,14 +103,14 @@ button, .btn-primary, .btn-secondary, .btn-danger, .btn-inactive, .btn-small {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
-  padding: 8px 20px;
   border-radius: 40px;
 }
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
   box-shadow: 0 2px 8px var(--accent-glow);
+  padding: 10px 24px;
+  font-size: 0.85rem;
 }
 .btn-primary:hover {
   transform: translateY(-2px);
@@ -122,6 +120,8 @@ button, .btn-primary, .btn-secondary, .btn-danger, .btn-inactive, .btn-small {
   background: transparent;
   border: 1px solid var(--border-light);
   color: var(--text-primary);
+  padding: 10px 24px;
+  font-size: 0.85rem;
 }
 .btn-secondary:hover {
   background: var(--accent-glow);
@@ -131,25 +131,18 @@ button, .btn-primary, .btn-secondary, .btn-danger, .btn-inactive, .btn-small {
 .btn-danger {
   background: var(--danger);
   color: white;
+  padding: 10px 24px;
+  font-size: 0.85rem;
 }
 .btn-danger:hover { background: #b91c1c; transform: translateY(-1px); }
 .btn-small { padding: 4px 12px; font-size: 0.75rem; }
-
-/* Глобальный ховер для всех кнопок */
-button:hover,
-.btn-secondary:hover,
-.spec-button:hover {
-  background: var(--accent-glow) !important;
-  color: var(--accent) !important;
-  border-color: var(--accent) !important;
-}
 
 /* ========== ПОЛЯ ВВОДА ========== */
 input, select, textarea {
   font-family: inherit;
   font-size: 0.85rem;
   padding: 8px 16px;
-  border-radius: var(--border-radius-element);
+  border-radius: 16px;
   border: 1px solid var(--border-light);
   background: var(--bg-panel-solid);
   color: var(--text-primary);
@@ -201,7 +194,7 @@ input:focus, select:focus, textarea:focus {
 .modal-content select, .modal-content input {
   background: var(--bg-panel);
   border: 1px solid var(--border-light);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 8px 12px;
   width: 100%;
   margin-bottom: 16px;
@@ -224,7 +217,7 @@ input:focus, select:focus, textarea:focus {
 .project-detail-card {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 32px;
+  border-radius: 24px;
   padding: 28px;
   border: 1px solid var(--border-light);
   margin-bottom: 24px;
@@ -271,7 +264,7 @@ input:focus, select:focus, textarea:focus {
 }
 .detail-field input, .detail-field select {
   padding: 8px 12px;
-  border-radius: 20px;
+  border-radius: 16px;
   border: 1px solid var(--border-light);
   background: var(--bg-panel-solid);
 }
@@ -287,7 +280,7 @@ input:focus, select:focus, textarea:focus {
 }
 .detail-list {
   background: var(--card-bg);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 12px;
   margin-bottom: 12px;
 }
@@ -313,11 +306,11 @@ input:focus, select:focus, textarea:focus {
   margin-top: 12px;
 }
 
-/* ========== СТАРЫЕ ВИДЖЕТЫ (не трогать, используются на других страницах) ========== */
+/* ========== СТАРЫЕ ВИДЖЕТЫ ========== */
 .widget-card {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: var(--border-radius-card);
+  border-radius: 20px;
   padding: 20px;
   border: 1px solid var(--border-light);
   transition: var(--transition);
@@ -376,7 +369,7 @@ input:focus, select:focus, textarea:focus {
   gap: 24px;
   padding: 20px;
   background: var(--bg-panel);
-  border-radius: var(--border-radius-card);
+  border-radius: 20px;
 }
 .tract-header {
   display: flex;
@@ -393,7 +386,7 @@ input:focus, select:focus, textarea:focus {
 }
 .tract-stats .stat-card {
   background: var(--card-bg);
-  border-radius: var(--border-radius-small);
+  border-radius: 16px;
   padding: 12px;
   text-align: center;
 }
@@ -418,7 +411,7 @@ input:focus, select:focus, textarea:focus {
 }
 .tract-column {
   background: var(--card-bg);
-  border-radius: var(--border-radius-card);
+  border-radius: 16px;
   border: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
@@ -497,7 +490,7 @@ input:focus, select:focus, textarea:focus {
 }
 .tract-summary {
   background: var(--card-bg);
-  border-radius: var(--border-radius-card);
+  border-radius: 16px;
   padding: 16px;
   cursor: pointer;
   transition: var(--transition);
@@ -538,7 +531,7 @@ input:focus, select:focus, textarea:focus {
 }
 .calculator-container {
   background: var(--bg-panel);
-  border-radius: var(--border-radius-card);
+  border-radius: 20px;
   padding: 24px;
   border: 1px solid var(--border-light);
   max-width: 800px;
@@ -573,7 +566,7 @@ input:focus, select:focus, textarea:focus {
 }
 .device-card .collapse-device:hover { color: var(--accent); }
 
-/* ========== НОВЫЙ ДИЗАЙН ДАШБОРДА (компактный, без дублей) ========== */
+/* ========== ДАШБОРД ========== */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -585,7 +578,7 @@ input:focus, select:focus, textarea:focus {
 .dashboard-widget {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid var(--border-light);
   transition: var(--transition);
   overflow: hidden;
@@ -886,7 +879,7 @@ body.dark .dashboard-widget-menu {
 .carousel-card {
   flex: 0 0 340px;
   background: var(--bg-panel-solid);
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 18px;
   cursor: pointer;
   transition: var(--transition);
@@ -962,7 +955,7 @@ body.dark .dashboard-widget-menu {
   align-items: center;
   justify-content: space-between;
   background: var(--bg-panel-solid);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 12px 18px;
   cursor: pointer;
   transition: var(--transition);
@@ -1024,7 +1017,7 @@ body.dark .dashboard-widget-menu {
   .list-row { flex-direction: column; align-items: stretch; }
   .list-detail-btn { align-self: flex-end; }
 }
-/* ===== ВЫЕЗЖАЮЩАЯ ПАНЕЛЬ НАСТРОЕК ===== */
+/* ===== ПАНЕЛЬ НАСТРОЕК ===== */
 .drawer-overlay {
   position: fixed;
   top: 0;
@@ -1181,19 +1174,9 @@ input:checked + .slider:before {
   align-items: center;
   margin-bottom: 20px;
 }
-/* Компактный режим для сетки виджетов */
 .dashboard-grid.compact-mode {
   grid-template-columns: repeat(auto-fit, minmax(180px, 200px));
   justify-content: center;
-}
-/* ===== КОМПАКТНЫЙ РЕЖИМ ВИДЖЕТОВ ===== */
-.dashboard-widget.compact-widget {
-  cursor: pointer;
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
 }
 .compact-widget-content {
   display: flex;
@@ -1221,7 +1204,7 @@ input:checked + .slider:before {
   color: var(--text-muted);
   margin-top: 4px;
 }
-/* ===== СТАТИСТИКА ТРАКТА В СТРОКУ ===== */
+/* ===== СТАТИСТИКА ТРАКТА ===== */
 .tract-stats-summary {
   display: flex;
   gap: 16px;
@@ -1236,7 +1219,7 @@ input:checked + .slider:before {
   white-space: nowrap;
   color: var(--text-primary);
 }
-/* ===== КОМПАКТНЫЕ КНОПКИ В САЙДБАРЕ ===== */
+/* ===== КНОПКИ В САЙДБАРЕ ===== */
 .btn-sidebar {
   background: var(--accent);
   color: white;
@@ -1247,7 +1230,6 @@ input:checked + .slider:before {
   width: 100%;
   margin-top: 8px;
   cursor: pointer;
-  transition: var(--transition);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1264,7 +1246,7 @@ input:checked + .slider:before {
   background: var(--accent-glow);
   border-color: var(--accent);
 }
-/* ========== ТОПБАР (восстановление стилей) ========== */
+/* ========== ТОПБАР ========== */
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -1298,8 +1280,12 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   cursor: pointer;
   transition: var(--transition);
-  padding: 6px 12px;
+  padding: 8px 20px;
   border-radius: 40px;
+}
+.nav-buttons button.active {
+  background: var(--accent);
+  color: white;
 }
 .nav-buttons button:hover {
   color: var(--accent);
@@ -1332,44 +1318,7 @@ input:checked + .slider:before {
   color: var(--accent);
   font-weight: 500;
 }
-.nav-buttons button.active {
-  color: var(--accent);
-  background: var(--accent-glow);
-  font-weight: 600;
-}
-.mode-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.role-select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 40px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-panel);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: var(--transition);
-}
-.role-select:hover {
-  border-color: var(--accent);
-}
-.role-select:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-glow);
-}
-.list-status {
-  display: inline-block;
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  color: white;
-  margin-left: 10px;
-}
+/* ========== ПРОЕКТЫ ========== */
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -1427,7 +1376,6 @@ input:checked + .slider:before {
   padding: 6px 14px;
   font-size: 0.8rem;
   color: var(--text-primary);
-  font-family: inherit;
   cursor: pointer;
 }
 .reset-btn {
@@ -1437,22 +1385,21 @@ input:checked + .slider:before {
   background: var(--accent-glow);
   border-color: var(--accent);
 }
-.projects-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-.projects-header h2 {
-  font-size: 1.8rem;
-  font-weight: 500;
-  background: linear-gradient(135deg, var(--text-primary), var(--accent));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  margin-bottom: 16px;
-}
-.header-actions {
+.projects-toolbar {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  padding: 12px 20px;
+  border: 1px solid var(--border-light);
+}
+.toolbar-left {
+  display: flex;
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
@@ -1489,7 +1436,7 @@ input:checked + .slider:before {
 .project-row {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 12px 18px;
   cursor: pointer;
   transition: var(--transition);
@@ -1502,97 +1449,6 @@ input:checked + .slider:before {
 }
 .priority-row {
   border-left: 4px solid #f5b042;
-}
-.project-row-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.project-row-name {
-  font-weight: 500;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 200px;
-}
-.project-row-status {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  color: white;
-}
-.project-row-stats {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  display: flex;
-  gap: 16px;
-}
-.project-row-progress {
-  width: 140px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.project-row-percent {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  min-width: 40px;
-  text-align: right;
-}
-@media (max-width: 768px) {
-  .project-row-info {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .project-row-progress {
-    width: 100%;
-  }
-}
-.projects-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 28px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  padding: 12px 20px;
-  border: 1px solid var(--border-light);
-}
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.filter-group label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.filter-group select, .reset-btn {
-  background: var(--bg-panel-solid);
-  border: 1px solid var(--border-light);
-  border-radius: 40px;
-  padding: 4px 12px;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-.reset-btn {
-  background: transparent;
-}
-.reset-btn:hover {
-  background: var(--accent-glow);
 }
 .project-row-grid {
   display: grid;
@@ -1653,66 +1509,8 @@ input:checked + .slider:before {
   .row-budget, .row-responsible, .row-progress, .row-status {
     grid-column: span 2;
   }
-  .project-row-grid .row-budget,
-  .project-row-grid .row-responsible,
-  .project-row-grid .row-progress,
-  .project-row-grid .row-status {
-    white-space: normal;
-  }
 }
-/* ===== СТАТИСТИКА ТРАКТА В СТРОКУ ===== */
-.tract-stats-summary {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.stat-badge {
-  background: var(--bg-panel-solid);
-  border-radius: 40px;
-  padding: 4px 12px;
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-/* ===== КОМПАКТНЫЕ КНОПКИ В АККОРДЕОНАХ ===== */
-.btn-sidebar {
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 40px;
-  padding: 6px 12px;
-  font-size: 0.7rem;
-  width: 100%;
-  margin-top: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.btn-sidebar:hover {
-  background: var(--accent-hover);
-}
-.btn-sidebar-secondary {
-  background: transparent;
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-.btn-sidebar-secondary:hover {
-  background: var(--accent-glow);
-  border-color: var(--accent);
-}
-.empty-calculations {
-  max-width: 600px;
-  width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  padding: 48px 24px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-radius: 32px;
-  border: 1px solid var(--border-light);
-}
+/* ===== ПУСТЫЕ СОСТОЯНИЯ ===== */
 .empty-calculations {
   max-width: 600px;
   width: 100%;
@@ -1745,18 +1543,6 @@ input:checked + .slider:before {
 }
 .calculations-layout {
   display: flex;
-  min-height: calc(100vh - 64px); /* высота окна минус топбар */
-}
-.calculations-layout .main-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 0; /* убираем лишнюю высоту */
-  flex: 1;
-}
-.calculations-layout {
-  display: flex;
   flex: 1;
   min-height: calc(100vh - 64px);
 }
@@ -1764,63 +1550,13 @@ input:checked + .slider:before {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
 }
-/* Общие стили для лейаута страницы расчётов */
-.calculations-layout {
-  display: flex;
-  flex: 1;
-  min-height: calc(100vh - 64px);
-}
-
-/* Режим с контентом (калькуляторы, тракты) – содержимое вверху */
 .calculations-layout.normal-mode .main-content {
-  display: block; /* убираем центрирование */
-  padding: 20px;
-  overflow-y: auto;
+  display: block;
 }
-
-/* Режим пустого состояния – центрируем */
 .calculations-layout.empty-mode .main-content {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-/* Стили для карточки пустого состояния */
-.empty-calculations {
-  max-width: 600px;
-  width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  padding: 48px 24px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-radius: 32px;
-  border: 1px solid var(--border-light);
-}
-.empty-calculations i {
-  font-size: 3rem;
-  color: var(--accent);
-  margin-bottom: 16px;
-}
-.empty-calculations h3 {
-  font-size: 1.5rem;
-  margin-bottom: 12px;
-  color: var(--text-primary);
-}
-.empty-calculations p {
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 8px;
-}
-.empty-calculations small {
-  color: var(--text-muted);
-  font-size: 0.75rem;
 }
