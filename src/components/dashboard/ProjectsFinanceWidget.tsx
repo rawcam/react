@@ -3,13 +3,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { useFinance } from '../../hooks/useFinance';
+import { useFinanceData } from '../../hooks/useFinanceData';
 import { useAuth } from '../../hooks/useAuth';
 
 export const ProjectsFinanceWidget: React.FC = () => {
   const navigate = useNavigate();
+  const { data, loading } = useFinanceData('month');
   const projects = useSelector((state: RootState) => state.projects.list);
-  const { totalMargin: companyMargin, totalProfitability: companyProfitability } = useFinance();
   const { hasRole } = useAuth();
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -27,16 +27,14 @@ export const ProjectsFinanceWidget: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!hasRole('director') && !hasRole('pm') && !hasRole('engineer')) return null;
-
-  const activeProjects = projects.filter(p => p.status !== 'done');
-  const totalContract = projects.reduce((sum, p) => sum + p.contractAmount, 0);
-  const totalActualIncome = projects.reduce((sum, p) => sum + p.actualIncome, 0);
-  const totalActualExpenses = projects.reduce((sum, p) => sum + p.actualExpenses, 0);
+  if (!hasRole(['director', 'pm', 'engineer'])) return null;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
   };
+
+  const activeProjects = projects.filter(p => p.status !== 'done');
+  const totalContract = projects.reduce((sum, p) => sum + p.contractAmount, 0);
 
   const handleWidgetClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.dashboard-widget-actions')) return;
@@ -55,6 +53,17 @@ export const ProjectsFinanceWidget: React.FC = () => {
     else if (action === 'settings') alert('Настройки виджета (демо)');
     else if (action === 'hide') alert('Используйте панель настроек для скрытия виджета');
   };
+
+  if (loading || !data) {
+    return (
+      <div className="dashboard-widget">
+        <div className="dashboard-widget-header">
+          <div className="dashboard-widget-title"><i className="fas fa-chart-pie"></i> Финансы проектов</div>
+        </div>
+        <div className="dashboard-widget-content">Загрузка...</div>
+      </div>
+    );
+  }
 
   if (displayMode === 'compact') {
     return (
@@ -98,17 +107,17 @@ export const ProjectsFinanceWidget: React.FC = () => {
           <span className="dashboard-finance-value">{formatCurrency(totalContract)}</span>
         </div>
         <div className="dashboard-finance-row">
-          <span className="dashboard-finance-label">Выручка (факт)</span>
-          <span className="dashboard-finance-value">{formatCurrency(totalActualIncome)}</span>
+          <span className="dashboard-finance-label">Выручка по проектам</span>
+          <span className="dashboard-finance-value">{formatCurrency(data.sales)}</span>
         </div>
         <div className="dashboard-finance-row">
-          <span className="dashboard-finance-label">Расходы (факт)</span>
-          <span className="dashboard-finance-value">{formatCurrency(totalActualExpenses)}</span>
+          <span className="dashboard-finance-label">Расходы по проектам</span>
+          <span className="dashboard-finance-value">{formatCurrency(data.equipment + data.salary + data.rent)}</span>
         </div>
         <div className="dashboard-finance-row">
-          <span className="dashboard-finance-label">Маржа (компания)</span>
+          <span className="dashboard-finance-label">Маржа (проекты)</span>
           <span className="dashboard-finance-value">
-            {formatCurrency(companyMargin)} ({(companyProfitability * 100).toFixed(1)}%)
+            {formatCurrency(data.sales - (data.equipment + data.salary + data.rent))}
           </span>
         </div>
       </div>
