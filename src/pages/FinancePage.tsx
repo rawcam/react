@@ -110,11 +110,21 @@ export const FinancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Фильтр периода */}
-      <div className="period-filter">
-        <button className={`toggle-btn ${period === 'month' ? 'active' : ''}`} onClick={() => setPeriod('month')}>Месяц</button>
-        <button className={`toggle-btn ${period === 'quarter' ? 'active' : ''}`} onClick={() => setPeriod('quarter')}>Квартал</button>
-        <button className={`toggle-btn ${period === 'year' ? 'active' : ''}`} onClick={() => setPeriod('year')}>Год</button>
+      {/* Единая строка управления: фильтр периода + переключатель вида */}
+      <div className="finance-controls">
+        <div className="period-filter">
+          <button className={`toggle-btn ${period === 'month' ? 'active' : ''}`} onClick={() => setPeriod('month')}>Месяц</button>
+          <button className={`toggle-btn ${period === 'quarter' ? 'active' : ''}`} onClick={() => setPeriod('quarter')}>Квартал</button>
+          <button className={`toggle-btn ${period === 'year' ? 'active' : ''}`} onClick={() => setPeriod('year')}>Год</button>
+        </div>
+        <div className="view-toggle">
+          <button className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
+            <i className="fas fa-th"></i> Отчёты
+          </button>
+          <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
+            <i className="fas fa-list"></i> Операции
+          </button>
+        </div>
       </div>
 
       {/* Селектор категорий информеров */}
@@ -200,7 +210,22 @@ export const FinancePage: React.FC = () => {
               <div className="label">Аренда</div>
               <div className="value">{formatAmount(data.rent)}</div>
             </div>
-            {/* Остальные информеры ОХР временно скрыты до появления данных */}
+            <div className="informer clickable" style={{ borderLeftColor: '#3b82f6' }} onClick={() => handleInformeClick('Транспорт', 'Транспортные расходы')}>
+              <div className="label">Транспорт</div>
+              <div className="value">{formatAmount(data.overhead.transport)}</div>
+            </div>
+            <div className="informer clickable" style={{ borderLeftColor: '#10b981' }} onClick={() => handleInformeClick('Связь/интернет', 'Интернет/Связь')}>
+              <div className="label">Связь/интернет</div>
+              <div className="value">{formatAmount(data.overhead.internet)}</div>
+            </div>
+            <div className="informer clickable" style={{ borderLeftColor: '#f59e0b' }} onClick={() => handleInformeClick('Канцтовары', 'Канцтовары')}>
+              <div className="label">Канцтовары</div>
+              <div className="value">{formatAmount(data.overhead.stationery)}</div>
+            </div>
+            <div className="informer clickable" style={{ borderLeftColor: '#ef4444' }} onClick={() => handleInformeClick('Прочее', 'Прочее')}>
+              <div className="label">Прочее</div>
+              <div className="value">{formatAmount(data.overhead.other)}</div>
+            </div>
           </div>
         </>
       )}
@@ -213,21 +238,27 @@ export const FinancePage: React.FC = () => {
               <div className="label">ФОТ (всего)</div>
               <div className="value">{formatAmount(data.kpi.totalSalary)}</div>
             </div>
-            {/* Детализация по сотрудникам временно скрыта */}
+            <div className="informer clickable" style={{ borderLeftColor: '#f472b6' }} onClick={() => handleInformeClick('Зарплата', 'Зарплата')}>
+              <div className="label">Зарплата</div>
+              <div className="value">{formatAmount(data.staff.salary)}</div>
+            </div>
+            <div className="informer clickable" style={{ borderLeftColor: '#fb923c' }} onClick={() => handleInformeClick('Премии', 'Премия')}>
+              <div className="label">Премии</div>
+              <div className="value">{formatAmount(data.staff.bonus)}</div>
+            </div>
+            <div className="informer clickable" style={{ borderLeftColor: '#fbbf24' }} onClick={() => handleInformeClick('Отпускные', 'Отпускные')}>
+              <div className="label">Отпускные</div>
+              <div className="value">{formatAmount(data.staff.vacation)}</div>
+            </div>
+            <div className="informer clickable" style={{ borderLeftColor: '#34d399' }} onClick={() => handleInformeClick('Больничные', 'Больничный')}>
+              <div className="label">Больничные</div>
+              <div className="value">{formatAmount(data.staff.sickLeave)}</div>
+            </div>
           </div>
         </>
       )}
 
-      {/* Переключатель Отчёты / Операции */}
-      <div className="view-toggle">
-        <button className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
-          <i className="fas fa-th"></i> Отчёты
-        </button>
-        <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
-          <i className="fas fa-list"></i> Операции
-        </button>
-      </div>
-
+      {/* Контент в зависимости от режима (отчёты или операции) */}
       {viewMode === 'grid' && (
         <>
           <div className="reports-grid">
