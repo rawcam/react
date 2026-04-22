@@ -16,6 +16,7 @@ export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Three.js сцена (без изменений)
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -250,41 +251,29 @@ export const LoginPage: React.FC = () => {
     };
   }, []);
 
+  // ИСПРАВЛЕННАЯ ФУНКЦИЯ ВХОДА
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      // 1. Аутентификация
+      // Очищаем старое перед входом
+      localStorage.clear();
+      sessionStorage.clear();
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      if (!data.session) throw new Error('No session returned');
-      
-      console.log('[Login] Session established for user:', data.session.user.email);
-      
-      // 2. Диспатч сессии
-      dispatch(setSession(data.session));
-      
-      // 3. Загрузка роли из user_roles
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('id', data.session.user.id)
-        .single();
-      
-      if (roleError) {
-        console.error('[Login] Failed to fetch role:', roleError.message);
-        // Устанавливаем роль по умолчанию
-        dispatch(setRole('engineer'));
-      } else {
-        console.log('[Login] Role loaded:', roleData?.role);
+      if (data.session) {
+        dispatch(setSession(data.session));
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('id', data.session.user.id)
+          .single();
         dispatch(setRole(roleData?.role || 'engineer'));
+        navigate('/dashboard');
       }
-      
-      // 4. Переход на дашборд
-      navigate('/dashboard');
     } catch (err: any) {
-      console.error('[Login] Error:', err);
       setError(err.message || 'Ошибка входа');
     } finally {
       setLoading(false);
