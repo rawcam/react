@@ -443,3 +443,50 @@
   margin-bottom: 20px;
   flex-wrap: wrap;
 }
+/* src/pages/FinancePage.css */
+/* ... все существующие стили ... */
+/* Добавить в конец: */
+.finance-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.period-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.custom-date-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+.custom-date-range input {
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+.transactions-search {
+  margin-bottom: 16px;
+}
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 16px;
+  border-radius: 40px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+.search-input::placeholder {
+  color: var(--text-muted);
+}
