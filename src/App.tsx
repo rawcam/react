@@ -5,7 +5,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store, RootState } from './store';
 import { supabase } from './lib/supabaseClient';
-import { setSession, setRole, setLoading, clearLocalStorageOnStartup } from './store/authSlice';
+import { setSession, setRole, setLoading } from './store/authSlice';
 import { Topbar } from './components/layout/Topbar';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectsPage } from './pages/ProjectsPage';
@@ -29,7 +29,17 @@ const AppContent = () => {
   const isLoading = useSelector((state: RootState) => state.auth.isLoading);
 
   useEffect(() => {
-    dispatch(clearLocalStorageOnStartup());
+    // Радикальная очистка всего, что может мешать
+    const keysToRemove = ['userRole', 'userName', 'theme'];
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    // Очищаем все ключи Supabase
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) localStorage.removeItem(key);
+    });
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('sb-')) sessionStorage.removeItem(key);
+    });
+
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -70,6 +80,20 @@ const AppContent = () => {
 
     return () => listener?.subscription.unsubscribe();
   }, [dispatch]);
+
+  // Если загрузка завершена, но пользователь не определён, а сессия Supabase есть — принудительно перезагружаем
+  useEffect(() => {
+    if (!isLoading && !user) {
+      const checkSession = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          console.warn('Session exists but user not in Redux, reloading...');
+          window.location.reload();
+        }
+      };
+      checkSession();
+    }
+  }, [isLoading, user]);
 
   if (isLoading) {
     return <LoadingScreen />;
