@@ -47,6 +47,8 @@ export const FinanceDetailModal: React.FC<FinanceDetailModalProps> = ({
         <div className="modal-body">
           {loading ? (
             <p>Загрузка...</p>
+          ) : transactions.length === 0 ? (
+            <p>Нет операций за выбранный период.</p>
           ) : (
             <table className="detail-table">
               <thead>
