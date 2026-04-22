@@ -73,44 +73,40 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
     try {
       const { start, end } = getDateRange();
 
-      // 1. Получаем все транзакции за период
-      const { data: transactions, error: txError } = await supabase
+      // 1. Агрегатные запросы для сумм (быстро, без загрузки всех строк)
+      const [incomeRes, expenseRes, receivablesRes, payablesRes, categoryRes] = await Promise.all([
+        supabase.from('finance_1c').select('amount.sum()').eq('type', 'income').gte('date', start).lte('date', end),
+        supabase.from('finance_1c').select('amount.sum()').eq('type', 'expense').gte('date', start).lte('date', end),
+        supabase.from('finance_1c').select('amount.sum()').eq('type', 'income').eq('status', 'В обработке').gte('date', start).lte('date', end),
+        supabase.from('finance_1c').select('amount.sum()').eq('type', 'expense').eq('status', 'В обработке').gte('date', start).lte('date', end),
+        supabase.from('finance_1c').select('category, amount.sum()').gte('date', start).lte('date', end).group('category')
+      ]);
+
+      const income = incomeRes.data?.[0]?.sum || 0;
+      const expense = expenseRes.data?.[0]?.sum || 0;
+      const receivables = receivablesRes.data?.[0]?.sum || 0;
+      const payables = payablesRes.data?.[0]?.sum || 0;
+
+      // 2. Детализация по категориям
+      const categorySums: Record<string, number> = {};
+      (categoryRes.data || []).forEach((row: any) => { categorySums[row.category] = row.sum; });
+
+      const sales = categorySums['Поступление от клиента'] || 0;
+      const advances = income - sales;
+      const equipment = categorySums['Закупка оборудования'] || 0;
+      const salary = ['Зарплата', 'Премия', 'Отпускные', 'Больничный'].reduce((sum, cat) => sum + (categorySums[cat] || 0), 0);
+      const rent = categorySums['Аренда офиса'] || 0;
+
+      // 3. Последние 50 транзакций
+      const { data: transactions } = await supabase
         .from('finance_1c')
         .select('*')
         .gte('date', start)
         .lte('date', end)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .limit(50);
 
-      if (txError) throw txError;
-
-      // 2. Агрегируем KPI
-      const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-      const receivables = transactions.filter(t => t.type === 'income' && t.status === 'В обработке').reduce((sum, t) => sum + t.amount, 0);
-      const payables = transactions.filter(t => t.type === 'expense' && t.status === 'В обработке').reduce((sum, t) => sum + t.amount, 0);
-
-      // Для трендов нужны данные за предыдущий период — упрощённо берём 10% для демо
-      const revenueTrend = 8.2;
-      const profitTrend = 5.4;
-      const receivablesTrend = -12;
-      const payablesTrend = 3.1;
-
-      // Категории для отчёта
-      const sales = transactions.filter(t => t.type === 'income' && t.category === 'Поступление от клиента').reduce((sum, t) => sum + t.amount, 0);
-      const advances = transactions.filter(t => t.type === 'income' && t.description.includes('Аванс')).reduce((sum, t) => sum + t.amount, 0);
-      const equipment = transactions.filter(t => t.type === 'expense' && t.category === 'Закупка оборудования').reduce((sum, t) => sum + t.amount, 0);
-      const salary = transactions.filter(t => t.type === 'expense' && ['Зарплата', 'Премия', 'Отпускные', 'Больничный'].includes(t.category)).reduce((sum, t) => sum + t.amount, 0);
-      const rent = transactions.filter(t => t.type === 'expense' && t.category === 'Аренда офиса').reduce((sum, t) => sum + t.amount, 0);
-
-      // План/факт по проектам (заглушка, можно позже сделать реальный запрос)
-      const projectsPlanFact = [
-        { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
-        { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
-        { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
-      ];
-
-      // Форматируем транзакции для таблицы (последние 50)
-      const latestTransactions = (transactions || []).slice(0, 50).map(t => ({
+      const latestTransactions = (transactions || []).map(t => ({
         id: t.id,
         date: new Date(t.date).toLocaleDateString('ru-RU'),
         description: t.description,
@@ -118,6 +114,19 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
         status: t.status,
         hasDocument: t.has_document,
       }));
+
+      // 4. Тренды (упрощённо)
+      const revenueTrend = 8.2;
+      const profitTrend = 5.4;
+      const receivablesTrend = -12;
+      const payablesTrend = 3.1;
+
+      // 5. План/факт по проектам (заглушка)
+      const projectsPlanFact = [
+        { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
+        { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
+        { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
+      ];
 
       setData({
         kpi: {
