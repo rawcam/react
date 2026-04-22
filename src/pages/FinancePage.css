@@ -303,3 +303,34 @@
   color: var(--text-muted);
   font-size: 0.75rem;
 }
+/* Добавьте в конец файла */
+.period-filter {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.period-filter .toggle-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 8px 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-secondary);
+  backdrop-filter: blur(8px);
+}
+
+.period-filter .toggle-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.badge.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+}
