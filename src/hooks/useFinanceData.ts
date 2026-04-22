@@ -11,7 +11,6 @@ interface FinanceKPI {
   receivablesTrend: number;
   payables: number;
   payablesTrend: number;
-  // Новые показатели
   totalTaxes: number;
   nds: number;
   profitTax: number;
@@ -82,24 +81,35 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
     try {
       const { start, end } = getDateRange();
 
-      // 1. Агрегатные запросы
-      const [incomeRes, expenseRes, receivablesRes, payablesRes, categoryRes] = await Promise.all([
-        supabase.from('finance_1c').select('amount.sum()').eq('type', 'income').gte('date', start).lte('date', end),
-        supabase.from('finance_1c').select('amount.sum()').eq('type', 'expense').gte('date', start).lte('date', end),
-        supabase.from('finance_1c').select('amount.sum()').eq('type', 'income').eq('status', 'В обработке').gte('date', start).lte('date', end),
-        supabase.from('finance_1c').select('amount.sum()').eq('type', 'expense').eq('status', 'В обработке').gte('date', start).lte('date', end),
-        supabase.from('finance_1c').select('category, amount.sum()').gte('date', start).lte('date', end).group('category')
-      ]);
+      // 1. Получаем все транзакции за период (для группировки по категориям)
+      const { data: allTransactions, error: txError } = await supabase
+        .from('finance_1c')
+        .select('*')
+        .gte('date', start)
+        .lte('date', end);
 
-      const income = incomeRes.data?.[0]?.sum || 0;
-      const expense = expenseRes.data?.[0]?.sum || 0;
-      const receivables = receivablesRes.data?.[0]?.sum || 0;
-      const payables = payablesRes.data?.[0]?.sum || 0;
+      if (txError) throw txError;
 
+      const transactions = allTransactions || [];
+
+      // 2. Агрегация сумм
+      let income = 0, expense = 0, receivables = 0, payables = 0;
       const categorySums: Record<string, number> = {};
-      (categoryRes.data || []).forEach((row: any) => { categorySums[row.category] = row.sum; });
 
-      // Детализация по налогам и другим категориям
+      transactions.forEach(t => {
+        const cat = t.category;
+        categorySums[cat] = (categorySums[cat] || 0) + t.amount;
+
+        if (t.type === 'income') {
+          income += t.amount;
+          if (t.status === 'В обработке') receivables += t.amount;
+        } else {
+          expense += t.amount;
+          if (t.status === 'В обработке') payables += t.amount;
+        }
+      });
+
+      // 3. Детализация по категориям
       const nds = categorySums['НДС'] || 0;
       const profitTax = categorySums['Налог на прибыль'] || 0;
       const insuranceContributions = categorySums['Страховые взносы'] || 0;
@@ -115,23 +125,18 @@ export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') =
       const equipment = categorySums['Закупка оборудования'] || 0;
       const rent = categorySums['Аренда офиса'] || 0;
 
-      // Последние 50 транзакций
-      const { data: transactions } = await supabase
-        .from('finance_1c')
-        .select('*')
-        .gte('date', start)
-        .lte('date', end)
-        .order('date', { ascending: false })
-        .limit(50);
-
-      const latestTransactions = (transactions || []).map(t => ({
-        id: t.id,
-        date: new Date(t.date).toLocaleDateString('ru-RU'),
-        description: t.description,
-        amount: t.amount,
-        status: t.status,
-        hasDocument: t.has_document,
-      }));
+      // 4. Последние 50 транзакций для таблицы
+      const latestTransactions = [...transactions]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 50)
+        .map(t => ({
+          id: t.id,
+          date: new Date(t.date).toLocaleDateString('ru-RU'),
+          description: t.description,
+          amount: t.amount,
+          status: t.status,
+          hasDocument: t.has_document,
+        }));
 
       const revenueTrend = 8.2;
       const profitTrend = 5.4;
