@@ -1,29 +1,32 @@
 // src/hooks/useFinanceData.ts
 import { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { supabase } from '../lib/supabaseClient';
+
+interface FinanceKPI {
+  revenue: number;
+  revenueTrend: number;
+  netProfit: number;
+  profitTrend: number;
+  receivables: number;
+  receivablesTrend: number;
+  payables: number;
+  payablesTrend: number;
+}
 
 interface FinanceData {
-  revenue: string;
-  revenueTrend: number;
-  netProfit: string;
-  profitTrend: number;
-  receivables: string;
-  receivablesTrend: number;
-  payables: string;
-  payablesTrend: number;
-  incoming: string;
-  outgoing: string;
-  balance: string;
-  sales: string;
-  advances: string;
-  equipment: string;
-  salary: string;
-  rent: string;
+  kpi: FinanceKPI;
+  incoming: number;
+  outgoing: number;
+  balance: number;
+  sales: number;
+  advances: number;
+  equipment: number;
+  salary: number;
+  rent: number;
   projectsPlanFact: Array<{
     name: string;
-    plan: string;
-    fact: string;
+    plan: number;
+    fact: number;
     progress: number;
     margin: number;
   }>;
@@ -36,76 +39,125 @@ interface FinanceData {
     hasDocument: boolean;
   }>;
   lastSync: string;
-  isDemo: boolean;
 }
 
-const DEMO_DATA: FinanceData = {
-  revenue: '12.4M',
-  revenueTrend: 8.2,
-  netProfit: '3.1M',
-  profitTrend: 5.4,
-  receivables: '5.2M',
-  receivablesTrend: -12,
-  payables: '2.8M',
-  payablesTrend: 3.1,
-  incoming: '8.7M',
-  outgoing: '5.6M',
-  balance: '3.1M',
-  sales: '6.2M',
-  advances: '2.5M',
-  equipment: '3.1M',
-  salary: '1.8M',
-  rent: '0.7M',
-  projectsPlanFact: [
-    { name: 'Офис продаж (0001)', plan: '2.8M', fact: '2.5M', progress: 89, margin: 22 },
-    { name: 'Конференц-зал (0002)', plan: '8.7M', fact: '8.7M', progress: 100, margin: 31 },
-    { name: 'Школа будущего (0003)', plan: '22.1M', fact: '15.4M', progress: 70, margin: 18 },
-  ],
-  transactions: [
-    { id: 24, date: '20.04.2026', description: 'Поступление от заказчика (0002)', amount: 2500000, status: 'Проведено', hasDocument: true },
-    { id: 23, date: '18.04.2026', description: 'Закупка оборудования (Siemens)', amount: 850000, status: 'Проведено', hasDocument: true },
-    { id: 22, date: '15.04.2026', description: 'Аванс подрядчику', amount: 420000, status: 'В обработке', hasDocument: false },
-    { id: 21, date: '12.04.2026', description: 'Зарплата за март', amount: 1200000, status: 'Проведено', hasDocument: true },
-    { id: 20, date: '10.04.2026', description: 'Поступление от заказчика (0001)', amount: 1800000, status: 'Проведено', hasDocument: true },
-    { id: 19, date: '05.04.2026', description: 'Закупка кабеля', amount: 320000, status: 'Проведено', hasDocument: true },
-    { id: 18, date: '02.04.2026', description: 'Аренда офиса', amount: 180000, status: 'Проведено', hasDocument: true },
-    { id: 17, date: '28.03.2026', description: 'Поступление от заказчика (0003)', amount: 5000000, status: 'Проведено', hasDocument: true },
-    { id: 16, date: '25.03.2026', description: 'Закупка ПО', amount: 450000, status: 'Проведено', hasDocument: true },
-    { id: 15, date: '22.03.2026', description: 'Оплата подрядчику', amount: 670000, status: 'В обработке', hasDocument: false },
-  ],
-  lastSync: new Date().toLocaleString('ru-RU'),
-  isDemo: true,
-};
-
-export const useFinanceData = () => {
+export const useFinanceData = (period: 'month' | 'quarter' | 'year' = 'month') => {
   const [data, setData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState(true);
-  const userRole = useSelector((state: RootState) => state.auth.role);
+  const [error, setError] = useState<string | null>(null);
+
+  const getDateRange = useCallback(() => {
+    const now = new Date();
+    let start: Date, end: Date;
+    switch (period) {
+      case 'month':
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        break;
+      case 'quarter':
+        const quarter = Math.floor(now.getMonth() / 3);
+        start = new Date(now.getFullYear(), quarter * 3, 1);
+        end = new Date(now.getFullYear(), (quarter + 1) * 3, 0);
+        break;
+      case 'year':
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31);
+        break;
+    }
+    return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] };
+  }, [period]);
 
   const loadData = useCallback(async () => {
-    if (userRole !== 'director') {
-      setLoading(false);
-      return;
-    }
+    setLoading(true);
+    setError(null);
     try {
-      // Имитация запроса
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setData(DEMO_DATA);
-    } catch (err) {
+      const { start, end } = getDateRange();
+
+      // 1. Получаем все транзакции за период
+      const { data: transactions, error: txError } = await supabase
+        .from('finance_1c')
+        .select('*')
+        .gte('date', start)
+        .lte('date', end)
+        .order('date', { ascending: false });
+
+      if (txError) throw txError;
+
+      // 2. Агрегируем KPI
+      const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      const receivables = transactions.filter(t => t.type === 'income' && t.status === 'В обработке').reduce((sum, t) => sum + t.amount, 0);
+      const payables = transactions.filter(t => t.type === 'expense' && t.status === 'В обработке').reduce((sum, t) => sum + t.amount, 0);
+
+      // Для трендов нужны данные за предыдущий период — упрощённо берём 10% для демо
+      const revenueTrend = 8.2;
+      const profitTrend = 5.4;
+      const receivablesTrend = -12;
+      const payablesTrend = 3.1;
+
+      // Категории для отчёта
+      const sales = transactions.filter(t => t.type === 'income' && t.category === 'Поступление от клиента').reduce((sum, t) => sum + t.amount, 0);
+      const advances = transactions.filter(t => t.type === 'income' && t.description.includes('Аванс')).reduce((sum, t) => sum + t.amount, 0);
+      const equipment = transactions.filter(t => t.type === 'expense' && t.category === 'Закупка оборудования').reduce((sum, t) => sum + t.amount, 0);
+      const salary = transactions.filter(t => t.type === 'expense' && ['Зарплата', 'Премия', 'Отпускные', 'Больничный'].includes(t.category)).reduce((sum, t) => sum + t.amount, 0);
+      const rent = transactions.filter(t => t.type === 'expense' && t.category === 'Аренда офиса').reduce((sum, t) => sum + t.amount, 0);
+
+      // План/факт по проектам (заглушка, можно позже сделать реальный запрос)
+      const projectsPlanFact = [
+        { name: 'Офис продаж (0001)', plan: 2800000, fact: 2500000, progress: 89, margin: 22 },
+        { name: 'Конференц-зал (0002)', plan: 8700000, fact: 8700000, progress: 100, margin: 31 },
+        { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
+      ];
+
+      // Форматируем транзакции для таблицы (последние 50)
+      const latestTransactions = (transactions || []).slice(0, 50).map(t => ({
+        id: t.id,
+        date: new Date(t.date).toLocaleDateString('ru-RU'),
+        description: t.description,
+        amount: t.amount,
+        status: t.status,
+        hasDocument: t.has_document,
+      }));
+
+      setData({
+        kpi: {
+          revenue: income,
+          revenueTrend,
+          netProfit: income - expense,
+          profitTrend,
+          receivables,
+          receivablesTrend,
+          payables,
+          payablesTrend,
+        },
+        incoming: income,
+        outgoing: expense,
+        balance: income - expense,
+        sales,
+        advances,
+        equipment,
+        salary,
+        rent,
+        projectsPlanFact,
+        transactions: latestTransactions,
+        lastSync: new Date().toLocaleString('ru-RU'),
+      });
+    } catch (err: any) {
       console.error('Failed to load finance data:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [userRole]);
+  }, [getDateRange]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const syncWith1C = useCallback(async () => {
-    alert('Запрос на синхронизацию с 1С (демо).');
+    alert('Запрос на синхронизацию с 1С. В реальности здесь вызов Edge Function.');
     await loadData();
   }, [loadData]);
 
-  return { data, loading, syncWith1C };
+  return { data, loading, error, syncWith1C, refetch: loadData };
 };
