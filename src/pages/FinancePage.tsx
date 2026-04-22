@@ -4,20 +4,57 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
 import { useFinanceData } from '../hooks/useFinanceData';
+import { FinanceDetailModal } from '../components/ui/FinanceDetailModal';
 import './FinancePage.css';
 
 export const FinancePage: React.FC = () => {
   const navigate = useNavigate();
   const userRole = useSelector((state: RootState) => state.auth.role);
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('month');
-  const { data, loading, error, syncWith1C } = useFinanceData(period);
+  const { data, loading, error, syncWith1C, getDetailedTransactions } = useFinanceData(period);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalCategory, setModalCategory] = useState('');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   useEffect(() => {
     if (userRole && userRole !== 'director') {
       navigate('/dashboard', { replace: true });
     }
   }, [userRole, navigate]);
+
+  useEffect(() => {
+    if (data) {
+      const now = new Date();
+      let start: Date, end: Date;
+      switch (period) {
+        case 'month':
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+          end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          break;
+        case 'quarter':
+          const quarter = Math.floor(now.getMonth() / 3);
+          start = new Date(now.getFullYear(), quarter * 3, 1);
+          end = new Date(now.getFullYear(), (quarter + 1) * 3, 0);
+          break;
+        case 'year':
+          start = new Date(now.getFullYear(), 0, 1);
+          end = new Date(now.getFullYear(), 11, 31);
+          break;
+      }
+      setDateRange({
+        start: start.toISOString().split('T')[0],
+        end: end.toISOString().split('T')[0],
+      });
+    }
+  }, [period, data]);
+
+  const handleInformeClick = (title: string, category: string) => {
+    setModalTitle(title);
+    setModalCategory(category);
+    setModalOpen(true);
+  };
 
   if (loading) {
     return (
@@ -66,7 +103,7 @@ export const FinancePage: React.FC = () => {
         <h1>📊 Финансы</h1>
         <div className="status-badge">
           <i className="fas fa-link"></i>
-          <span>● 1С онлайн (реальные данные)</span>
+          <span>● 1С онлайн</span>
         </div>
       </div>
 
@@ -77,35 +114,59 @@ export const FinancePage: React.FC = () => {
         <button className={`toggle-btn ${period === 'year' ? 'active' : ''}`} onClick={() => setPeriod('year')}>Год</button>
       </div>
 
-      {/* Информеры */}
+      {/* Информеры — первый ряд */}
       <div className="informers-row">
-        <div className="informer" style={{ borderLeftColor: '#3b82f6' }}>
+        <div className="informer clickable" style={{ borderLeftColor: '#3b82f6' }} onClick={() => handleInformeClick('Выручка', 'Поступление от клиента')}>
           <div className="label">Выручка</div>
           <div className="value">{formatAmount(data.kpi.revenue)}</div>
           <div className={`trend ${data.kpi.revenueTrend > 0 ? 'trend-up' : 'trend-down'}`}>
             <i className={`fas fa-arrow-${data.kpi.revenueTrend > 0 ? 'up' : 'down'}`}></i> {Math.abs(data.kpi.revenueTrend)}%
           </div>
         </div>
-        <div className="informer" style={{ borderLeftColor: '#10b981' }}>
+        <div className="informer clickable" style={{ borderLeftColor: '#10b981' }} onClick={() => handleInformeClick('Чистая прибыль', '')}>
           <div className="label">Чистая прибыль</div>
           <div className="value">{formatAmount(data.kpi.netProfit)}</div>
           <div className={`trend ${data.kpi.profitTrend > 0 ? 'trend-up' : 'trend-down'}`}>
             <i className={`fas fa-arrow-${data.kpi.profitTrend > 0 ? 'up' : 'down'}`}></i> {Math.abs(data.kpi.profitTrend)}%
           </div>
         </div>
-        <div className="informer" style={{ borderLeftColor: '#f59e0b' }}>
+        <div className="informer clickable" style={{ borderLeftColor: '#f59e0b' }} onClick={() => handleInformeClick('Дебиторская задолженность', '')}>
           <div className="label">Дебиторка</div>
           <div className="value">{formatAmount(data.kpi.receivables)}</div>
           <div className={`trend ${data.kpi.receivablesTrend < 0 ? 'trend-down' : 'trend-up'}`}>
             <i className={`fas fa-arrow-${data.kpi.receivablesTrend < 0 ? 'down' : 'up'}`}></i> {Math.abs(data.kpi.receivablesTrend)}%
           </div>
         </div>
-        <div className="informer" style={{ borderLeftColor: '#ef4444' }}>
+        <div className="informer clickable" style={{ borderLeftColor: '#ef4444' }} onClick={() => handleInformeClick('Кредиторская задолженность', '')}>
           <div className="label">Кредиторка</div>
           <div className="value">{formatAmount(data.kpi.payables)}</div>
           <div className={`trend ${data.kpi.payablesTrend > 0 ? 'trend-up' : 'trend-down'}`}>
             <i className={`fas fa-arrow-${data.kpi.payablesTrend > 0 ? 'up' : 'down'}`}></i> {Math.abs(data.kpi.payablesTrend)}%
           </div>
+        </div>
+      </div>
+
+      {/* Информеры — второй ряд (налоги, зарплата, кредиты) */}
+      <div className="informers-row">
+        <div className="informer clickable" style={{ borderLeftColor: '#8b5cf6' }} onClick={() => handleInformeClick('Налоги (всего)', 'НДС')}>
+          <div className="label">Налоги всего</div>
+          <div className="value">{formatAmount(data.kpi.totalTaxes)}</div>
+          <div className="sub">НДС: {formatAmount(data.kpi.nds)} | Прибыль: {formatAmount(data.kpi.profitTax)}</div>
+        </div>
+        <div className="informer clickable" style={{ borderLeftColor: '#ec4899' }} onClick={() => handleInformeClick('Зарплата', 'Зарплата')}>
+          <div className="label">Фонд оплаты труда</div>
+          <div className="value">{formatAmount(data.kpi.totalSalary)}</div>
+          <div className="sub">Включая премии и отпускные</div>
+        </div>
+        <div className="informer clickable" style={{ borderLeftColor: '#06b6d4' }} onClick={() => handleInformeClick('Кредиты', 'Погашение кредита (тело)')}>
+          <div className="label">Кредиты</div>
+          <div className="value">{formatAmount(data.kpi.totalCredits)}</div>
+          <div className="sub">Тело: {formatAmount(data.kpi.creditBody)} | Проценты: {formatAmount(data.kpi.creditInterest)}</div>
+        </div>
+        <div className="informer clickable" style={{ borderLeftColor: '#84cc16' }} onClick={() => handleInformeClick('Остаток на конец периода', '')}>
+          <div className="label">Остаток</div>
+          <div className="value">{formatAmount(data.balance)}</div>
+          <div className="sub">Доходы - Расходы</div>
         </div>
       </div>
 
@@ -143,12 +204,6 @@ export const FinancePage: React.FC = () => {
                 <span>Оборудование: {formatAmount(data.equipment)}</span>
                 <span>Зарплата: {formatAmount(data.salary)}</span>
                 <span>Аренда: {formatAmount(data.rent)}</span>
-              </div>
-            </div>
-            <div className="report-card">
-              <div className="report-header">
-                <span className="report-title">Остаток на конец</span>
-                <span className="report-amount">{formatAmount(data.balance)}</span>
               </div>
             </div>
           </div>
@@ -223,13 +278,20 @@ export const FinancePage: React.FC = () => {
       {/* Информация об интеграции */}
       <div className="integration-note">
         <h4><i className="fas fa-check-circle" style={{ color: 'var(--success)' }}></i> Интеграция с 1С подтверждена</h4>
-        <p>Данные загружаются из таблицы Supabase, эмулирующей выгрузку из 1С. Обновление по кнопке «Синхронизировать».</p>
+        <p>Данные загружаются из таблицы Supabase, эмулирующей выгрузку из 1С.</p>
         <div className="sync-info">
           <i className="fas fa-database"></i> <span>Последняя синхронизация: {data.lastSync}</span>
-          <i className="fas fa-check-circle" style={{ color: 'var(--success)', marginLeft: 'auto' }}></i>
-          <span>Режим реальных данных</span>
         </div>
       </div>
+
+      {/* Модальное окно детализации */}
+      <FinanceDetailModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalTitle}
+        category={modalCategory}
+        dateRange={dateRange}
+      />
     </div>
   );
 };
