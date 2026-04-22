@@ -1,5 +1,5 @@
 // src/pages/FinancePage.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
@@ -200,22 +200,7 @@ export const FinancePage: React.FC = () => {
               <div className="label">Аренда</div>
               <div className="value">{formatAmount(data.rent)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#3b82f6' }} onClick={() => handleInformeClick('Транспорт', 'Транспортные расходы')}>
-              <div className="label">Транспорт</div>
-              <div className="value">{formatAmount(categorySums['Транспортные расходы'] || 0)}</div>
-            </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#10b981' }} onClick={() => handleInformeClick('Связь/интернет', 'Интернет/Связь')}>
-              <div className="label">Связь/интернет</div>
-              <div className="value">{formatAmount(categorySums['Интернет/Связь'] || 0)}</div>
-            </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#f59e0b' }} onClick={() => handleInformeClick('Канцтовары', 'Канцтовары')}>
-              <div className="label">Канцтовары</div>
-              <div className="value">{formatAmount(categorySums['Канцтовары'] || 0)}</div>
-            </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#ef4444' }} onClick={() => handleInformeClick('Прочее', 'Прочее')}>
-              <div className="label">Прочее</div>
-              <div className="value">{formatAmount(categorySums['Прочее'] || 0)}</div>
-            </div>
+            {/* Остальные информеры ОХР временно скрыты до появления данных */}
           </div>
         </>
       )}
@@ -228,27 +213,12 @@ export const FinancePage: React.FC = () => {
               <div className="label">ФОТ (всего)</div>
               <div className="value">{formatAmount(data.kpi.totalSalary)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#f472b6' }} onClick={() => handleInformeClick('Зарплата', 'Зарплата')}>
-              <div className="label">Зарплата</div>
-              <div className="value">{formatAmount(categorySums['Зарплата'] || 0)}</div>
-            </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#fb923c' }} onClick={() => handleInformeClick('Премии', 'Премия')}>
-              <div className="label">Премии</div>
-              <div className="value">{formatAmount(categorySums['Премия'] || 0)}</div>
-            </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#fbbf24' }} onClick={() => handleInformeClick('Отпускные', 'Отпускные')}>
-              <div className="label">Отпускные</div>
-              <div className="value">{formatAmount(categorySums['Отпускные'] || 0)}</div>
-            </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#34d399' }} onClick={() => handleInformeClick('Больничные', 'Больничный')}>
-              <div className="label">Больничные</div>
-              <div className="value">{formatAmount(categorySums['Больничный'] || 0)}</div>
-            </div>
+            {/* Детализация по сотрудникам временно скрыта */}
           </div>
         </>
       )}
 
-      {/* Отчёты (сетка) */}
+      {/* Переключатель Отчёты / Операции */}
       <div className="view-toggle">
         <button className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
           <i className="fas fa-th"></i> Отчёты
@@ -287,7 +257,7 @@ export const FinancePage: React.FC = () => {
           <div className="section-title"><i className="fas fa-tasks"></i> План/факт по проектам</div>
           <div className="reports-grid">
             {data.projectsPlanFact.map((p, idx) => (
-              <div className="report-card clickable" key={idx} onClick={() => navigate(`/projects?id=${p.id}`)}>
+              <div className="report-card clickable" key={idx} onClick={() => navigate(`/projects?id=${p.name.split('(')[1]?.replace(')', '') || '0001'}`)}>
                 <div className="report-header">
                   <span>{p.name}</span>
                   <span>{formatAmount(p.fact)} / {formatAmount(p.plan)}</span>
