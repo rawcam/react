@@ -107,12 +107,9 @@ export const FinancePage: React.FC = () => {
 
   return (
     <div className="finance-page">
-      <div className="page-header">
-        <h1>📊 Финансы</h1>
-        <div className="status-badge">
-          <i className="fas fa-link"></i>
-          <span>● 1С онлайн</span>
-        </div>
+      <div className="status-badge">
+        <i className="fas fa-link"></i>
+        <span>● 1С онлайн</span>
       </div>
 
       {/* Панель сортировки периодов */}
