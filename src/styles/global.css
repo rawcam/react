@@ -217,7 +217,7 @@ input:focus, select:focus, textarea:focus {
 .project-detail-card {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 24px;
+  border-radius: 8px;
   padding: 28px;
   border: 1px solid var(--border-light);
   margin-bottom: 24px;
