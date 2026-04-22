@@ -45,7 +45,7 @@ export const CalculationsPage: React.FC = () => {
     );
   }
 
-  // Основной вид с сайдбаром
+  // Основной вид с сайдбаром (без заголовка "Расчёты")
   return (
     <CalculationsLayout sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar}>
       <div className="calculations-main">
