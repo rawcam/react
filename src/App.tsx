@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useEffect, useState, Suspense, lazy } from 'react';
+import { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -12,12 +12,10 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { SpecificationsListPage } from './pages/SpecificationsListPage';
 import { SpecificationPage } from './pages/SpecificationPage';
 import { LoginPage } from './pages/LoginPage';
+import { FinancePage } from './pages/FinancePage';
+import FlowEditorPage from './pages/FlowEditorPage';
+import { CalculationsPage } from './pages/CalculationsPage';
 import './index.css';
-
-// Ленивая загрузка тяжёлых страниц
-const FinancePage = lazy(() => import('./pages/FinancePage'));
-const FlowEditorPage = lazy(() => import('./pages/FlowEditorPage'));
-const CalculationsPage = lazy(() => import('./pages/CalculationsPage'));
 
 // Синхронная очистка хранилища
 const clearStorage = () => {
@@ -125,19 +123,17 @@ const AppContent = () => {
           <Topbar />
           <div className="app-layout">
             <main className="main-content">
-              <Suspense fallback={<LoadingScreen />}>
-                <Routes>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/finance" element={<FinancePage />} />
-                  <Route path="/projects" element={<ProjectsPage />} />
-                  <Route path="/calculations" element={<CalculationsPage />} />
-                  <Route path="/specifications" element={<SpecificationsListPage />} />
-                  <Route path="/specification/:id" element={<SpecificationPage />} />
-                  <Route path="/specification" element={<SpecificationPage />} />
-                  <Route path="/flow-editor" element={<FlowEditorPage />} />
-                </Routes>
-              </Suspense>
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/finance" element={<FinancePage />} />
+                <Route path="/projects" element={<ProjectsPage />} />
+                <Route path="/calculations" element={<CalculationsPage />} />
+                <Route path="/specifications" element={<SpecificationsListPage />} />
+                <Route path="/specification/:id" element={<SpecificationPage />} />
+                <Route path="/specification" element={<SpecificationPage />} />
+                <Route path="/flow-editor" element={<FlowEditorPage />} />
+              </Routes>
             </main>
           </div>
         </div>
