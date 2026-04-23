@@ -381,7 +381,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               {schemas.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             <input type="text" value={schemaName} onChange={(e) => onSchemaNameChange(e.target.value)} placeholder="Название схемы" />
-            <div className="sidebar-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+            <div className="sidebar-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
               <button className="btn-sidebar-secondary" onClick={onSaveSchema}><i className="fas fa-save"></i> Сохранить</button>
               <button className="btn-sidebar-secondary" onClick={onNewSchema}><i className="fas fa-file"></i> Новая</button>
               <button className="btn-sidebar-secondary" onClick={onExportSVG}><i className="fas fa-camera"></i> SVG</button>
