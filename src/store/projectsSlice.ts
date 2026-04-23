@@ -51,6 +51,7 @@ export interface Project {
   status: ProjectStatus;
   statusStartDate: string;
   startDate: string;
+  endDate?: string;                 // добавлено
   progress: number;
   contractAmount: number;
   engineer: string;
@@ -83,6 +84,7 @@ const demoProjects: Project[] = [
     status: 'design',
     statusStartDate: '2025-01-15',
     startDate: '2025-01-10',
+    endDate: '2025-06-30',
     progress: 35,
     contractAmount: 2500000,
     engineer: 'Иванов А.А.',
