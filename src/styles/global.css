@@ -15,6 +15,55 @@ body {
   overflow-x: hidden;
 }
 
+/* ========== ПРИНУДИТЕЛЬНЫЕ СКРУГЛЕНИЯ ========== */
+.topbar,
+.projects-toolbar,
+.specs-toolbar,
+.finance-toolbar,
+.project-card,
+.spec-card,
+.carousel-card,
+.list-row,
+.project-row,
+.informer,
+.report-card,
+.widget-card,
+.dashboard-widget {
+  border-radius: 16px !important;
+}
+
+/* ========== КНОПКИ "СЕТКА/СПИСОК" ВЫНОСИМ ВПРАВО ========== */
+.view-toggle-right {
+  display: flex;
+  justify-content: flex-end;
+  margin: 16px 0 12px;
+}
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-panel-solid);
+  border-radius: 40px;
+  padding: 4px;
+  border: 1px solid var(--border-light);
+}
+.view-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 18px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: var(--transition);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.view-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
 /* ========== ОБЩИЕ ЭЛЕМЕНТЫ ========== */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
