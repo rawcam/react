@@ -26,14 +26,24 @@
   padding: 20px 16px;
   border-bottom: 1px solid var(--border-light);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   transition: var(--transition);
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
 }
 
 .sidebar.collapsed .sidebar-header {
   justify-content: center;
   padding: 16px 8px;
+}
+
+.sidebar.collapsed .sidebar-header h3 {
+  display: none;
 }
 
 .collapse-btn {
@@ -90,7 +100,6 @@
   font-size: 0.9rem;
   width: 20px;
   text-align: center;
-  transition: transform 0.2s;
   color: var(--accent);
 }
 
@@ -138,16 +147,7 @@
   margin-top: auto;
 }
 
-.sidebar-footer a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.sidebar-footer a:hover {
-  text-decoration: underline;
-}
-
-/* Стили для элементов внутри аккордеонов */
+/* Остальные стили элементов (mode-btn, setting и т.д.) остаются без изменений */
 .mode-btn {
   background: transparent;
   border: 1px solid var(--border-light);
@@ -167,16 +167,6 @@
   background: var(--accent);
   color: white;
   border-color: var(--accent);
-}
-
-.mode-btn i {
-  width: 18px;
-  text-align: center;
-}
-
-.mode-btn.danger:hover {
-  background: var(--danger);
-  border-color: var(--danger);
 }
 
 .setting {
@@ -202,79 +192,4 @@
   color: var(--text-primary);
   font-size: 0.8rem;
   width: 120px;
-}
-
-.setting.checkbox-row {
-  justify-content: flex-start;
-  gap: 8px;
-}
-
-.setting.checkbox-row input {
-  margin-left: auto;
-}
-
-.paths-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.paths-list li {
-  padding: 8px 12px;
-  margin-bottom: 4px;
-  background: var(--card-bg);
-  border-radius: 40px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: var(--transition);
-  color: var(--text-primary);
-}
-
-.paths-list li:hover {
-  background: var(--accent);
-  color: white;
-}
-
-.paths-list li.active {
-  background: var(--accent);
-  color: white;
-}
-
-.tracts-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.widget-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 0.8rem;
-  padding: 4px 0;
-}
-
-.widget-label {
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  font-size: 0.7rem;
-}
-
-.network-value {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--accent);
-}
-
-.power-value {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--danger);
-}
-
-.manage-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
