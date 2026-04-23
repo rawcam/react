@@ -971,29 +971,6 @@ const FlowEditorPage: React.FC = () => {
 
   return (
     <div className="flow-editor" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-page)' }}>
-      {/* Кнопка возврата (интегрирована в верхнюю панель) */}
-      <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 16 }}>
-        <button
-          onClick={() => navigate('/dashboard')}
-          style={{
-            background: 'var(--card-bg)',
-            border: '1px solid var(--border-light)',
-            borderRadius: '20px',
-            padding: '6px 16px',
-            fontSize: '13px',
-            cursor: 'pointer',
-            color: 'var(--text-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <i className="fas fa-arrow-left"></i> Назад
-        </button>
-        <span style={{ fontSize: '14px', fontWeight: 500 }}>Редактор схем</span>
-        <div style={{ flex: 1 }} />
-      </div>
-
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <input type="file" accept=".json" ref={fileInputRef} style={{ display: 'none' }} onChange={loadSchemaFromFile} />
         <Sidebar
