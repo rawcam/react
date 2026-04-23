@@ -15,7 +15,7 @@ export interface SidebarModule {
   id: string;
   title: string;
   icon: string;
-  component: React.ComponentType;
+  component: React.ComponentType<any>; // разрешаем любые пропсы
 }
 
 export const sidebarModules: SidebarModule[] = [
