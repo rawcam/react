@@ -1,50 +1,32 @@
 /* src/pages/CalculationsPage.css */
-.calculations-page {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
 .calculations-layout {
   display: flex;
   flex: 1;
   min-height: 0;
 }
 
-.calculations-sidebar {
-  width: 280px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-right: 1px solid var(--border-light);
-  transition: width 0.2s ease;
-  overflow-y: auto;
-}
-
-.calculations-sidebar.collapsed {
-  width: 80px;
-}
-
 .calculations-content {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-}
-
-.calculations-layout.empty-mode .calculations-content {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: center; /* центрируем пустое состояние */
   align-items: center;
 }
 
+.calculations-content.tracts-active {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
 .empty-calculations {
-  max-width: 600px;
+  max-width: 500px;
   text-align: center;
-  padding: 48px 24px;
+  padding: 40px;
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 32px;
+  border-radius: 20px;
   border: 1px solid var(--border-light);
 }
 
@@ -63,5 +45,4 @@
 .empty-calculations p {
   color: var(--text-secondary);
   line-height: 1.5;
-  margin-bottom: 8px;
 }
