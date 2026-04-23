@@ -28,7 +28,6 @@ export const ProjectsPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'priority' | 'normal'>('all');
 
-  // Извлекаем projectId из URL
   const searchParams = new URLSearchParams(location.search);
   const projectId = searchParams.get('id');
   const selectedProject = projectId ? projects.find(p => p.id === projectId) : null;
