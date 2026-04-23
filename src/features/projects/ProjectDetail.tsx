@@ -272,7 +272,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             </div>
             <div className="detail-field">
               <label>Статус:</label>
-              <select value={editedProject.status} onChange={e => handleChange('status', e.target.value as ProjectStatus)} style={{ background: statusColors[editedProject.status] || '#ccc', color: 'white' }}>
+              <select value={editedProject.status} onChange={e => handleChange('status', e.target.value as ProjectStatus)} style={{ background: 'var(--bg-panel-solid)', color: 'var(--text-primary)' }}>
                 <option value="presale">Пресейл</option>
                 <option value="design">Стадия П</option>
                 <option value="ready">Стадия Р</option>
@@ -295,6 +295,10 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             <div className="detail-field">
               <label>Дата начала:</label>
               <input type="date" value={editedProject.startDate} onChange={e => handleChange('startDate', e.target.value)} />
+            </div>
+            <div className="detail-field">
+              <label>Дата завершения:</label>
+              <input type="date" value={editedProject.endDate || ''} onChange={e => handleChange('endDate', e.target.value)} />
             </div>
             <div className="detail-field">
               <label>Прогресс (%):</label>
@@ -493,6 +497,24 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
       {activeTab === 'roadmap' && (
         <div className="detail-section">
           <h4>Дорожная карта (план/факт)</h4>
+          <div className="roadmap-timeline">
+            {editedProject.roadmapPlanned.map((item, idx) => {
+              const actual = editedProject.roadmapActual[idx];
+              const plannedDate = new Date(item.date);
+              const actualDate = actual ? new Date(actual.date) : null;
+              const isCompleted = actualDate !== null;
+              const isLate = actualDate && actualDate > plannedDate;
+              return (
+                <div key={idx} className={`timeline-item ${isCompleted ? (isLate ? 'late' : 'completed') : ''}`}>
+                  <div className="timeline-status">{item.status}</div>
+                  <div className="timeline-dates">
+                    <span>План: {item.date}</span>
+                    {actualDate && <span>Факт: {actual.date}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           <table className="roadmap-table">
             <thead>
               <tr>
@@ -526,7 +548,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                         setEditedProject(prev => ({ ...prev, roadmapActual: newActual }));
                       }}
                     />
-                   </td>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -580,7 +602,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
       )}
 
       <div className="detail-actions">
-        <button className="btn-primary" onClick={handleSave} disabled={saving}>
+        <button className="btn-primary btn-save" onClick={handleSave} disabled={saving}>
           {saving ? 'Сохранение...' : 'Сохранить изменения'}
         </button>
       </div>
