@@ -1,0 +1,67 @@
+/* src/pages/CalculationsPage.css */
+.calculations-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.calculations-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.calculations-sidebar {
+  width: 280px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid var(--border-light);
+  transition: width 0.2s ease;
+  overflow-y: auto;
+}
+
+.calculations-sidebar.collapsed {
+  width: 80px;
+}
+
+.calculations-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.calculations-layout.empty-mode .calculations-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.empty-calculations {
+  max-width: 600px;
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 32px;
+  border: 1px solid var(--border-light);
+}
+
+.empty-calculations i {
+  font-size: 3rem;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.empty-calculations h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.empty-calculations p {
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
