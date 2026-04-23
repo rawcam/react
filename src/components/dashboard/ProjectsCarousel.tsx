@@ -128,16 +128,6 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
       {viewMode === 'list' && (
         <div className="projects-list-vertical">
-          {/* Заголовки столбцов */}
-          <div className="list-header">
-            <div className="list-col-icon"></div>
-            <div className="list-col-id">№</div>
-            <div className="list-col-name">Название</div>
-            <div className="list-col-budget">Бюджет</div>
-            <div className="list-col-responsible">Ответственные</div>
-            <div className="list-col-status">Статус</div>
-            <div className="list-col-progress">Прогресс</div>
-          </div>
           {sortedProjects.map(project => (
             <div
               key={project.id}
