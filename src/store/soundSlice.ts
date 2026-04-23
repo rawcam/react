@@ -46,7 +46,24 @@ const initialState: SoundState = {
 };
 
 function calcSPL(sensitivity: number, power: number, distance: number, headroom: number, roomGain: number): number {
-  return Math.round(sensitivity + 10 * Math.log10(power) - 20 * Math.log10(distance) + roomGain - headroom);
+  const spl = sensitivity + 10 * Math.log10(power) - 20 * Math.log10(distance) + roomGain;
+  return Math.round(spl - headroom);
+}
+
+function calcDrop(startSPL: number, startDist: number, endDist: number): number {
+  return Math.round(startSPL - 20 * Math.log10(endDist / startDist));
+}
+
+function calcPowerChange(startSPL: number, startPower: number, endPower: number): number {
+  return Math.round(startSPL + 10 * Math.log10(endPower / startPower));
+}
+
+function calcRT60(volume: number, area: number, absorption: number): number {
+  return Math.round((0.161 * volume) / (area * absorption) * 100) / 100;
+}
+
+function calcRequiredPower(requiredSPL: number, sensitivity: number, distance: number): number {
+  return Math.pow(10, (requiredSPL - sensitivity + 20 * Math.log10(distance)) / 10);
 }
 
 const soundSlice = createSlice({
@@ -59,8 +76,25 @@ const soundSlice = createSlice({
         const spl = calcSPL(state.sensitivity, state.sourcePower, state.distance, state.headroom, state.roomGain);
         state.resultValue = spl;
         state.resultText = `${spl} дБ`;
+      } else if (state.activeMode === 'drop') {
+        const splAtStart = calcSPL(state.sensitivity, state.sourcePower, state.startDistance, state.headroom, state.roomGain);
+        const drop = calcDrop(splAtStart, state.startDistance, state.endDistance);
+        state.resultValue = drop;
+        state.resultText = `${drop} дБ`;
+      } else if (state.activeMode === 'power') {
+        const splAtStart = calcSPL(state.sensitivity, state.sourcePower, state.startDistance, state.headroom, state.roomGain);
+        const newSPL = calcPowerChange(splAtStart, state.powerChangeFrom, state.powerChangeTo);
+        state.resultValue = newSPL;
+        state.resultText = `${newSPL} дБ`;
+      } else if (state.activeMode === 'rt60') {
+        const rt60 = calcRT60(state.roomVolume, state.roomArea, state.avgAbsorption);
+        state.resultValue = rt60;
+        state.resultText = `${rt60} с`;
+      } else if (state.activeMode === 'speakers') {
+        const power = calcRequiredPower(state.requiredSPL, state.speakerSensitivity, state.distance);
+        state.resultValue = power;
+        state.resultText = `${Math.round(power)} Вт`;
       }
-      // остальные режимы для краткости опущены (они уже есть в вашем исходном файле)
     },
     setSoundMode: (state, action: PayloadAction<SoundMode>) => {
       state.activeMode = action.payload;
