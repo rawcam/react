@@ -2,23 +2,36 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../App'; // импорт из App.tsx, где теперь создаётся клиент
 import { setProjects, Project } from '../store/projectsSlice';
 
 export const useProjectsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
+  const role = useSelector((state: RootState) => state.auth.role);
 
   const loadProjects = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', user.id);
+
+    let query = supabase.from('projects').select('*');
+
+    // Если роль НЕ director и НЕ pm, то показываем только свои проекты
+    if (role !== 'director' && role !== 'pm') {
+      query = query.eq('user_id', user.id);
+    }
+
+    const { data, error } = await query;
+
     if (error) {
       console.error('Failed to load projects:', error.message);
       return;
     }
+
+    if (!data) {
+      console.warn('No data received from projects');
+      return;
+    }
+
     const projects = data.map((item: any) => ({
       id: item.id,
       shortId: item.short_id,
@@ -46,7 +59,7 @@ export const useProjectsSupabase = () => {
       roadmapActual: item.roadmap_actual,
     }));
     dispatch(setProjects(projects));
-  }, [user, dispatch]);
+  }, [user, role, dispatch]);
 
   const addProjectToDb = useCallback(async (project: Omit<Project, 'id' | 'shortId'>) => {
     if (!user) return;
