@@ -7,10 +7,11 @@
   z-index: 2;
 }
 
+/* Статус 1С — прижат вправо */
 .finance-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .status-badge-small {
@@ -27,6 +28,7 @@
   backdrop-filter: blur(4px);
 }
 
+/* Тулбар периода */
 .finance-toolbar {
   display: flex;
   align-items: center;
@@ -40,17 +42,31 @@
   border: 1px solid var(--border-light);
 }
 
-.finance-control-row {
+.toolbar-left {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-.informer-category-selector {
+.filter-group {
   display: flex;
+  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+}
+.filter-group label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.filter-group select {
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  cursor: pointer;
 }
 
 .custom-date-range {
@@ -68,6 +84,172 @@
   font-size: 0.8rem;
 }
 
+/* Строка управления: категории информеров слева, переключатель вида справа */
+.finance-control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.informer-category-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-panel-solid);
+  border-radius: 40px;
+  padding: 4px;
+  border: 1px solid var(--border-light);
+}
+.view-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 18px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: var(--transition);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.view-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* Заголовки секций */
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 24px 0 16px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title i {
+  color: var(--accent);
+}
+
+/* Информеры */
+.informers-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.informer {
+  flex: 1 1 180px;
+  background: var(--bg-panel-solid);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 16px 20px;
+  border-left: 4px solid;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+.informer.clickable {
+  cursor: pointer;
+}
+.informer.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+.informer .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.informer .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.informer .trend {
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.trend-up { color: var(--success); }
+.trend-down { color: var(--danger); }
+.informer .sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Сетка отчётов */
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.report-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  cursor: pointer;
+}
+.report-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.report-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.report-amount {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+.report-details {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+  height: 6px;
+  border-radius: 6px;
+  margin: 12px 0 6px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 6px;
+}
+
+/* Таблица транзакций */
 .transactions-search {
   margin-bottom: 16px;
 }
@@ -84,216 +266,20 @@
 .search-input::placeholder {
   color: var(--text-muted);
 }
-
-/* Селектор категорий информеров */
-.informer-category-selector {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.informer-category-selector .toggle-btn {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-light);
-  border-radius: 40px;
-  padding: 6px 16px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  color: var(--text-secondary);
-  backdrop-filter: blur(8px);
-}
-
-.informer-category-selector .toggle-btn.active {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
-.informers-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.informer {
-  flex: 1 1 180px;
-  background: var(--bg-panel-solid);
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  padding: 16px 20px;
-  border-left: 4px solid;
-  box-shadow: var(--shadow);
-  transition: var(--transition);
-}
-
-.informer.clickable {
-  cursor: pointer;
-}
-
-.informer.clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
-}
-
-.informer .label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-
-.informer .value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.informer .trend {
-  font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.trend-up { color: var(--success); }
-.trend-down { color: var(--danger); }
-
-.informer .sub {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.toggle-btn {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-light);
-  border-radius: 40px;
-  padding: 8px 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  color: var(--text-secondary);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  backdrop-filter: blur(8px);
-}
-
-.toggle-btn.active {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-  box-shadow: 0 4px 12px var(--accent-glow);
-}
-
-.section-title {
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin: 24px 0 16px;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.section-title i {
-  color: var(--accent);
-}
-
-.reports-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.report-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  padding: 20px;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow);
-  transition: var(--transition);
-}
-
-.report-card.clickable {
-  cursor: pointer;
-}
-
-.report-card.clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
-}
-
-.report-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.report-title {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.report-amount {
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: var(--text-primary);
-}
-
-.progress-bar {
-  background: rgba(255, 255, 255, 0.1);
-  height: 6px;
-  border-radius: 6px;
-  margin: 12px 0 6px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 6px;
-}
-
-.report-details {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
 .transactions-container {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  border-radius: 24px;
+  border-radius: 16px;
   padding: 4px 0;
   border: 1px solid var(--border-light);
   overflow-x: auto;
   margin-bottom: 24px;
 }
-
 .transactions-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 700px;
 }
-
 .transactions-table th {
   text-align: left;
   padding: 16px 12px;
@@ -305,32 +291,26 @@
   letter-spacing: 0.5px;
   border-bottom: 1px solid var(--border-light);
 }
-
 .transactions-table td {
   padding: 14px 12px;
   border-bottom: 1px solid var(--border-light);
   color: var(--text-primary);
 }
-
 .transactions-table tr:last-child td {
   border-bottom: none;
 }
-
 .transactions-table tr:hover td {
   background: var(--accent-glow);
 }
-
 .badge {
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.7rem;
   font-weight: 500;
 }
-
 .badge.success { background: rgba(16,185,129,0.2); color: var(--success); }
 .badge.warning { background: rgba(245,158,11,0.2); color: var(--warning); }
 .badge.danger { background: rgba(239,68,68,0.2); color: var(--danger); }
-
 .btn-download {
   background: transparent;
   border: 1px solid var(--border-light);
@@ -344,18 +324,17 @@
   align-items: center;
   gap: 6px;
 }
-
 .btn-download:hover {
   background: var(--accent);
   color: white;
   border-color: var(--accent);
 }
-
 .btn-download:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Кнопка синхронизации и интеграция */
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   border: none;
@@ -370,129 +349,56 @@
   justify-content: center;
   gap: 8px;
   box-shadow: 0 8px 20px var(--accent-glow);
-  width: 100%;
+  width: auto;
   margin-top: 24px;
 }
-
-/* Блок интеграции 1С */
 .integration-block {
-  margin-top: 32px;
-  padding: 24px;
-  background: var(--bg-panel-solid);
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  border: 1px solid var(--border-light);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--accent-glow);
+  border-radius: 16px;
+  border: 1px dashed var(--accent);
 }
-
 .integration-text h4 {
-  font-size: 1.2rem;
-  margin-bottom: 12px;
   color: var(--text-primary);
+  margin-bottom: 8px;
+  font-size: 1rem;
 }
-
 .integration-text p {
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
-  max-width: 600px;
-  margin: 0 auto;
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
-
+.sync-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
 .btn-sync {
   background: var(--accent);
+  color: white;
   border: none;
   border-radius: 40px;
-  padding: 10px 32px;
-  color: white;
+  padding: 10px 20px;
   font-weight: 500;
-  font-size: 0.9rem;
   cursor: pointer;
+  margin-top: 16px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin: 20px 0 12px;
-  transition: var(--transition);
-  box-shadow: 0 4px 12px var(--accent-glow);
 }
 
-.btn-sync:hover {
-  background: var(--accent-hover);
-  transform: scale(1.02);
-}
-
-.sync-info {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
+/* Пустое состояние */
 .empty-state {
   text-align: center;
   padding: 60px 20px;
   color: var(--text-muted);
 }
-.finance-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.informer-category-selector {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-/* src/pages/FinancePage.css */
-/* ... все существующие стили ... */
-/* Добавить в конец: */
-.finance-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-.period-filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.custom-date-range {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: 8px;
-}
-.custom-date-range input {
-  background: var(--bg-panel-solid);
-  border: 1px solid var(--border-light);
-  border-radius: 16px;
-  padding: 6px 10px;
-  color: var(--text-primary);
-  font-size: 0.8rem;
-}
-.transactions-search {
+.empty-state i {
+  font-size: 3rem;
   margin-bottom: 16px;
-}
-.search-input {
-  width: 100%;
-  max-width: 400px;
-  padding: 10px 16px;
-  border-radius: 40px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-panel-solid);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-}
-.search-input::placeholder {
-  color: var(--text-muted);
+  opacity: 0.5;
 }
