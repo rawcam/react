@@ -16,29 +16,18 @@ const initialState: VcState = {
   activeMode: 'codec',
   codecPreset: 'trueconf',
   resolution: '1080p',
-  fps: 25,
-  participants: 4,
-  multipointParticipants: 8,
+  fps: 30,
+  participants: 2,
+  multipointParticipants: 4,
   resultValue: 0,
   resultText: '',
 };
 
-const calculateVc = (state: VcState): { value: number; text: string } => {
-  if (state.activeMode === 'codec') {
-    const baseBitrates: Record<string, Record<string, number>> = {
-      'trueconf': { '720p': 1.5, '1080p': 3, '4K': 12 },
-      'webrtc': { '720p': 2, '1080p': 4.5, '4K': 15 },
-      'h264': { '720p': 2.5, '1080p': 5, '4K': 20 },
-      'h265': { '720p': 1.2, '1080p': 2.5, '4K': 10 },
-    };
-    const base = (baseBitrates[state.codecPreset]?.[state.resolution] || 3) * (state.fps / 25);
-    const total = Math.round(base * state.participants);
-    return { value: total, text: `${total} Мбит/с` };
-  } else {
-    const streams = state.multipointParticipants * (state.multipointParticipants - 1);
-    const load = Math.round(streams * 0.5);
-    return { value: load, text: `Нагрузка ${load} ед.` };
-  }
+const codecBitrates: Record<string, number> = {
+  trueconf: 2.5, webrtc: 2.0, h264: 4.0, h265: 2.5,
+};
+const resolutionFactor: Record<string, number> = {
+  '1080p': 1, '720p': 0.5, '4K': 2,
 };
 
 const vcSlice = createSlice({
@@ -47,12 +36,24 @@ const vcSlice = createSlice({
   reducers: {
     setVcConfig: (state, action: PayloadAction<Partial<VcState>>) => {
       Object.assign(state, action.payload);
-      const res = calculateVc(state);
-      state.resultValue = res.value;
-      state.resultText = res.text;
+      if (state.activeMode === 'codec') {
+        const base = codecBitrates[state.codecPreset] || 2.5;
+        const res = resolutionFactor[state.resolution] || 1;
+        const per = Math.round(base * res * (state.fps / 30));
+        const total = per * state.participants;
+        state.resultValue = total;
+        state.resultText = `${total} Мбит/с (${per} Мбит/с/уч.)`;
+      } else {
+        const load = Math.round(state.multipointParticipants * 1.5);
+        state.resultValue = load;
+        state.resultText = `Нагрузка: ${load} Мбит/с`;
+      }
+    },
+    setVcMode: (state, action: PayloadAction<VcState['activeMode']>) => {
+      state.activeMode = action.payload;
     },
   },
 });
 
-export const { setVcConfig } = vcSlice.actions;
+export const { setVcConfig, setVcMode } = vcSlice.actions;
 export default vcSlice.reducer;
