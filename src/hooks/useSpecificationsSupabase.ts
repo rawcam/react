@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../App'; // импорт из App.tsx
 import { setSpecifications, Specification } from '../store/specificationsSlice';
 
 export const useSpecificationsSupabase = () => {
@@ -14,7 +14,7 @@ export const useSpecificationsSupabase = () => {
     if (!user) return;
     try {
       let query = supabase.from('specifications').select('*');
-      // Если роль не director и не pm, фильтруем по user_id
+      // Если роль НЕ director и НЕ pm, фильтруем по user_id
       if (role !== 'director' && role !== 'pm') {
         query = query.eq('user_id', user.id);
       }
