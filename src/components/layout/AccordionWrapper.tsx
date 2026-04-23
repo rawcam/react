@@ -9,7 +9,7 @@ interface AccordionWrapperProps {
 export const AccordionWrapper: React.FC<AccordionWrapperProps> = ({ module }) => {
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(`accordion_${module.id}`);
-    return saved !== null ? saved === 'true' : true;
+    return saved !== null ? saved === 'true' : true; // по умолчанию свёрнуты
   });
 
   useEffect(() => {
@@ -18,20 +18,18 @@ export const AccordionWrapper: React.FC<AccordionWrapperProps> = ({ module }) =>
 
   const toggle = () => setCollapsed(prev => !prev);
 
-  const Component = module.component as React.ComponentType<any>; // чтобы можно было передавать пропсы
+  const Component = module.component as React.ComponentType<any>;
 
   return (
     <div className="sidebar-section">
       <div className="section-header" onClick={toggle}>
         <i className={module.icon}></i>
         <span>{module.title}</span>
-        <i className={`fas fa-angle-down ${collapsed ? 'collapsed' : ''}`}></i>
+        <i className={`fas fa-chevron-${collapsed ? 'right' : 'down'}`}></i>
       </div>
-      {!collapsed && (
-        <div className="section-content">
-          <Component />
-        </div>
-      )}
+      <div className={`section-content${collapsed ? ' collapsed' : ''}`}>
+        <Component />
+      </div>
     </div>
   );
 };
