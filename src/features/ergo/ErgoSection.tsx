@@ -14,7 +14,7 @@ export const ErgoSection: React.FC = () => {
   return (
     <div className="section-content-inner">
       <button className="mode-btn" onClick={openCalculator}>
-        <i className="fas fa-calculator"></i> Эргономика ЭКП
+        <i className="fas fa-calculator"></i> Показать калькулятор
       </button>
     </div>
   );
