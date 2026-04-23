@@ -1697,3 +1697,9 @@ body.light .nav-buttons {
   align-items: center;
   margin-bottom: 24px;
 }
+.specs-control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
