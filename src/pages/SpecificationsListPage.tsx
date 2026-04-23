@@ -137,12 +137,12 @@ export const SpecificationsListPage: React.FC = () => {
             </select>
           </div>
         </div>
+      </div>
+
+      <div className="specs-control-row">
         <button className="btn-primary" onClick={() => setShowModal(true)}>
           <i className="fas fa-plus"></i> Новая спецификация
         </button>
-      </div>
-
-      <div className="view-toggle-right">
         <div className="view-toggle">
           <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
             <i className="fas fa-th"></i> Сетка
@@ -190,7 +190,6 @@ export const SpecificationsListPage: React.FC = () => {
               <th>Сумма</th>
               <th>Позиций</th>
               <th>Создана</th>
-              <th>Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -201,16 +200,10 @@ export const SpecificationsListPage: React.FC = () => {
                 <td>{Math.round(spec.totalSum).toLocaleString()} ₽</td>
                 <td>{spec.itemsCount}</td>
                 <td>{new Date(spec.createdAt).toLocaleDateString('ru-RU')}</td>
-                <td className="spec-actions" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => handleOpen(spec.id)} title="Открыть"><i className="fas fa-eye"></i></button>
-                  <button onClick={() => handleDuplicate(spec)} title="Дублировать"><i className="fas fa-copy"></i></button>
-                  {spec.projectId && <button onClick={() => handleUnlink(spec.id)} title="Открепить"><i className="fas fa-unlink"></i></button>}
-                  <button onClick={() => handleDelete(spec.id)} title="Удалить"><i className="fas fa-trash-alt"></i></button>
-                </td>
               </tr>
             ))}
             {filteredSpecs.length === 0 && (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px' }}>Нет спецификаций</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px' }}>Нет спецификаций</td></tr>
             )}
           </tbody>
         </table>
