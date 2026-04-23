@@ -31,7 +31,7 @@
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
   padding: 16px 20px;
-  border-radius: 60px;
+  border-radius: 16px;
   border: 1px solid var(--border-light);
 }
 
