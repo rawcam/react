@@ -8,27 +8,17 @@ import { setProjects, Project } from '../store/projectsSlice';
 export const useProjectsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
-  const role = useSelector((state: RootState) => state.auth.role);
 
   const loadProjects = useCallback(async () => {
     if (!user) return;
-    
-    let query = supabase.from('projects').select('*');
-    
-    // Если роль director или pm, загружаем все проекты, иначе только свои
-    if (role === 'director' || role === 'pm') {
-      console.log('[loadProjects] Loading ALL projects for director/pm');
-    } else {
-      console.log('[loadProjects] Loading own projects for user:', user.id);
-      query = query.eq('user_id', user.id);
-    }
-    
-    const { data, error } = await query;
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', user.id);
     if (error) {
       console.error('Failed to load projects:', error.message);
       return;
     }
-    
     const projects = data.map((item: any) => ({
       id: item.id,
       shortId: item.short_id,
@@ -37,6 +27,7 @@ export const useProjectsSupabase = () => {
       status: item.status,
       statusStartDate: item.status_start_date,
       startDate: item.start_date,
+      endDate: item.end_date,
       progress: item.progress,
       contractAmount: item.contract_amount,
       engineer: item.engineer,
@@ -54,11 +45,9 @@ export const useProjectsSupabase = () => {
       roadmapPlanned: item.roadmap_planned,
       roadmapActual: item.roadmap_actual,
     }));
-    
     dispatch(setProjects(projects));
-  }, [user, role, dispatch]);
+  }, [user, dispatch]);
 
-  // Остальные функции (add, update, delete) оставляем без изменений, но их тоже можно адаптировать
   const addProjectToDb = useCallback(async (project: Omit<Project, 'id' | 'shortId'>) => {
     if (!user) return;
     const newId = Date.now().toString();
@@ -71,6 +60,7 @@ export const useProjectsSupabase = () => {
       status: project.status,
       status_start_date: project.statusStartDate,
       start_date: project.startDate,
+      end_date: project.endDate,
       progress: project.progress,
       contract_amount: project.contractAmount,
       engineer: project.engineer,
@@ -106,6 +96,7 @@ export const useProjectsSupabase = () => {
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.statusStartDate !== undefined) dbUpdates.status_start_date = updates.statusStartDate;
     if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+    if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
     if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
     if (updates.contractAmount !== undefined) dbUpdates.contract_amount = updates.contractAmount;
     if (updates.engineer !== undefined) dbUpdates.engineer = updates.engineer;
