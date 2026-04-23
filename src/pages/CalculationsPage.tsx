@@ -1,86 +1,58 @@
 // src/pages/CalculationsPage.tsx
 import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
-import { setViewMode, setActiveCalculator } from '../store/tractsSlice';
-import { Sidebar } from '../components/layout/Sidebar';
-import { ActiveTract } from '../features/tracts/ActiveTract';
-import { AllTractsView } from '../features/tracts/AllTractsView';
-import { LedCalculator } from '../components/calculations/LedCalculator';
+import { CalculationsLayout } from '../components/layout/CalculationsLayout';
+import { TractsSection } from '../features/tracts/TractsSection';
+import { VideoCalculator } from '../components/calculations/VideoCalculator';
 import { SoundCalculator } from '../components/calculations/SoundCalculator';
+import { LedCalculator } from '../components/calculations/LedCalculator';
 import { VcCalculator } from '../components/calculations/VcCalculator';
 import { ErgoCalculator } from '../components/calculations/ErgoCalculator';
 import { PowerCalculator } from '../components/calculations/PowerCalculator';
-import './CalculationsPage.css';
+import { useAppSelector } from '../hooks/hooks';
 
 export const CalculationsPage: React.FC = () => {
-  const dispatch = useDispatch();
-  const viewMode = useSelector((state: RootState) => state.tracts.viewMode);
-  const activeCalculator = useSelector((state: RootState) => state.tracts.activeCalculator);
-  const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId);
-  const tracts = useSelector((state: RootState) => state.tracts.tracts);
+  const [activeCalculator, setActiveCalculator] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const viewMode = useAppSelector(state => state.tracts.viewMode);
+  const activeTractId = useAppSelector(state => state.tracts.activeTractId);
+  const tracts = useAppSelector(state => state.tracts.tracts);
   const activeTract = tracts.find(t => t.id === activeTractId);
 
-  const handleBackFromCalculator = () => {
-    dispatch(setViewMode('single'));
-    dispatch(setActiveCalculator(null));
+  const handleSelectCalculator = (id: string) => {
+    setActiveCalculator(id);
   };
 
-  const renderCalculator = () => {
-    switch (activeCalculator) {
-      case 'led': return <LedCalculator onBack={handleBackFromCalculator} />;
-      case 'sound': return <SoundCalculator onBack={handleBackFromCalculator} />;
-      case 'vc': return <VcCalculator onBack={handleBackFromCalculator} />;
-      case 'ergo': return <ErgoCalculator onBack={handleBackFromCalculator} />;
-      case 'power': return <PowerCalculator onBack={handleBackFromCalculator} />;
-      default: return null;
-    }
+  const handleBack = () => {
+    setActiveCalculator(null);
   };
 
-  // Режим "Все тракты"
-  if (viewMode === 'all') {
+  const toggleSidebar = () => {
+    setSidebarCollapsed(prev => !prev);
+  };
+
+  // Если открыт конкретный калькулятор
+  if (activeCalculator) {
     return (
-      <div className="calculations-layout normal-mode">
-        <Sidebar />
-        <div className="main-content">
-          <h2>Расчёты</h2>
-          <AllTractsView />
-        </div>
+      <div className="calculator-view">
+        <button className="btn-secondary" onClick={handleBack} style={{ marginBottom: 16 }}>
+          <i className="fas fa-arrow-left"></i> Назад к трактам
+        </button>
+        {activeCalculator === 'video' && <VideoCalculator onBack={handleBack} />}
+        {activeCalculator === 'sound' && <SoundCalculator onBack={handleBack} />}
+        {activeCalculator === 'led' && <LedCalculator onBack={handleBack} />}
+        {activeCalculator === 'vc' && <VcCalculator onBack={handleBack} />}
+        {activeCalculator === 'ergo' && <ErgoCalculator onBack={handleBack} />}
+        {activeCalculator === 'power' && <PowerCalculator onBack={handleBack} />}
       </div>
     );
   }
 
-  // Режим калькулятора
-  if (viewMode === 'calculator' && activeCalculator) {
-    return (
-      <div className="calculations-layout normal-mode">
-        <Sidebar />
-        <div className="main-content">
-          <h2>Расчёты</h2>
-          {renderCalculator()}
-        </div>
-      </div>
-    );
-  }
+  // Определяем, нужно ли показать пустое состояние
+  const showEmptyState = viewMode === 'all' ? tracts.length === 0 : !activeTract;
 
-  // Режим одного тракта
-  if (viewMode === 'single' && activeTract) {
-    return (
-      <div className="calculations-layout normal-mode">
-        <Sidebar />
-        <div className="main-content">
-          <h2>Расчёты</h2>
-          <ActiveTract />
-        </div>
-      </div>
-    );
-  }
-
-  // Пустое состояние (центрируем)
   return (
-    <div className="calculations-layout empty-mode">
-      <Sidebar />
-      <div className="main-content">
+    <CalculationsLayout sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar}>
+      {showEmptyState ? (
         <div className="empty-calculations">
           <i className="fas fa-calculator"></i>
           <h3>Начните работу</h3>
@@ -90,7 +62,11 @@ export const CalculationsPage: React.FC = () => {
           </p>
           <small>Все расчёты сохраняются автоматически.</small>
         </div>
-      </div>
-    </div>
+      ) : (
+        <div className="calculations-main">
+          <TractsSection onSelectCalculator={handleSelectCalculator} />
+        </div>
+      )}
+    </CalculationsLayout>
   );
 };
