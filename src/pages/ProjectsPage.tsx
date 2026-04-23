@@ -86,26 +86,36 @@ export const ProjectsPage = () => {
           <div className="filter-group">
             <label><i className="fas fa-sort"></i> Сортировка</label>
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
-              <option value="name">По названию</option><option value="budget">По бюджету (убыв.)</option><option value="margin">По марже (убыв.)</option><option value="date">По дате начала (новые)</option><option value="progress">По прогрессу</option>
+              <option value="name">По названию</option>
+              <option value="budget">По бюджету (убыв.)</option>
+              <option value="margin">По марже (убыв.)</option>
+              <option value="date">По дате начала (новые)</option>
+              <option value="progress">По прогрессу</option>
             </select>
           </div>
           <div className="filter-group">
             <label><i className="fas fa-filter"></i> Статус</label>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="all">Все</option><option value="presale">Пресейл</option><option value="design">Проект</option><option value="ready">Готов</option><option value="construction">Стройка</option><option value="done">Завершён</option>
+              <option value="all">Все</option>
+              <option value="presale">Пресейл</option>
+              <option value="design">Проект</option>
+              <option value="ready">Готов</option>
+              <option value="construction">Стройка</option>
+              <option value="done">Завершён</option>
             </select>
           </div>
           <div className="filter-group">
             <label><i className="fas fa-star"></i> Приоритет</label>
             <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as any)}>
-              <option value="all">Все</option><option value="priority">Только срочные</option><option value="normal">Обычные</option>
+              <option value="all">Все</option>
+              <option value="priority">Только срочные</option>
+              <option value="normal">Обычные</option>
             </select>
           </div>
           <button className="reset-btn" onClick={resetFilters}>Сбросить</button>
         </div>
       </div>
 
-      {/* Строка с кнопкой "Новый проект" слева и переключателем вида справа */}
       <div className="projects-control-row">
         {(hasRole('director') || hasRole('pm')) && (
           <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
