@@ -349,9 +349,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''} ${theme}`}>
       <div className="sidebar-header">
-        {!collapsed && <h2>Sputnik Studio</h2>}
+        {!collapsed && <h2></h2>} {/* Убрали "Sputnik Studio" */}
         <div className="header-actions">
-          <button className="theme-switch" onClick={onToggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
+          <button className="theme-switch" onClick={onToggleTheme}>
+            <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
+          </button>
           <button className="collapse-btn" onClick={onToggleCollapse}>{collapsed ? '→' : '←'}</button>
         </div>
       </div>
@@ -379,16 +381,16 @@ const Sidebar: React.FC<SidebarProps> = ({
               {schemas.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             <input type="text" value={schemaName} onChange={(e) => onSchemaNameChange(e.target.value)} placeholder="Название схемы" />
-            <div className="sidebar-actions">
-              <button onClick={onSaveSchema}><i className="fas fa-save"></i> Сохранить</button>
-              <button onClick={onNewSchema}><i className="fas fa-file"></i> Новая</button>
-              <button onClick={onExportSVG}><i className="fas fa-camera"></i> SVG</button>
-              <button onClick={onExportDXF}><i className="fas fa-cube"></i> DXF</button>
-              <button onClick={onExportExcel}><i className="fas fa-file-excel"></i> Excel</button>
-              <button onClick={onSaveToFile}><i className="fas fa-download"></i> JSON</button>
-              <button onClick={onLoadFromFile}><i className="fas fa-upload"></i> Загрузить</button>
-              <button onClick={onShowStatistics}><i className="fas fa-chart-pie"></i> Статистика</button>
-              <button onClick={onClearCanvas} style={{ color: 'var(--danger)' }}><i className="fas fa-trash-alt"></i> Очистить</button>
+            <div className="sidebar-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+              <button className="btn-sidebar-secondary" onClick={onSaveSchema}><i className="fas fa-save"></i> Сохранить</button>
+              <button className="btn-sidebar-secondary" onClick={onNewSchema}><i className="fas fa-file"></i> Новая</button>
+              <button className="btn-sidebar-secondary" onClick={onExportSVG}><i className="fas fa-camera"></i> SVG</button>
+              <button className="btn-sidebar-secondary" onClick={onExportDXF}><i className="fas fa-cube"></i> DXF</button>
+              <button className="btn-sidebar-secondary" onClick={onExportExcel}><i className="fas fa-file-excel"></i> Excel</button>
+              <button className="btn-sidebar-secondary" onClick={onSaveToFile}><i className="fas fa-download"></i> JSON</button>
+              <button className="btn-sidebar-secondary" onClick={onLoadFromFile}><i className="fas fa-upload"></i> Загрузить</button>
+              <button className="btn-sidebar-secondary" onClick={onShowStatistics}><i className="fas fa-chart-pie"></i> Статистика</button>
+              <button className="btn-sidebar-secondary" onClick={onClearCanvas} style={{ color: 'var(--danger)' }}><i className="fas fa-trash-alt"></i> Очистить</button>
             </div>
           </div>
         )}
@@ -513,12 +515,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           {showAlign && (
             <div className="section-content">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                <button onClick={() => onAlignNodes?.('left')} style={{ padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>← Влево</button>
-                <button onClick={() => onAlignNodes?.('right')} style={{ padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>Вправо →</button>
-                <button onClick={() => onAlignNodes?.('top')} style={{ padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>↑ Вверх</button>
-                <button onClick={() => onAlignNodes?.('bottom')} style={{ padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>↓ Вниз</button>
-                <button onClick={() => onAlignNodes?.('horizontal')} style={{ gridColumn: 'span 2', padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>Распределить по горизонтали</button>
-                <button onClick={() => onAlignNodes?.('vertical')} style={{ gridColumn: 'span 2', padding: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer' }}>Распределить по вертикали</button>
+                <button className="btn-sidebar-secondary" onClick={() => onAlignNodes?.('left')}>← Влево</button>
+                <button className="btn-sidebar-secondary" onClick={() => onAlignNodes?.('right')}>Вправо →</button>
+                <button className="btn-sidebar-secondary" onClick={() => onAlignNodes?.('top')}>↑ Вверх</button>
+                <button className="btn-sidebar-secondary" onClick={() => onAlignNodes?.('bottom')}>↓ Вниз</button>
+                <button className="btn-sidebar-secondary" onClick={() => onAlignNodes?.('horizontal')} style={{ gridColumn: 'span 2' }}>Распределить по горизонтали</button>
+                <button className="btn-sidebar-secondary" onClick={() => onAlignNodes?.('vertical')} style={{ gridColumn: 'span 2' }}>Распределить по вертикали</button>
               </div>
             </div>
           )}
@@ -585,7 +587,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <label style={{ fontSize: 12 }}>Высота строки (px)</label>
                 <input type="number" min="12" max="30" step="1" value={localNodeSettings.rowHeight} onChange={(e) => handleNodeSettingChange('rowHeight', Number(e.target.value))} style={{ width: 48, padding: '4px 6px', fontSize: 12, textAlign: 'right' }} />
               </div>
-              <button onClick={handleApplyToAll} style={{ marginTop: 8, padding: '6px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '40px', cursor: 'pointer', width: '100%', fontWeight: 500, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+              <button className="btn-sidebar" onClick={handleApplyToAll}>
                 <i className="fas fa-paint-brush"></i> {applyingAll ? '✓ Применено!' : 'Применить ко всем'}
               </button>
             </div>
@@ -697,7 +699,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <label style={{ fontSize: 12 }}>Фон</label>
                 <NativeColorPicker value={localEdgeSettings.markerBackgroundColor} onChange={(c) => handleEdgeSettingChange('markerBackgroundColor', c)} />
               </div>
-              <button onClick={handleApplyEdgeStyleToDevice} style={{ marginTop: 8, padding: '8px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '40px', cursor: 'pointer', width: '100%', fontWeight: 500, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <button className="btn-sidebar" onClick={handleApplyEdgeStyleToDevice}>
                 <i className="fas fa-check"></i> Применить ко всем кабелям устройства
               </button>
             </div>
