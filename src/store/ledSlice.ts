@@ -3,11 +3,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface LedState {
   activeMode: 'cabinets' | 'resolution';
-  pitch: number;
   cabinetWidth: number;
   cabinetHeight: number;
   cabinetsW: number;
   cabinetsH: number;
+  pitch: number;
   targetResolution: 'fhd' | '4k' | 'custom';
   customResW: number;
   customResH: number;
@@ -21,11 +21,11 @@ export interface LedState {
 
 const initialState: LedState = {
   activeMode: 'cabinets',
-  pitch: 2.5,
-  cabinetWidth: 500,
-  cabinetHeight: 500,
-  cabinetsW: 4,
-  cabinetsH: 3,
+  cabinetWidth: 600,
+  cabinetHeight: 337.5,
+  cabinetsW: 1,
+  cabinetsH: 1,
+  pitch: 1.2,
   targetResolution: 'fhd',
   customResW: 1920,
   customResH: 1080,
@@ -37,27 +37,26 @@ const initialState: LedState = {
   power: 0,
 };
 
-const calculateLed = (state: LedState): Partial<LedState> => {
-  const { activeMode, pitch, cabinetWidth, cabinetHeight, cabinetsW, cabinetsH, targetResolution, customResW, customResH } = state;
-  let resW = 0, resH = 0, width_m = 0, height_m = 0;
-
-  if (activeMode === 'cabinets') {
-    width_m = (cabinetsW * cabinetWidth) / 1000;
-    height_m = (cabinetsH * cabinetHeight) / 1000;
-    resW = Math.round((cabinetsW * cabinetWidth) / pitch);
-    resH = Math.round((cabinetsH * cabinetHeight) / pitch);
-  } else {
-    if (targetResolution === 'fhd') { resW = 1920; resH = 1080; }
-    else if (targetResolution === '4k') { resW = 3840; resH = 2160; }
-    else { resW = customResW; resH = customResH; }
-    width_m = (resW * pitch) / 1000;
-    height_m = (resH * pitch) / 1000;
-  }
-
+const calcCabinet = (state: LedState): Partial<LedState> => {
+  const width_m = (state.cabinetWidth / 1000) * state.cabinetsW;
+  const height_m = (state.cabinetHeight / 1000) * state.cabinetsH;
+  const resW = Math.round(width_m / (state.pitch / 1000));
+  const resH = Math.round(height_m / (state.pitch / 1000));
   const area = width_m * height_m;
-  const power = area * 300;
-
+  const power = area * (state.pitch === 0.7 ? 500 : state.pitch <= 1 ? 450 : 400);
   return { width_m, height_m, resW, resH, area, power };
+};
+
+const calcResolution = (state: LedState): Partial<LedState> => {
+  let targetW: number, targetH: number;
+  if (state.targetResolution === 'fhd') { targetW = 1920; targetH = 1080; }
+  else if (state.targetResolution === '4k') { targetW = 3840; targetH = 2160; }
+  else { targetW = state.customResW; targetH = state.customResH; }
+  const width_m = (targetW * state.pitch) / 1000;
+  const height_m = (targetH * state.pitch) / 1000;
+  const area = width_m * height_m;
+  const power = area * (state.pitch === 0.7 ? 500 : state.pitch <= 1 ? 450 : 400);
+  return { width_m, height_m, resW: targetW, resH: targetH, area, power };
 };
 
 const ledSlice = createSlice({
@@ -66,11 +65,22 @@ const ledSlice = createSlice({
   reducers: {
     setLedConfig: (state, action: PayloadAction<Partial<LedState>>) => {
       Object.assign(state, action.payload);
-      const calc = calculateLed(state);
-      Object.assign(state, calc);
+      if (state.activeMode === 'cabinets') {
+        Object.assign(state, calcCabinet(state));
+      } else {
+        Object.assign(state, calcResolution(state));
+      }
+    },
+    setLedMode: (state, action: PayloadAction<'cabinets' | 'resolution'>) => {
+      state.activeMode = action.payload;
+      if (state.activeMode === 'cabinets') {
+        Object.assign(state, calcCabinet(state));
+      } else {
+        Object.assign(state, calcResolution(state));
+      }
     },
   },
 });
 
-export const { setLedConfig } = ledSlice.actions;
+export const { setLedConfig, setLedMode } = ledSlice.actions;
 export default ledSlice.reducer;
