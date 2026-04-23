@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../App';
 import { useDispatch } from 'react-redux';
 import { setSession, setRole } from '../store/authSlice';
 import './LoginPage.css';
@@ -251,16 +251,11 @@ export const LoginPage: React.FC = () => {
     };
   }, []);
 
-  // ИСПРАВЛЕННАЯ ФУНКЦИЯ ВХОДА
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      // Очищаем старое перед входом
-      localStorage.clear();
-      sessionStorage.clear();
-      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (data.session) {
