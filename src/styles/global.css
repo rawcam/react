@@ -1691,3 +1691,9 @@ body.light .nav-buttons {
   justify-content: center;
   align-items: center;
 }
+.projects-control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
