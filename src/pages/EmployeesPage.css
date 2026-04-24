@@ -113,6 +113,12 @@
   vertical-align: middle;
 }
 
+/* Ховер для строк таблицы */
+.employees-table tbody tr:hover td {
+  background-color: var(--accent-glow);
+  cursor: pointer;
+}
+
 .employees-table tr:last-child td {
   border-bottom: none;
 }
@@ -149,7 +155,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000; /* поверх всего */
+  z-index: 2000;
 }
 
 .modal-content {
