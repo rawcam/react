@@ -49,15 +49,15 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
 
   const loadPayments = async () => {
     try {
-      const payments = await withAuthRetry<SalaryPayment[]>(async () => {
-        const { data, error } = await supabase
+      const payments = await withAuthRetry<SalaryPayment[]>(() =>
+        supabase
           .from('salary_payments')
           .select('*')
           .eq('employee_id', employee.id)
-          .order('date', { ascending: false });
-        return { data: data as SalaryPayment[] | null, error };
-      });
-      if (payments) setPayments(payments);
+          .order('date', { ascending: false })
+          .then(({ data, error }) => ({ data: data as SalaryPayment[] | null, error }))
+      );
+      setPayments(payments);
     } catch (err) {
       console.error('Ошибка загрузки выплат:', err);
     }
