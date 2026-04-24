@@ -135,6 +135,7 @@ const AppContent = () => {
                 <Route path="/specification" element={<SpecificationPage />} />
                 <Route path="/flow-editor" element={<FlowEditorPage />} />
                 <Route path="/employees" element={<EmployeesPage />} />
+                <Route path="/my-profile" element={<MyProfilePage />} />
               </Routes>
             </main>
           </div>
