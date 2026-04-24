@@ -1,11 +1,6 @@
 // src/utils/supabaseHelpers.ts
 import { supabase } from '../App';
 
-/**
- * Выполняет запрос к Supabase, при ошибке "JWT expired" или 401
- * автоматически обновляет сессию и повторяет запрос.
- * queryFn должна возвращать Promise<{ data: T; error: any }>.
- */
 export async function withAuthRetry<T>(
   queryFn: () => Promise<{ data: T; error: any }>
 ): Promise<T> {
@@ -14,10 +9,7 @@ export async function withAuthRetry<T>(
     const { data, error } = await queryFn();
     if (!error) return data;
 
-    if (
-      error?.message?.includes('JWT expired') ||
-      error?.status === 401
-    ) {
+    if (error?.message?.includes('JWT expired') || error?.status === 401) {
       if (attempt < MAX_RETRIES) {
         const { data: refreshData } = await supabase.auth.refreshSession();
         if (refreshData.session) continue;
