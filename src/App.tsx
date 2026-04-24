@@ -16,6 +16,7 @@ import { FinancePage } from './pages/FinancePage';
 import FlowEditorPage from './pages/FlowEditorPage';
 import { CalculationsPage } from './pages/CalculationsPage';
 import { EmployeesPage } from './pages/EmployeesPage';
+import { MyProfilePage } from './pages/MyProfilePage';
 import './index.css';
 
 // Синхронная очистка хранилища
