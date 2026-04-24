@@ -122,7 +122,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
             <button className="btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? 'Сохранение...' : 'Сохранить'}
             </button>
-            <button className="btn-danger" onClick={handleDelete} style={{ marginLeft: 12 }}>
+            <button className="btn-danger" onClick={handleDelete} style={{ marginLeft: 12, padding: '10px 24px'}}>
               Удалить сотрудника
             </button>
           </div>
