@@ -17,6 +17,7 @@ import FlowEditorPage from './pages/FlowEditorPage';
 import { CalculationsPage } from './pages/CalculationsPage';
 import { EmployeesPage } from './pages/EmployeesPage';
 import { MyProfilePage } from './pages/MyProfilePage';
+import { VacationRequestsPage } from './pages/VacationRequestsPage';
 import './index.css';
 
 // Синхронная очистка хранилища
@@ -137,6 +138,7 @@ const AppContent = () => {
                 <Route path="/flow-editor" element={<FlowEditorPage />} />
                 <Route path="/employees" element={<EmployeesPage />} />
                 <Route path="/my-profile" element={<MyProfilePage />} />
+                <Route path="/vacation-requests" element={<VacationRequestsPage />} />
               </Routes>
             </main>
           </div>
