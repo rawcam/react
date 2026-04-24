@@ -2,8 +2,9 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { supabase } from '../App'; // импорт из App.tsx, где теперь создаётся клиент
+import { supabase } from '../App';
 import { setProjects, Project } from '../store/projectsSlice';
+import { withAuthRetry } from '../utils/supabaseHelpers';
 
 export const useProjectsSupabase = () => {
   const dispatch = useDispatch();
@@ -12,53 +13,50 @@ export const useProjectsSupabase = () => {
 
   const loadProjects = useCallback(async () => {
     if (!user) return;
+    try {
+      const data = await withAuthRetry(() => {
+        let query = supabase.from('projects').select('*');
+        if (role !== 'director' && role !== 'pm') {
+          query = query.eq('user_id', user.id);
+        }
+        return query;
+      });
 
-    let query = supabase.from('projects').select('*');
-
-    // Если роль НЕ director и НЕ pm, то показываем только свои проекты
-    if (role !== 'director' && role !== 'pm') {
-      query = query.eq('user_id', user.id);
+      const projects = data.map((item: any) => ({
+        id: item.id,
+        shortId: item.short_id,
+        name: item.name,
+        category: item.category,
+        status: item.status,
+        statusStartDate: item.status_start_date,
+        startDate: item.start_date,
+        endDate: item.end_date,
+        progress: item.progress,
+        contractAmount: item.contract_amount,
+        engineer: item.engineer,
+        projectManager: item.project_manager,
+        priority: item.priority,
+        meetings: item.meetings,
+        purchases: item.purchases,
+        incomeSchedule: item.income_schedule,
+        expenseSchedule: item.expense_schedule,
+        serviceVisits: item.service_visits,
+        actualIncome: item.actual_income,
+        actualExpenses: item.actual_expenses,
+        nextStatus: item.next_status,
+        nextStatusDate: item.next_status_date,
+        roadmapPlanned: item.roadmap_planned,
+        roadmapActual: item.roadmap_actual,
+      }));
+      dispatch(setProjects(projects));
+    } catch (err: any) {
+      if (err.message === 'SESSION_EXPIRED') {
+        await supabase.auth.signOut();
+        window.location.reload();
+      } else {
+        console.error('Failed to load projects:', err);
+      }
     }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Failed to load projects:', error.message);
-      return;
-    }
-
-    if (!data) {
-      console.warn('No data received from projects');
-      return;
-    }
-
-    const projects = data.map((item: any) => ({
-      id: item.id,
-      shortId: item.short_id,
-      name: item.name,
-      category: item.category,
-      status: item.status,
-      statusStartDate: item.status_start_date,
-      startDate: item.start_date,
-      endDate: item.end_date,
-      progress: item.progress,
-      contractAmount: item.contract_amount,
-      engineer: item.engineer,
-      projectManager: item.project_manager,
-      priority: item.priority,
-      meetings: item.meetings,
-      purchases: item.purchases,
-      incomeSchedule: item.income_schedule,
-      expenseSchedule: item.expense_schedule,
-      serviceVisits: item.service_visits,
-      actualIncome: item.actual_income,
-      actualExpenses: item.actual_expenses,
-      nextStatus: item.next_status,
-      nextStatusDate: item.next_status_date,
-      roadmapPlanned: item.roadmap_planned,
-      roadmapActual: item.roadmap_actual,
-    }));
-    dispatch(setProjects(projects));
   }, [user, role, dispatch]);
 
   const addProjectToDb = useCallback(async (project: Omit<Project, 'id' | 'shortId'>) => {
@@ -93,11 +91,8 @@ export const useProjectsSupabase = () => {
       user_id: user.id,
     };
     const { error } = await supabase.from('projects').insert(dbProject);
-    if (error) {
-      console.error('Failed to add project:', error.message);
-      return;
-    }
-    await loadProjects();
+    if (error) console.error('Failed to add project:', error.message);
+    else await loadProjects();
     return newId;
   }, [user, loadProjects]);
 
@@ -105,6 +100,7 @@ export const useProjectsSupabase = () => {
     if (!user) return;
     const dbUpdates: any = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
+    // ... (остальные поля аналогично оригиналу, без изменений)
     if (updates.category !== undefined) dbUpdates.category = updates.category;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.statusStartDate !== undefined) dbUpdates.status_start_date = updates.statusStartDate;
@@ -127,36 +123,17 @@ export const useProjectsSupabase = () => {
     if (updates.roadmapPlanned !== undefined) dbUpdates.roadmap_planned = updates.roadmapPlanned;
     if (updates.roadmapActual !== undefined) dbUpdates.roadmap_actual = updates.roadmapActual;
 
-    const { error } = await supabase
-      .from('projects')
-      .update(dbUpdates)
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('Failed to update project:', error.message);
-      return;
-    }
-    await loadProjects();
+    const { error } = await supabase.from('projects').update(dbUpdates).eq('id', id).eq('user_id', user.id);
+    if (error) console.error('Failed to update project:', error.message);
+    else await loadProjects();
   }, [user, loadProjects]);
 
   const deleteProjectFromDb = useCallback(async (id: string) => {
     if (!user) return;
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('Failed to delete project:', error.message);
-      return;
-    }
-    await loadProjects();
+    const { error } = await supabase.from('projects').delete().eq('id', id).eq('user_id', user.id);
+    if (error) console.error('Failed to delete project:', error.message);
+    else await loadProjects();
   }, [user, loadProjects]);
 
-  return {
-    loadProjects,
-    addProjectToDb,
-    updateProjectInDb,
-    deleteProjectFromDb,
-  };
+  return { loadProjects, addProjectToDb, updateProjectInDb, deleteProjectFromDb };
 };
