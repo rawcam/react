@@ -1,6 +1,8 @@
 // src/components/employees/VacationsTab.tsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../App';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 interface Vacation {
   id: string;
@@ -21,7 +23,8 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [remainingDays, setRemainingDays] = useState(28); // заглушка, позже можно считать
+  const [remainingDays, setRemainingDays] = useState(28);
+  const userRole = useSelector((state: RootState) => state.auth.role);
 
   useEffect(() => {
     loadVacations();
@@ -51,7 +54,7 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
     setLoading(true);
     setError('');
 
-    // Проверяем, нет ли пересечения с другими инженерами (упрощённо: считаем, что инженеры – все, кроме менеджеров)
+    // Проверка пересечений с другими инженерами
     const { data: conflicts, error: conflictError } = await supabase
       .from('vacations')
       .select('*, employees!inner(*)')
@@ -65,7 +68,6 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
       return;
     }
 
-    // Создаём отпуск
     const { error: insertError } = await supabase
       .from('vacations')
       .insert({
@@ -83,6 +85,22 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
       setError('Ошибка при планировании отпуска');
     }
     setLoading(false);
+  };
+
+  const handleApprove = async (vacationId: string) => {
+    const { error } = await supabase
+      .from('vacations')
+      .update({ status: 'approved' })
+      .eq('id', vacationId);
+    if (!error) loadVacations();
+  };
+
+  const handleReject = async (vacationId: string) => {
+    const { error } = await supabase
+      .from('vacations')
+      .update({ status: 'rejected' })
+      .eq('id', vacationId);
+    if (!error) loadVacations();
   };
 
   return (
@@ -109,8 +127,18 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
         ) : (
           vacations.map(v => (
             <div key={v.id} className="vacation-item">
-              <div className="vacation-dates">{new Date(v.start_date).toLocaleDateString('ru-RU')} – {new Date(v.end_date).toLocaleDateString('ru-RU')}</div>
-              <div className="vacation-status">{v.status === 'approved' ? 'Одобрен' : v.status === 'rejected' ? 'Отклонён' : 'На рассмотрении'}</div>
+              <div className="vacation-dates">
+                {new Date(v.start_date).toLocaleDateString('ru-RU')} – {new Date(v.end_date).toLocaleDateString('ru-RU')}
+              </div>
+              <div className="vacation-status">
+                {v.status === 'approved' ? 'Одобрен' : v.status === 'rejected' ? 'Отклонён' : 'На рассмотрении'}
+              </div>
+              {userRole === 'director' && v.status === 'pending' && (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn-secondary" onClick={() => handleApprove(v.id)}>Одобрить</button>
+                  <button className="btn-secondary" onClick={() => handleReject(v.id)} style={{ color: 'var(--danger)' }}>Отклонить</button>
+                </div>
+              )}
             </div>
           ))
         )}
