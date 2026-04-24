@@ -11,8 +11,8 @@ interface Employee {
   department: string;
   base_salary: number;
   hire_date: string;
-  email?: string;      // ← новое поле
-  phone?: string;       // ← новое поле
+  email?: string;
+  phone?: string;
 }
 
 interface SalaryPayment {
@@ -71,8 +71,8 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
         department: editedEmployee.department,
         base_salary: editedEmployee.base_salary,
         hire_date: editedEmployee.hire_date,
-        email: editedEmployee.email,    // ← сохраняем email
-        phone: editedEmployee.phone,    // ← сохраняем телефон
+        email: editedEmployee.email,
+        phone: editedEmployee.phone,
       })
       .eq('id', employee.id);
     if (!error) {
@@ -82,6 +82,17 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
       alert('Ошибка при сохранении');
     }
     setSaving(false);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Удалить сотрудника "${employee.full_name}"? Это действие необратимо.`)) return;
+    const { error } = await supabase.from('employees').delete().eq('id', employee.id);
+    if (!error) {
+      onUpdate();
+      onBack();
+    } else {
+      alert('Ошибка при удалении: ' + error.message);
+    }
   };
 
   return (
@@ -110,6 +121,9 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
           <div className="detail-actions">
             <button className="btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? 'Сохранение...' : 'Сохранить'}
+            </button>
+            <button className="btn-danger" onClick={handleDelete} style={{ marginLeft: 12 }}>
+              Удалить сотрудника
             </button>
           </div>
         </div>
