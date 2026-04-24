@@ -51,6 +51,9 @@ export const Topbar: React.FC = () => {
         ))}
       </div>
       <div className="topbar-actions">
+        <button className="icon-btn" onClick={() => navigate('/my-profile')} title="Личный кабинет">
+          <i className="fas fa-user"></i>
+        </button>
         <button className="icon-btn" onClick={() => dispatch(openWidgetConfig())}>
           <i className="fas fa-sliders-h"></i>
         </button>
