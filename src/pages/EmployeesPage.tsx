@@ -1,7 +1,5 @@
 // src/pages/EmployeesPage.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
 import { supabase } from '../App';
 import './EmployeesPage.css';
 
@@ -54,11 +52,15 @@ export const EmployeesPage: React.FC = () => {
   // Загрузка сотрудников
   const loadEmployees = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('employees').select('*').order('full_name');
-    if (!error && data) {
-      setEmployees(data);
+    try {
+      const { data, error } = await supabase.from('employees').select('*').order('full_name');
+      if (error) throw error;
+      setEmployees(data || []);
+    } catch (err) {
+      console.error('Ошибка загрузки сотрудников:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -67,9 +69,12 @@ export const EmployeesPage: React.FC = () => {
 
   // Загрузка выплат сотрудника
   const loadPayments = async (empId: string) => {
-    const { data, error } = await supabase.from('salary_payments').select('*').eq('employee_id', empId).order('date', { ascending: false });
-    if (!error && data) {
-      setPayments(data);
+    try {
+      const { data, error } = await supabase.from('salary_payments').select('*').eq('employee_id', empId).order('date', { ascending: false });
+      if (error) throw error;
+      setPayments(data || []);
+    } catch (err) {
+      console.error('Ошибка загрузки выплат:', err);
     }
   };
 
@@ -85,19 +90,25 @@ export const EmployeesPage: React.FC = () => {
 
   // Обработчики
   const handleAdd = async () => {
-    const { error } = await supabase.from('employees').insert({
-      full_name: formName,
-      position: formPosition,
-      department: formDepartment,
-      base_salary: formSalary,
-      hire_date: formHireDate,
-    });
-    if (!error) {
+    if (!formName.trim() || !formPosition.trim() || !formDepartment.trim()) {
+      alert('Заполните все поля');
+      return;
+    }
+    try {
+      const { error } = await supabase.from('employees').insert({
+        full_name: formName,
+        position: formPosition,
+        department: formDepartment,
+        base_salary: formSalary,
+        hire_date: formHireDate,
+      });
+      if (error) throw error;
       setShowAddModal(false);
-      setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000);
+      clearForm();
       loadEmployees();
-    } else {
-      alert('Ошибка при добавлении');
+    } catch (err) {
+      console.error('Ошибка добавления:', err);
+      alert('Не удалось добавить сотрудника');
     }
   };
 
@@ -113,19 +124,26 @@ export const EmployeesPage: React.FC = () => {
 
   const handleSaveEdit = async () => {
     if (!selectedEmployee) return;
-    const { error } = await supabase.from('employees').update({
-      full_name: formName,
-      position: formPosition,
-      department: formDepartment,
-      base_salary: formSalary,
-      hire_date: formHireDate,
-    }).eq('id', selectedEmployee.id);
-    if (!error) {
+    if (!formName.trim() || !formPosition.trim() || !formDepartment.trim()) {
+      alert('Заполните все поля');
+      return;
+    }
+    try {
+      const { error } = await supabase.from('employees').update({
+        full_name: formName,
+        position: formPosition,
+        department: formDepartment,
+        base_salary: formSalary,
+        hire_date: formHireDate,
+      }).eq('id', selectedEmployee.id);
+      if (error) throw error;
       setShowAddModal(false);
       setSelectedEmployee(null);
+      clearForm();
       loadEmployees();
-    } else {
-      alert('Ошибка при сохранении');
+    } catch (err) {
+      console.error('Ошибка обновления:', err);
+      alert('Не удалось обновить сотрудника');
     }
   };
 
@@ -133,6 +151,14 @@ export const EmployeesPage: React.FC = () => {
     setSelectedEmployee(emp);
     loadPayments(emp.id);
     setShowPaymentsModal(true);
+  };
+
+  const clearForm = () => {
+    setFormName('');
+    setFormPosition('');
+    setFormDepartment('');
+    setFormSalary(100000);
+    setFormHireDate(new Date().toISOString().slice(0, 10));
   };
 
   if (loading) {
@@ -161,7 +187,7 @@ export const EmployeesPage: React.FC = () => {
             />
           </div>
         </div>
-        <button className="btn-primary" onClick={() => { setSelectedEmployee(null); setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000); setFormHireDate(new Date().toISOString().slice(0,10)); setShowAddModal(true); }}>
+        <button className="btn-primary" onClick={() => { setSelectedEmployee(null); clearForm(); setShowAddModal(true); }}>
           <i className="fas fa-user-plus"></i> Добавить
         </button>
       </div>
@@ -204,7 +230,7 @@ export const EmployeesPage: React.FC = () => {
 
       {/* Модальное окно добавления/редактирования */}
       {showAddModal && (
-        <div className="modal" onClick={() => setShowAddModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{selectedEmployee ? 'Редактировать сотрудника' : 'Новый сотрудник'}</h3>
@@ -224,25 +250,29 @@ export const EmployeesPage: React.FC = () => {
 
       {/* Модальное окно выплат */}
       {showPaymentsModal && selectedEmployee && (
-        <div className="modal" onClick={() => setShowPaymentsModal(false)}>
-          <div className="modal-content payments-modal" style={{ maxHeight: '60vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={() => setShowPaymentsModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '600px', maxHeight: '60vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Выплаты: {selectedEmployee.full_name}</h3>
               <span className="modal-close" onClick={() => setShowPaymentsModal(false)}>×</span>
             </div>
-            <table className="employees-table">
-              <thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Описание</th></tr></thead>
-              <tbody>
-                {payments.map(p => (
-                  <tr key={p.id}>
-                    <td>{new Date(p.date).toLocaleDateString('ru-RU')}</td>
-                    <td>{typeLabels[p.type] || p.type}</td>
-                    <td>{p.amount.toLocaleString()} ₽</td>
-                    <td>{p.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {payments.length === 0 ? (
+              <p>Нет данных о выплатах</p>
+            ) : (
+              <table className="employees-table">
+                <thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Описание</th></tr></thead>
+                <tbody>
+                  {payments.map(p => (
+                    <tr key={p.id}>
+                      <td>{new Date(p.date).toLocaleDateString('ru-RU')}</td>
+                      <td>{typeLabels[p.type] || p.type}</td>
+                      <td>{p.amount.toLocaleString()} ₽</td>
+                      <td>{p.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
