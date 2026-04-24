@@ -14,12 +14,12 @@ export const useSpecificationsSupabase = () => {
   const loadSpecifications = useCallback(async (): Promise<void> => {
     if (!user) return;
     try {
-      const data = await withAuthRetry(() => {
+      const data = await withAuthRetry<any[]>(() => {
         let query = supabase.from('specifications').select('*');
         if (role !== 'director' && role !== 'pm') {
           query = query.eq('user_id', user.id);
         }
-        return query;
+        return query.then(({ data, error }) => ({ data: data as any[], error }));
       });
 
       const specs = data.map((item: any) => ({
