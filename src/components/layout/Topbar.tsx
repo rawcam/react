@@ -19,6 +19,7 @@ export const Topbar: React.FC = () => {
     { path: '/projects', label: 'Проекты' },
     { path: '/calculations', label: 'Расчёты' },
     { path: '/specifications', label: 'Спецификации' },
+    { path: '/employees', label: 'Сотрудники' },
     { path: '/flow-editor', label: 'Редактор' },
   ];
 
