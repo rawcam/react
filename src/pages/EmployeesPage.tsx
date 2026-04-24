@@ -101,21 +101,24 @@ export const EmployeesPage: React.FC = () => {
   }, [employees, deptFilter, search, vacationFilter]);
 
   const handleAdd = async () => {
-    const { error } = await supabase.from('employees').insert({
+    const dataToInsert = {
       full_name: formName,
       position: formPosition,
       department: formDepartment,
       base_salary: formSalary,
       hire_date: formHireDate,
       email: formEmail,
-    });
-    if (!error) {
+    };
+    console.log('[EmployeesPage] Inserting employee:', dataToInsert);
+    const { error } = await supabase.from('employees').insert(dataToInsert);
+    if (error) {
+      console.error('[EmployeesPage] Insert error:', error);
+      alert('Ошибка при добавлении: ' + error.message);
+    } else {
       setShowAddModal(false);
       setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000);
       setFormEmail('');
       loadEmployees();
-    } else {
-      alert('Ошибка при добавлении: ' + error.message);
     }
   };
 
