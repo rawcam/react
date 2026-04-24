@@ -1,36 +1,15 @@
 // src/components/employees/EmployeeDetail.tsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../App';
+import { VacationsTab } from './VacationsTab';
 import './EmployeeDetail.css';
 
-interface Employee {
-  id: string;
-  full_name: string;
-  position: string;
-  department: string;
-  base_salary: number;
-  hire_date: string;
-}
-
-interface SalaryPayment {
-  id: number;
-  date: string;
-  amount: number;
-  type: string;
-  description: string;
-}
-
-const typeLabels: Record<string, string> = {
-  salary: 'Зарплата',
-  bonus: 'Премия',
-  vacation: 'Отпускные',
-  sick_leave: 'Больничный',
-};
+// ... (интерфейсы Employee и SalaryPayment без изменений)
 
 interface EmployeeDetailProps {
   employee: Employee;
   onBack: () => void;
-  onUpdate: () => void; // чтобы обновить список после сохранения
+  onUpdate: () => void;
 }
 
 export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack, onUpdate }) => {
@@ -40,7 +19,6 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Загружаем выплаты при монтировании
     loadPayments();
   }, []);
 
@@ -72,7 +50,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
       })
       .eq('id', employee.id);
     if (!error) {
-      onUpdate(); // обновить список на родительской странице
+      onUpdate();
       alert('Сохранено');
     } else {
       alert('Ошибка при сохранении');
@@ -87,7 +65,6 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
       </button>
       <h2 style={{ marginTop: 16 }}>{employee.full_name}</h2>
 
-      {/* Вкладки */}
       <div className="detail-tabs">
         <button className={activeTab === 'info' ? 'active' : ''} onClick={() => setActiveTab('info')}>Информация</button>
         <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => setActiveTab('payments')}>Выплаты</button>
@@ -97,26 +74,11 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
 
       {activeTab === 'info' && (
         <div className="detail-form">
-          <div className="detail-field">
-            <label>ФИО</label>
-            <input type="text" value={editedEmployee.full_name} onChange={e => handleChange('full_name', e.target.value)} />
-          </div>
-          <div className="detail-field">
-            <label>Должность</label>
-            <input type="text" value={editedEmployee.position} onChange={e => handleChange('position', e.target.value)} />
-          </div>
-          <div className="detail-field">
-            <label>Отдел</label>
-            <input type="text" value={editedEmployee.department} onChange={e => handleChange('department', e.target.value)} />
-          </div>
-          <div className="detail-field">
-            <label>Оклад (₽)</label>
-            <input type="number" value={editedEmployee.base_salary} onChange={e => handleChange('base_salary', Number(e.target.value))} />
-          </div>
-          <div className="detail-field">
-            <label>Дата выхода</label>
-            <input type="date" value={editedEmployee.hire_date} onChange={e => handleChange('hire_date', e.target.value)} />
-          </div>
+          <div className="detail-field"><label>ФИО</label><input type="text" value={editedEmployee.full_name} onChange={e => handleChange('full_name', e.target.value)} /></div>
+          <div className="detail-field"><label>Должность</label><input type="text" value={editedEmployee.position} onChange={e => handleChange('position', e.target.value)} /></div>
+          <div className="detail-field"><label>Отдел</label><input type="text" value={editedEmployee.department} onChange={e => handleChange('department', e.target.value)} /></div>
+          <div className="detail-field"><label>Оклад (₽)</label><input type="number" value={editedEmployee.base_salary} onChange={e => handleChange('base_salary', Number(e.target.value))} /></div>
+          <div className="detail-field"><label>Дата выхода</label><input type="date" value={editedEmployee.hire_date} onChange={e => handleChange('hire_date', e.target.value)} /></div>
           <div className="detail-actions">
             <button className="btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? 'Сохранение...' : 'Сохранить'}
@@ -143,11 +105,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
         </div>
       )}
 
-      {activeTab === 'vacations' && (
-        <div className="placeholder-tab">
-          <p>Планирование отпусков (будет доступно позже)</p>
-        </div>
-      )}
+      {activeTab === 'vacations' && <VacationsTab employeeId={employee.id} />}
 
       {activeTab === 'documents' && (
         <div className="placeholder-tab">
