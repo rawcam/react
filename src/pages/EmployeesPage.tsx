@@ -5,7 +5,6 @@ import { supabase } from '../App';
 import { EmployeeDetail } from '../components/employees/EmployeeDetail';
 import './EmployeesPage.css';
 
-// Локальное определение интерфейса Employee
 interface Employee {
   id: string;
   full_name: string;
@@ -14,6 +13,7 @@ interface Employee {
   base_salary: number;
   hire_date: string;
   email?: string;
+  phone?: string;
   onVacation?: boolean;
 }
 
@@ -95,7 +95,17 @@ export const EmployeesPage: React.FC = () => {
       setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000);
       loadEmployees();
     } else {
-      alert('Ошибка при добавлении');
+      alert('Ошибка при добавлении: ' + error.message);
+    }
+  };
+
+  const handleDelete = async (empId: string, name: string) => {
+    if (!confirm(`Удалить сотрудника "${name}"? Это действие необратимо.`)) return;
+    const { error } = await supabase.from('employees').delete().eq('id', empId);
+    if (!error) {
+      loadEmployees();
+    } else {
+      alert('Ошибка при удалении: ' + error.message);
     }
   };
 
@@ -176,6 +186,7 @@ export const EmployeesPage: React.FC = () => {
                 <td>{new Date(emp.hire_date).toLocaleDateString('ru-RU')}</td>
                 <td>
                   <button className="btn-secondary" onClick={(e) => { e.stopPropagation(); handleRowClick(emp.id); }}>Подробнее</button>
+                  <button className="btn-secondary" style={{ marginLeft: 8, color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(emp.id, emp.full_name); }}>Удалить</button>
                 </td>
               </tr>
             ))}
