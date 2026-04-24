@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { supabase } from '../App';
 import { RootState } from '../store';
+import { withAuthRetry } from '../utils/supabaseHelpers';
 import './MyProfilePage.css';
 
 interface Employee {
@@ -61,31 +62,42 @@ export const MyProfilePage: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     const loadEmployee = async () => {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .eq('email', user.email)
-        .single();
-      if (!error && data) {
-        setEmployee(data);
-        setPredictedBonus(Math.round(data.base_salary * 0.15));
+      try {
+        const emp = await withAuthRetry<Employee>(async () => {
+          const { data, error } = await supabase
+            .from('employees')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+          return { data: data as Employee | null, error };
+        });
+        if (emp) {
+          setEmployee(emp);
+          setPredictedBonus(Math.round(emp.base_salary * 0.15));
 
-        const today = new Date().toISOString().slice(0, 10);
-        const { data: vacations } = await supabase
-          .from('vacations')
-          .select('start_date')
-          .eq('employee_id', data.id)
-          .eq('status', 'approved')
-          .gte('start_date', today)
-          .order('start_date', { ascending: true })
-          .limit(1);
-        if (vacations && vacations.length > 0) {
-          const start = new Date(vacations[0].start_date);
-          const diff = Math.ceil((start.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-          setDaysUntilVacation(diff > 0 ? diff : 0);
+          const today = new Date().toISOString().slice(0, 10);
+          const vacations = await withAuthRetry<Vacation[]>(async () => {
+            const { data, error } = await supabase
+              .from('vacations')
+              .select('*')
+              .eq('employee_id', emp.id)
+              .eq('status', 'approved')
+              .gte('start_date', today)
+              .order('start_date', { ascending: true })
+              .limit(1);
+            return { data: data as Vacation[] | null, error };
+          });
+          if (vacations && vacations.length > 0) {
+            const start = new Date(vacations[0].start_date);
+            const diff = Math.ceil((start.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            setDaysUntilVacation(diff > 0 ? diff : 0);
+          }
         }
+      } catch (err: any) {
+        console.error('MyProfilePage load error:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     loadEmployee();
   }, [user]);
@@ -104,39 +116,47 @@ export const MyProfilePage: React.FC = () => {
     setSubmitting(true);
     setVacationError('');
 
-    // Проверка пересечений с другими инженерами
-    const { data: conflicts, error: conflictError } = await supabase
-      .from('vacations')
-      .select('*, employees!inner(*)')
-      .eq('employees.position', 'Инженер-проектировщик')
-      .neq('employee_id', employee.id) // исключаем самого себя
-      .gte('start_date', startDate)
-      .lte('end_date', endDate);
-
-    if (!conflictError && conflicts && conflicts.length > 0) {
-      setVacationError('В выбранный период уже есть инженеры в отпуске. Выберите другие даты.');
-      setSubmitting(false);
-      return;
-    }
-
-    const { error: insertError } = await supabase
-      .from('vacations')
-      .insert({
-        employee_id: employee.id,
-        start_date: startDate,
-        end_date: endDate,
-        status: 'pending',
+    try {
+      // Проверка пересечений с другими инженерами
+      const conflicts = await withAuthRetry<any[]>(async () => {
+        const { data, error } = await supabase
+          .from('vacations')
+          .select('*, employees!inner(*)')
+          .eq('employees.position', 'Инженер-проектировщик')
+          .neq('employee_id', employee.id)
+          .gte('start_date', startDate)
+          .lte('end_date', endDate);
+        return { data: data as any[], error };
       });
 
-    if (!insertError) {
-      setShowVacationModal(false);
-      setStartDate('');
-      setEndDate('');
-      alert('Заявление на отпуск отправлено на рассмотрение.');
-    } else {
-      setVacationError('Ошибка при отправке заявления.');
+      if (conflicts && conflicts.length > 0) {
+        setVacationError('В выбранный период уже есть инженеры в отпуске. Выберите другие даты.');
+        setSubmitting(false);
+        return;
+      }
+
+      const { error: insertError } = await supabase
+        .from('vacations')
+        .insert({
+          employee_id: employee.id,
+          start_date: startDate,
+          end_date: endDate,
+          status: 'pending',
+        });
+
+      if (!insertError) {
+        setShowVacationModal(false);
+        setStartDate('');
+        setEndDate('');
+        alert('Заявление на отпуск отправлено на рассмотрение.');
+      } else {
+        setVacationError('Ошибка при отправке заявления.');
+      }
+    } catch (err) {
+      setVacationError('Ошибка сети');
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   if (loading) return <div className="profile-page"><div className="empty-state">Загрузка...</div></div>;
@@ -186,7 +206,6 @@ export const MyProfilePage: React.FC = () => {
         </button>
       </div>
 
-      {/* Модальное окно планирования отпуска */}
       {showVacationModal && (
         <div className="modal" onClick={() => setShowVacationModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
