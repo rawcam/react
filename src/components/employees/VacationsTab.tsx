@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../App';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import { withAuthRetry } from '../../utils/supabaseHelpers';
 
 interface Vacation {
   id: string;
@@ -31,13 +32,18 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
   }, []);
 
   const loadVacations = async () => {
-    const { data, error } = await supabase
-      .from('vacations')
-      .select('*')
-      .eq('employee_id', employeeId)
-      .order('start_date', { ascending: false });
-    if (!error && data) {
-      setVacations(data);
+    try {
+      const vacations = await withAuthRetry<Vacation[]>(async () => {
+        const { data, error } = await supabase
+          .from('vacations')
+          .select('*')
+          .eq('employee_id', employeeId)
+          .order('start_date', { ascending: false });
+        return { data: data as Vacation[] | null, error };
+      });
+      if (vacations) setVacations(vacations);
+    } catch (err) {
+      console.error('Ошибка загрузки отпусков:', err);
     }
   };
 
@@ -54,38 +60,45 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
     setLoading(true);
     setError('');
 
-    // Проверка пересечений с другими инженерами
-    const { data: conflicts, error: conflictError } = await supabase
-      .from('vacations')
-      .select('*, employees!inner(*)')
-      .eq('employees.position', 'Инженер-проектировщик')
-      .neq('employee_id', employeeId)
-      .gte('start_date', startDate)
-      .lte('end_date', endDate);
-
-    if (!conflictError && conflicts && conflicts.length > 0) {
-      setError('В выбранный период уже есть инженеры в отпуске. Выберите другие даты.');
-      setLoading(false);
-      return;
-    }
-
-    const { error: insertError } = await supabase
-      .from('vacations')
-      .insert({
-        employee_id: employeeId,
-        start_date: startDate,
-        end_date: endDate,
-        status: 'pending',
+    try {
+      const conflicts = await withAuthRetry<any[]>(async () => {
+        const { data, error } = await supabase
+          .from('vacations')
+          .select('*, employees!inner(*)')
+          .eq('employees.position', 'Инженер-проектировщик')
+          .neq('employee_id', employeeId)
+          .gte('start_date', startDate)
+          .lte('end_date', endDate);
+        return { data: data as any[], error };
       });
 
-    if (!insertError) {
-      setStartDate('');
-      setEndDate('');
-      loadVacations();
-    } else {
-      setError('Ошибка при планировании отпуска');
+      if (conflicts && conflicts.length > 0) {
+        setError('В выбранный период уже есть инженеры в отпуске. Выберите другие даты.');
+        setLoading(false);
+        return;
+      }
+
+      const { error: insertError } = await supabase
+        .from('vacations')
+        .insert({
+          employee_id: employeeId,
+          start_date: startDate,
+          end_date: endDate,
+          status: 'pending',
+        });
+
+      if (!insertError) {
+        setStartDate('');
+        setEndDate('');
+        loadVacations();
+      } else {
+        setError('Ошибка при планировании отпуска');
+      }
+    } catch (err) {
+      setError('Ошибка сети');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleApprove = async (vacationId: string) => {
