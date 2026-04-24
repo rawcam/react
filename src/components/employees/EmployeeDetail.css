@@ -1,0 +1,77 @@
+/* src/components/employees/EmployeeDetail.css */
+.employee-detail {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.detail-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 8px;
+}
+
+.detail-tabs button {
+  background: none;
+  border: none;
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 40px 40px 0 0;
+  transition: var(--transition);
+}
+
+.detail-tabs button.active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+
+.detail-tabs button:hover:not(.active) {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.detail-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-field label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.detail-field input {
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.detail-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.payments-list {
+  overflow-x: auto;
+}
