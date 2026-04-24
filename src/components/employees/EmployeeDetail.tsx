@@ -4,7 +4,6 @@ import { supabase } from '../../App';
 import { VacationsTab } from './VacationsTab';
 import './EmployeeDetail.css';
 
-// Интерфейсы
 interface Employee {
   id: string;
   full_name: string;
@@ -12,6 +11,8 @@ interface Employee {
   department: string;
   base_salary: number;
   hire_date: string;
+  email?: string;      // ← новое поле
+  phone?: string;       // ← новое поле
 }
 
 interface SalaryPayment {
@@ -70,6 +71,8 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
         department: editedEmployee.department,
         base_salary: editedEmployee.base_salary,
         hire_date: editedEmployee.hire_date,
+        email: editedEmployee.email,    // ← сохраняем email
+        phone: editedEmployee.phone,    // ← сохраняем телефон
       })
       .eq('id', employee.id);
     if (!error) {
@@ -101,6 +104,8 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
           <div className="detail-field"><label>Должность</label><input type="text" value={editedEmployee.position} onChange={e => handleChange('position', e.target.value)} /></div>
           <div className="detail-field"><label>Отдел</label><input type="text" value={editedEmployee.department} onChange={e => handleChange('department', e.target.value)} /></div>
           <div className="detail-field"><label>Оклад (₽)</label><input type="number" value={editedEmployee.base_salary} onChange={e => handleChange('base_salary', Number(e.target.value))} /></div>
+          <div className="detail-field"><label>Email</label><input type="email" value={editedEmployee.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
+          <div className="detail-field"><label>Телефон</label><input type="text" value={editedEmployee.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
           <div className="detail-field"><label>Дата выхода</label><input type="date" value={editedEmployee.hire_date} onChange={e => handleChange('hire_date', e.target.value)} /></div>
           <div className="detail-actions">
             <button className="btn-primary" onClick={handleSave} disabled={saving}>
