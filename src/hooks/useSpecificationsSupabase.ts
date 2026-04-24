@@ -2,8 +2,9 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { supabase } from '../App'; // импорт из App.tsx
+import { supabase } from '../App';
 import { setSpecifications, Specification } from '../store/specificationsSlice';
+import { withAuthRetry } from '../utils/supabaseHelpers';
 
 export const useSpecificationsSupabase = () => {
   const dispatch = useDispatch();
@@ -13,16 +14,14 @@ export const useSpecificationsSupabase = () => {
   const loadSpecifications = useCallback(async (): Promise<void> => {
     if (!user) return;
     try {
-      let query = supabase.from('specifications').select('*');
-      // Если роль НЕ director и НЕ pm, фильтруем по user_id
-      if (role !== 'director' && role !== 'pm') {
-        query = query.eq('user_id', user.id);
-      }
-      const { data, error } = await query;
-      if (error) {
-        console.error('loadSpecifications error:', error.message);
-        return;
-      }
+      const data = await withAuthRetry(() => {
+        let query = supabase.from('specifications').select('*');
+        if (role !== 'director' && role !== 'pm') {
+          query = query.eq('user_id', user.id);
+        }
+        return query;
+      });
+
       const specs = data.map((item: any) => ({
         id: item.id,
         name: item.name,
@@ -32,8 +31,13 @@ export const useSpecificationsSupabase = () => {
         rows: item.rows || [],
       }));
       dispatch(setSpecifications(specs));
-    } catch (err) {
-      console.error('loadSpecifications unexpected error:', err);
+    } catch (err: any) {
+      if (err.message === 'SESSION_EXPIRED') {
+        await supabase.auth.signOut();
+        window.location.reload();
+      } else {
+        console.error('loadSpecifications error:', err);
+      }
     }
   }, [user, role, dispatch]);
 
