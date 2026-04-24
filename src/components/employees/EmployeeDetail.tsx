@@ -63,23 +63,26 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
 
   const handleSave = async () => {
     setSaving(true);
+    const dataToUpdate = {
+      full_name: editedEmployee.full_name,
+      position: editedEmployee.position,
+      department: editedEmployee.department,
+      base_salary: editedEmployee.base_salary,
+      hire_date: editedEmployee.hire_date,
+      email: editedEmployee.email,
+      phone: editedEmployee.phone,
+    };
+    console.log('[EmployeeDetail] Updating employee:', dataToUpdate);
     const { error } = await supabase
       .from('employees')
-      .update({
-        full_name: editedEmployee.full_name,
-        position: editedEmployee.position,
-        department: editedEmployee.department,
-        base_salary: editedEmployee.base_salary,
-        hire_date: editedEmployee.hire_date,
-        email: editedEmployee.email,
-        phone: editedEmployee.phone,
-      })
+      .update(dataToUpdate)
       .eq('id', employee.id);
-    if (!error) {
+    if (error) {
+      console.error('[EmployeeDetail] Update error:', error);
+      alert('Ошибка при сохранении: ' + error.message);
+    } else {
       onUpdate();
       alert('Сохранено');
-    } else {
-      alert('Ошибка при сохранении');
     }
     setSaving(false);
   };
