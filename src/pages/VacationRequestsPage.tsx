@@ -29,13 +29,13 @@ export const VacationRequestsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry<any[]>(() =>
-        supabase
+      const data = await withAuthRetry<any[]>(async () => {
+        const { data, error } = await supabase
           .from('vacations')
           .select('id, employee_id, start_date, end_date, status, created_at, employees(full_name, department)')
-          .order('created_at', { ascending: false })
-          .then(({ data, error }) => ({ data: data as any[], error }))
-      );
+          .order('created_at', { ascending: false });
+        return { data: data as any[], error };
+      });
 
       const formatted: VacationRequest[] = data.map((item: any) => ({
         id: item.id,
