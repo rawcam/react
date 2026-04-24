@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../App';
 import { VacationsTab } from './VacationsTab';
+import { withAuthRetry } from '../../utils/supabaseHelpers';
 import './EmployeeDetail.css';
 
 interface Employee {
@@ -47,13 +48,18 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
   }, []);
 
   const loadPayments = async () => {
-    const { data, error } = await supabase
-      .from('salary_payments')
-      .select('*')
-      .eq('employee_id', employee.id)
-      .order('date', { ascending: false });
-    if (!error && data) {
-      setPayments(data);
+    try {
+      const payments = await withAuthRetry<SalaryPayment[]>(async () => {
+        const { data, error } = await supabase
+          .from('salary_payments')
+          .select('*')
+          .eq('employee_id', employee.id)
+          .order('date', { ascending: false });
+        return { data: data as SalaryPayment[] | null, error };
+      });
+      if (payments) setPayments(payments);
+    } catch (err) {
+      console.error('Ошибка загрузки выплат:', err);
     }
   };
 
@@ -63,26 +69,23 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
 
   const handleSave = async () => {
     setSaving(true);
-    const dataToUpdate = {
-      full_name: editedEmployee.full_name,
-      position: editedEmployee.position,
-      department: editedEmployee.department,
-      base_salary: editedEmployee.base_salary,
-      hire_date: editedEmployee.hire_date,
-      email: editedEmployee.email,
-      phone: editedEmployee.phone,
-    };
-    console.log('[EmployeeDetail] Updating employee:', dataToUpdate);
     const { error } = await supabase
       .from('employees')
-      .update(dataToUpdate)
+      .update({
+        full_name: editedEmployee.full_name,
+        position: editedEmployee.position,
+        department: editedEmployee.department,
+        base_salary: editedEmployee.base_salary,
+        hire_date: editedEmployee.hire_date,
+        email: editedEmployee.email,
+        phone: editedEmployee.phone,
+      })
       .eq('id', employee.id);
-    if (error) {
-      console.error('[EmployeeDetail] Update error:', error);
-      alert('Ошибка при сохранении: ' + error.message);
-    } else {
+    if (!error) {
       onUpdate();
       alert('Сохранено');
+    } else {
+      alert('Ошибка при сохранении');
     }
     setSaving(false);
   };
