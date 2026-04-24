@@ -21,18 +21,18 @@ export const FinanceDetailModal: React.FC<FinanceDetailModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    withAuthRetry<any[]>(async () => {
-      const { data, error } = await supabase
+    withAuthRetry<any[]>(() =>
+      supabase
         .from('finance_1c')
         .select('*')
         .eq('category', category)
         .gte('date', dateRange.start)
         .lte('date', dateRange.end)
-        .order('date', { ascending: false });
-      return { data: data as any[] | null, error };
-    }).then(data => {
-      if (data) setTransactions(data);
-    }).catch(err => console.error(err))
+        .order('date', { ascending: false })
+        .then(({ data, error }) => ({ data: data as any[] | null, error }))
+    )
+      .then(data => setTransactions(data))
+      .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, [isOpen, category, dateRange]);
 
