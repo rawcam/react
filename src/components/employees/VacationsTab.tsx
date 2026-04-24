@@ -59,6 +59,7 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
       .from('vacations')
       .select('*, employees!inner(*)')
       .eq('employees.position', 'Инженер-проектировщик')
+      .neq('employee_id', employeeId)
       .gte('start_date', startDate)
       .lte('end_date', endDate);
 
@@ -103,6 +104,12 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
     if (!error) loadVacations();
   };
 
+  const handleDeleteVacation = async (vacationId: string) => {
+    if (!confirm('Удалить запись об отпуске?')) return;
+    const { error } = await supabase.from('vacations').delete().eq('id', vacationId);
+    if (!error) loadVacations();
+  };
+
   return (
     <div className="vacations-container">
       <div className="vacations-form">
@@ -133,12 +140,17 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
               <div className="vacation-status">
                 {v.status === 'approved' ? 'Одобрен' : v.status === 'rejected' ? 'Отклонён' : 'На рассмотрении'}
               </div>
-              {userRole === 'director' && v.status === 'pending' && (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn-secondary" onClick={() => handleApprove(v.id)}>Одобрить</button>
-                  <button className="btn-secondary" onClick={() => handleReject(v.id)} style={{ color: 'var(--danger)' }}>Отклонить</button>
-                </div>
-              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {userRole === 'director' && v.status === 'pending' && (
+                  <>
+                    <button className="btn-secondary" onClick={() => handleApprove(v.id)}>Одобрить</button>
+                    <button className="btn-secondary" onClick={() => handleReject(v.id)} style={{ color: 'var(--danger)' }}>Отклонить</button>
+                  </>
+                )}
+                <button className="btn-secondary" onClick={() => handleDeleteVacation(v.id)} style={{ color: 'var(--danger)' }}>
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
             </div>
           ))
         )}
