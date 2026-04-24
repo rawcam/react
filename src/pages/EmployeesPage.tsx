@@ -21,6 +21,7 @@ export const EmployeesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState<string>('all');
+  const [vacationFilter, setVacationFilter] = useState<string>('all'); // all, onVacation, available
   const [showAddModal, setShowAddModal] = useState(false);
   const [formName, setFormName] = useState('');
   const [formPosition, setFormPosition] = useState('');
@@ -51,11 +52,13 @@ export const EmployeesPage: React.FC = () => {
     loadEmployees();
   }, []);
 
+  // Здесь нужно будет загружать статус отпусков, пока заглушка
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
       const matchDept = deptFilter === 'all' || emp.department === deptFilter;
       const matchSearch = emp.full_name.toLowerCase().includes(search.toLowerCase()) ||
                           emp.position.toLowerCase().includes(search.toLowerCase());
+      // Фильтр по отпускам пока пропускаем всех
       return matchDept && matchSearch;
     });
   }, [employees, deptFilter, search]);
@@ -104,6 +107,14 @@ export const EmployeesPage: React.FC = () => {
             <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
               <option value="all">Все отделы</option>
               {departments.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Отпуск</label>
+            <select value={vacationFilter} onChange={e => setVacationFilter(e.target.value)}>
+              <option value="all">Все</option>
+              <option value="onVacation">В отпуске</option>
+              <option value="available">Доступен</option>
             </select>
           </div>
           <div className="filter-group">
@@ -156,7 +167,7 @@ export const EmployeesPage: React.FC = () => {
         </table>
       </div>
 
-      {/* Модальное окно добавления (оставим пока для быстрого добавления) */}
+      {/* Модальное окно добавления */}
       {showAddModal && (
         <div className="modal" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
