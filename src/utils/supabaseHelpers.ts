@@ -1,46 +1,42 @@
+// src/utils/supabaseHelpers.ts
 import { supabase } from '../App';
 
-const REQUEST_TIMEOUT = 8000; // 8 секунд на запрос
-const REFRESH_TIMEOUT = 5000; // 5 секунд на обновление токена
+const REQUEST_TIMEOUT = 8000;
 
-async function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout>;
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let id: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(errorMsg)), ms);
+    id = setTimeout(() => reject(new Error('TIMEOUT')), ms);
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId!));
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(id!);
+  }
 }
 
 export async function withAuthRetry<T>(
-  queryFn: () => Promise<{ data: T; error: any }>
+  queryFn: () => Promise<{ data: T | null; error: any }>
 ): Promise<T> {
   const MAX_RETRIES = 1;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const { data, error } = await withTimeout(
-      queryFn(),
-      REQUEST_TIMEOUT,
-      'TIMEOUT'
-    );
+    const { data, error } = await withTimeout(queryFn(), REQUEST_TIMEOUT);
 
-    if (!error) return data;
+    if (!error && data !== null && data !== undefined) return data;
 
     if (error?.message?.includes('JWT expired') || error?.status === 401) {
       if (attempt < MAX_RETRIES) {
         try {
-          const refreshRes = await withTimeout(
-            supabase.auth.refreshSession(),
-            REFRESH_TIMEOUT,
-            'REFRESH_TIMEOUT'
-          );
-          if (refreshRes.data.session) continue;
-        } catch (refreshError) {
-          // обновить не удалось
-        }
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          if (refreshData.session) continue;
+        } catch {}
       }
       throw new Error('SESSION_EXPIRED');
     }
-    // все остальные ошибки – сразу выбрасываем
-    throw error;
+
+    if (error) throw error;
+    // если нет ошибки, но data пустая — возвращаем как есть (может быть пустой массив)
+    if (data === null || data === undefined) throw new Error('NO_DATA');
   }
   throw new Error('UNREACHABLE');
 }
