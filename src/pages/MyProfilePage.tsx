@@ -22,10 +22,24 @@ interface Vacation {
   status: 'pending' | 'approved' | 'rejected';
 }
 
+const inspiringQuotes = [
+  '«Самая трудная часть работы — решиться начать. Остальное — просто упорство и правильные инструменты.»',
+  '«Успех — это сумма маленьких усилий, повторяемых изо дня в день.»',
+  '«Великие дела не совершаются в одиночку, но начинаются с одного человека.»',
+  '«Каждый день — это новая возможность стать лучше, чем вчера.»',
+  '«Твой вклад важен. Без тебя эта команда была бы другой.»'
+];
+
 export const MyProfilePage: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showVacationModal, setShowVacationModal] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [vacationError, setVacationError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   const [nextSalaryDate] = useState(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 1, 5);
@@ -38,6 +52,11 @@ export const MyProfilePage: React.FC = () => {
   });
   const [predictedBonus, setPredictedBonus] = useState(0);
   const [daysUntilVacation, setDaysUntilVacation] = useState(0);
+  const [quote, setQuote] = useState('');
+
+  useEffect(() => {
+    setQuote(inspiringQuotes[Math.floor(Math.random() * inspiringQuotes.length)]);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -51,7 +70,6 @@ export const MyProfilePage: React.FC = () => {
         setEmployee(data);
         setPredictedBonus(Math.round(data.base_salary * 0.15));
 
-        // Ближайший утверждённый отпуск
         const today = new Date().toISOString().slice(0, 10);
         const { data: vacations } = await supabase
           .from('vacations')
@@ -72,6 +90,55 @@ export const MyProfilePage: React.FC = () => {
     loadEmployee();
   }, [user]);
 
+  const handlePlanVacation = async () => {
+    if (!startDate || !endDate) {
+      setVacationError('Выберите даты начала и окончания отпуска');
+      return;
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      setVacationError('Дата начала не может быть позже даты окончания');
+      return;
+    }
+    if (!employee) return;
+
+    setSubmitting(true);
+    setVacationError('');
+
+    // Проверка пересечений с другими инженерами
+    const { data: conflicts, error: conflictError } = await supabase
+      .from('vacations')
+      .select('*, employees!inner(*)')
+      .eq('employees.position', 'Инженер-проектировщик')
+      .neq('employee_id', employee.id) // исключаем самого себя
+      .gte('start_date', startDate)
+      .lte('end_date', endDate);
+
+    if (!conflictError && conflicts && conflicts.length > 0) {
+      setVacationError('В выбранный период уже есть инженеры в отпуске. Выберите другие даты.');
+      setSubmitting(false);
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from('vacations')
+      .insert({
+        employee_id: employee.id,
+        start_date: startDate,
+        end_date: endDate,
+        status: 'pending',
+      });
+
+    if (!insertError) {
+      setShowVacationModal(false);
+      setStartDate('');
+      setEndDate('');
+      alert('Заявление на отпуск отправлено на рассмотрение.');
+    } else {
+      setVacationError('Ошибка при отправке заявления.');
+    }
+    setSubmitting(false);
+  };
+
   if (loading) return <div className="profile-page"><div className="empty-state">Загрузка...</div></div>;
   if (!employee) return <div className="profile-page"><div className="empty-state">Профиль не найден. Обратитесь к администратору.</div></div>;
 
@@ -80,7 +147,7 @@ export const MyProfilePage: React.FC = () => {
       <div className="profile-header">
         <div className="profile-greeting">
           <h2>Привет, {employee.full_name.split(' ')[1]}! 👋</h2>
-          <p className="positive-quote">«Самая трудная часть работы — решиться начать. Остальное — просто упорство и правильные инструменты.»</p>
+          <p className="positive-quote">{quote}</p>
         </div>
         <div className="profile-avatar">
           {employee.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -114,10 +181,32 @@ export const MyProfilePage: React.FC = () => {
         <button className="btn-primary" onClick={() => alert('Функция запроса расчётного листа пока недоступна')}>
           📄 Запросить расчётный лист
         </button>
-        <button className="btn-secondary" onClick={() => alert('Планирование отпуска откроется в новом окне')}>
+        <button className="btn-secondary" onClick={() => setShowVacationModal(true)}>
           🏖️ Запланировать отпуск
         </button>
       </div>
+
+      {/* Модальное окно планирования отпуска */}
+      {showVacationModal && (
+        <div className="modal" onClick={() => setShowVacationModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Запланировать отпуск</h3>
+              <span className="modal-close" onClick={() => setShowVacationModal(false)}>×</span>
+            </div>
+            <div className="date-range" style={{ display: 'flex', gap: '16px', marginBottom: '16px', alignItems: 'center' }}>
+              <label>С</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+              <label>по</label>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+            </div>
+            {vacationError && <div className="error-message" style={{ color: 'var(--danger)', marginBottom: '12px' }}>{vacationError}</div>}
+            <button className="btn-primary" onClick={handlePlanVacation} disabled={submitting} style={{ width: '100%' }}>
+              {submitting ? 'Отправка...' : 'Отправить заявление'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
