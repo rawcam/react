@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../App';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
+import { withAuthRetry } from '../utils/supabaseHelpers';
 import './VacationRequestsPage.css';
 
 interface VacationRequest {
@@ -21,16 +22,19 @@ export const VacationRequestsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [deptFilter, setDeptFilter] = useState<string>('all');
+  const [error, setError] = useState<string | null>(null);
   const userRole = useSelector((state: RootState) => state.auth.role);
 
   const loadRequests = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('vacations')
-      .select('id, employee_id, start_date, end_date, status, created_at, employees(full_name, department)')
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
+    setError(null);
+    try {
+      const data = await withAuthRetry(() =>
+        supabase
+          .from('vacations')
+          .select('id, employee_id, start_date, end_date, status, created_at, employees(full_name, department)')
+          .order('created_at', { ascending: false })
+      );
       const formatted: VacationRequest[] = data.map((item: any) => ({
         id: item.id,
         employee_id: item.employee_id,
@@ -42,8 +46,16 @@ export const VacationRequestsPage: React.FC = () => {
         created_at: item.created_at,
       }));
       setRequests(formatted);
+    } catch (err: any) {
+      if (err.message === 'SESSION_EXPIRED') {
+        await supabase.auth.signOut();
+        window.location.reload();
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -64,7 +76,6 @@ export const VacationRequestsPage: React.FC = () => {
       .update({ status: action })
       .eq('id', id);
     if (!error) {
-      // Обновляем локальный список
       setRequests(prev => prev.map(r => r.id === id ? { ...r, status: action } : r));
     } else {
       alert('Ошибка при обновлении статуса');
@@ -78,8 +89,18 @@ export const VacationRequestsPage: React.FC = () => {
 
   if (loading) return <div className="requests-page"><div className="empty-state">Загрузка заявок...</div></div>;
 
+  if (error) return (
+    <div className="requests-page">
+      <div className="empty-state">
+        <p>Ошибка: {error}</p>
+        <button onClick={loadRequests}>Повторить</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="requests-page">
+      {/* ... JSX без изменений, как в оригинале ... */}
       <div className="requests-toolbar">
         <div className="toolbar-left">
           <div className="filter-group">
@@ -100,17 +121,10 @@ export const VacationRequestsPage: React.FC = () => {
           </div>
         </div>
       </div>
-
       <div className="requests-card">
         <table className="requests-table">
           <thead>
-            <tr>
-              <th>Сотрудник</th>
-              <th>Отдел</th>
-              <th>Даты</th>
-              <th>Статус</th>
-              <th>Действия</th>
-            </tr>
+            <tr><th>Сотрудник</th><th>Отдел</th><th>Даты</th><th>Статус</th><th>Действия</th></tr>
           </thead>
           <tbody>
             {filteredRequests.length === 0 ? (
