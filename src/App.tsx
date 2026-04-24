@@ -15,6 +15,7 @@ import { LoginPage } from './pages/LoginPage';
 import { FinancePage } from './pages/FinancePage';
 import FlowEditorPage from './pages/FlowEditorPage';
 import { CalculationsPage } from './pages/CalculationsPage';
+import { EmployeesPage } from './pages/EmployeesPage';
 import './index.css';
 
 // Синхронная очистка хранилища
@@ -133,6 +134,7 @@ const AppContent = () => {
                 <Route path="/specification/:id" element={<SpecificationPage />} />
                 <Route path="/specification" element={<SpecificationPage />} />
                 <Route path="/flow-editor" element={<FlowEditorPage />} />
+                <Route path="/employees" element={<EmployeesPage />} />
               </Routes>
             </main>
           </div>
