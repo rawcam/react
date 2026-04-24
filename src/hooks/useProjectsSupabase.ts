@@ -14,13 +14,13 @@ export const useProjectsSupabase = () => {
   const loadProjects = useCallback(async () => {
     if (!user) return;
     try {
-      const raw = await withAuthRetry<any[]>(() => {
+      const raw = await withAuthRetry<any[]>(async () => {
         let query = supabase.from('projects').select('*');
         if (role !== 'director' && role !== 'pm') {
           query = query.eq('user_id', user.id);
         }
-        // Возвращаем Promise, который резолвится в { data, error }
-        return query.then(({ data, error }) => ({ data: data as any[], error }));
+        const { data, error } = await query;
+        return { data: data as any[], error };
       });
 
       const projects = raw.map((item: any) => ({
