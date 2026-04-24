@@ -4,7 +4,30 @@ import { supabase } from '../../App';
 import { VacationsTab } from './VacationsTab';
 import './EmployeeDetail.css';
 
-// ... (интерфейсы Employee и SalaryPayment без изменений)
+// Интерфейсы
+interface Employee {
+  id: string;
+  full_name: string;
+  position: string;
+  department: string;
+  base_salary: number;
+  hire_date: string;
+}
+
+interface SalaryPayment {
+  id: number;
+  date: string;
+  amount: number;
+  type: string;
+  description: string;
+}
+
+const typeLabels: Record<string, string> = {
+  salary: 'Зарплата',
+  bonus: 'Премия',
+  vacation: 'Отпускные',
+  sick_leave: 'Больничный',
+};
 
 interface EmployeeDetailProps {
   employee: Employee;
