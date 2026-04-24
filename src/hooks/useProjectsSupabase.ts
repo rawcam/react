@@ -14,15 +14,16 @@ export const useProjectsSupabase = () => {
   const loadProjects = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await withAuthRetry(() => {
+      const raw = await withAuthRetry<any[]>(() => {
         let query = supabase.from('projects').select('*');
         if (role !== 'director' && role !== 'pm') {
           query = query.eq('user_id', user.id);
         }
-        return query;
+        // Возвращаем Promise, который резолвится в { data, error }
+        return query.then(({ data, error }) => ({ data: data as any[], error }));
       });
 
-      const projects = data.map((item: any) => ({
+      const projects = raw.map((item: any) => ({
         id: item.id,
         shortId: item.short_id,
         name: item.name,
@@ -100,7 +101,6 @@ export const useProjectsSupabase = () => {
     if (!user) return;
     const dbUpdates: any = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
-    // ... (остальные поля аналогично оригиналу, без изменений)
     if (updates.category !== undefined) dbUpdates.category = updates.category;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.statusStartDate !== undefined) dbUpdates.status_start_date = updates.statusStartDate;
