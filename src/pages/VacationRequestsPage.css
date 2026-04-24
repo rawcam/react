@@ -1,0 +1,106 @@
+/* src/pages/VacationRequestsPage.css */
+.requests-page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.requests-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 12px 20px;
+  border: 1px solid var(--border-light);
+}
+
+.toolbar-left {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.filter-group select {
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.requests-card {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  overflow-x: auto;
+}
+
+.requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.requests-table th {
+  text-align: left;
+  padding: 16px 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.requests-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.pending { background: rgba(245,158,11,0.2); color: var(--warning); }
+.status-badge.approved { background: rgba(16,185,129,0.2); color: var(--success); }
+.status-badge.rejected { background: rgba(239,68,68,0.2); color: var(--danger); }
+
+.btn-approve {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.btn-reject {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
