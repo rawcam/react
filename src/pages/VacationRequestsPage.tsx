@@ -29,12 +29,14 @@ export const VacationRequestsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry(() =>
+      const data = await withAuthRetry<any[]>(() =>
         supabase
           .from('vacations')
           .select('id, employee_id, start_date, end_date, status, created_at, employees(full_name, department)')
           .order('created_at', { ascending: false })
+          .then(({ data, error }) => ({ data: data as any[], error }))
       );
+
       const formatted: VacationRequest[] = data.map((item: any) => ({
         id: item.id,
         employee_id: item.employee_id,
@@ -52,6 +54,7 @@ export const VacationRequestsPage: React.FC = () => {
         window.location.reload();
       } else {
         setError(err.message);
+        console.error('Load requests error:', err);
       }
     } finally {
       setLoading(false);
@@ -89,18 +92,19 @@ export const VacationRequestsPage: React.FC = () => {
 
   if (loading) return <div className="requests-page"><div className="empty-state">Загрузка заявок...</div></div>;
 
-  if (error) return (
-    <div className="requests-page">
-      <div className="empty-state">
-        <p>Ошибка: {error}</p>
-        <button onClick={loadRequests}>Повторить</button>
+  if (error) {
+    return (
+      <div className="requests-page">
+        <div className="empty-state">
+          <p>Ошибка: {error}</p>
+          <button onClick={loadRequests}>Повторить</button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="requests-page">
-      {/* ... JSX без изменений, как в оригинале ... */}
       <div className="requests-toolbar">
         <div className="toolbar-left">
           <div className="filter-group">
@@ -121,10 +125,17 @@ export const VacationRequestsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
       <div className="requests-card">
         <table className="requests-table">
           <thead>
-            <tr><th>Сотрудник</th><th>Отдел</th><th>Даты</th><th>Статус</th><th>Действия</th></tr>
+            <tr>
+              <th>Сотрудник</th>
+              <th>Отдел</th>
+              <th>Даты</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
           </thead>
           <tbody>
             {filteredRequests.length === 0 ? (
