@@ -47,13 +47,13 @@ export const EmployeesPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry<any[]>(() =>
-        supabase
+      const data = await withAuthRetry<any[]>(async () => {
+        const { data, error } = await supabase
           .from('employees')
           .select('*')
-          .order('full_name')
-          .then(({ data, error }) => ({ data: data as any[], error }))
-      );
+          .order('full_name');
+        return { data: data as any[], error };
+      });
 
       const today = new Date().toISOString().slice(0, 10);
       const { data: vacData, error: vacError } = await supabase
