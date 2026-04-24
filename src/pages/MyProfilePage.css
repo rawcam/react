@@ -83,10 +83,52 @@
   color: var(--text-muted);
 }
 
+/* Кнопки в одну строку и одинаковой высоты */
 .profile-actions {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.profile-actions .btn-primary,
+.profile-actions .btn-secondary {
+  padding: 10px 24px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  height: 40px;
+  box-sizing: border-box;
+  border-radius: 40px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-actions .btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: white;
+  border: none;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.profile-actions .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.profile-actions .btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.profile-actions .btn-secondary:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent);
 }
 
 .empty-state {
