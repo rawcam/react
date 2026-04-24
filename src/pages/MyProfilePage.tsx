@@ -63,30 +63,30 @@ export const MyProfilePage: React.FC = () => {
     if (!user) return;
     const loadEmployee = async () => {
       try {
-        const emp = await withAuthRetry<Employee>(() =>
-          supabase
+        const emp = await withAuthRetry<Employee>(async () => {
+          const { data, error } = await supabase
             .from('employees')
             .select('*')
             .eq('email', user.email)
-            .single()
-            .then(({ data, error }) => ({ data: data as Employee | null, error }))
-        );
+            .single();
+          return { data: data as Employee | null, error };
+        });
         if (emp) {
           setEmployee(emp);
           setPredictedBonus(Math.round(emp.base_salary * 0.15));
 
           const today = new Date().toISOString().slice(0, 10);
-          const vacations = await withAuthRetry<Vacation[]>(() =>
-            supabase
+          const vacations = await withAuthRetry<Vacation[]>(async () => {
+            const { data, error } = await supabase
               .from('vacations')
               .select('*')
               .eq('employee_id', emp.id)
               .eq('status', 'approved')
               .gte('start_date', today)
               .order('start_date', { ascending: true })
-              .limit(1)
-              .then(({ data, error }) => ({ data: data as Vacation[] | null, error }))
-          );
+              .limit(1);
+            return { data: data as Vacation[] | null, error };
+          });
           if (vacations && vacations.length > 0) {
             const start = new Date(vacations[0].start_date);
             const diff = Math.ceil((start.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -117,16 +117,16 @@ export const MyProfilePage: React.FC = () => {
     setVacationError('');
 
     try {
-      const conflicts = await withAuthRetry<any[]>(() =>
-        supabase
+      const conflicts = await withAuthRetry<any[]>(async () => {
+        const { data, error } = await supabase
           .from('vacations')
           .select('*, employees!inner(*)')
           .eq('employees.position', 'Инженер-проектировщик')
           .neq('employee_id', employee.id)
           .gte('start_date', startDate)
-          .lte('end_date', endDate)
-          .then(({ data, error }) => ({ data: data as any[] | null, error }))
-      );
+          .lte('end_date', endDate);
+        return { data: data as any[] | null, error };
+      });
 
       if (conflicts.length > 0) {
         setVacationError('В выбранный период уже есть инженеры в отпуске. Выберите другие даты.');
