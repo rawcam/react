@@ -33,6 +33,7 @@ export const EmployeesPage: React.FC = () => {
   const [formDepartment, setFormDepartment] = useState('');
   const [formSalary, setFormSalary] = useState<number>(100000);
   const [formHireDate, setFormHireDate] = useState(new Date().toISOString().slice(0, 10));
+  const [formEmail, setFormEmail] = useState('');
 
   const searchParams = new URLSearchParams(location.search);
   const employeeId = searchParams.get('id');
@@ -106,10 +107,12 @@ export const EmployeesPage: React.FC = () => {
       department: formDepartment,
       base_salary: formSalary,
       hire_date: formHireDate,
+      email: formEmail,
     });
     if (!error) {
       setShowAddModal(false);
       setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000);
+      setFormEmail('');
       loadEmployees();
     } else {
       alert('Ошибка при добавлении: ' + error.message);
@@ -187,6 +190,7 @@ export const EmployeesPage: React.FC = () => {
           onClick={() => {
             setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000);
             setFormHireDate(new Date().toISOString().slice(0, 10));
+            setFormEmail('');
             setShowAddModal(true);
           }}
         >
@@ -264,6 +268,10 @@ export const EmployeesPage: React.FC = () => {
             <div className="setting" style={{ marginBottom: '12px' }}>
               <label>Оклад (₽)</label>
               <input type="number" value={formSalary} onChange={e => setFormSalary(Number(e.target.value))} />
+            </div>
+            <div className="setting" style={{ marginBottom: '12px' }}>
+              <label>Email</label>
+              <input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} />
             </div>
             <div className="setting" style={{ marginBottom: '20px' }}>
               <label>Дата выхода</label>
