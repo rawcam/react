@@ -1,6 +1,7 @@
 // src/components/ui/FinanceDetailModal.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../App';
+import { withAuthRetry } from '../../utils/supabaseHelpers';
 import './FinanceDetailModal.css';
 
 interface FinanceDetailModalProps {
@@ -20,17 +21,19 @@ export const FinanceDetailModal: React.FC<FinanceDetailModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    supabase
-      .from('finance_1c')
-      .select('*')
-      .eq('category', category)
-      .gte('date', dateRange.start)
-      .lte('date', dateRange.end)
-      .order('date', { ascending: false })
-      .then(({ data, error }) => {
-        if (!error && data) setTransactions(data);
-        setLoading(false);
-      });
+    withAuthRetry<any[]>(async () => {
+      const { data, error } = await supabase
+        .from('finance_1c')
+        .select('*')
+        .eq('category', category)
+        .gte('date', dateRange.start)
+        .lte('date', dateRange.end)
+        .order('date', { ascending: false });
+      return { data: data as any[] | null, error };
+    }).then(data => {
+      if (data) setTransactions(data);
+    }).catch(err => console.error(err))
+      .finally(() => setLoading(false));
   }, [isOpen, category, dateRange]);
 
   if (!isOpen) return null;
