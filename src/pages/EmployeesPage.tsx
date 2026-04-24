@@ -47,7 +47,14 @@ export const EmployeesPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry(() => supabase.from('employees').select('*').order('full_name'));
+      const data = await withAuthRetry<any[]>(() =>
+        supabase
+          .from('employees')
+          .select('*')
+          .order('full_name')
+          .then(({ data, error }) => ({ data: data as any[], error }))
+      );
+
       const today = new Date().toISOString().slice(0, 10);
       const { data: vacData, error: vacError } = await supabase
         .from('vacations')
@@ -148,7 +155,6 @@ export const EmployeesPage: React.FC = () => {
 
   return (
     <div className="employees-page">
-      {/* ... остальной JSX без изменений ... */}
       <div className="employees-toolbar">
         <div className="toolbar-left">
           <div className="filter-group">
@@ -187,22 +193,41 @@ export const EmployeesPage: React.FC = () => {
           <i className="fas fa-user-plus"></i> Добавить
         </button>
       </div>
+
       <div className="employees-card">
         <table className="employees-table">
           <thead>
-            <tr><th>Сотрудник</th><th>Должность</th><th>Отдел</th><th>Оклад</th><th>Дата выхода</th><th>Действия</th></tr>
+            <tr>
+              <th>Сотрудник</th>
+              <th>Должность</th>
+              <th>Отдел</th>
+              <th>Оклад</th>
+              <th>Дата выхода</th>
+              <th>Действия</th>
+            </tr>
           </thead>
           <tbody>
             {filteredEmployees.map(emp => (
               <tr key={emp.id} onClick={() => handleRowClick(emp.id)} style={{ cursor: 'pointer' }}>
-                <td><div className="employee-name"><span className="employee-avatar">{emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</span>{emp.full_name}</div></td>
+                <td>
+                  <div className="employee-name">
+                    <span className="employee-avatar">{emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</span>
+                    {emp.full_name}
+                  </div>
+                </td>
                 <td>{emp.position}</td>
                 <td>{emp.department}</td>
                 <td>{emp.base_salary.toLocaleString()} ₽</td>
                 <td>{new Date(emp.hire_date).toLocaleDateString('ru-RU')}</td>
                 <td>
                   <button className="btn-secondary" onClick={(e) => { e.stopPropagation(); handleRowClick(emp.id); }}>Подробнее</button>
-                  <button className="btn-secondary" style={{ marginLeft: 8, color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(emp.id, emp.full_name); }}>Удалить</button>
+                  <button
+                    className="btn-secondary"
+                    style={{ marginLeft: 8, color: 'var(--danger)' }}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(emp.id, emp.full_name); }}
+                  >
+                    Удалить
+                  </button>
                 </td>
               </tr>
             ))}
@@ -215,27 +240,38 @@ export const EmployeesPage: React.FC = () => {
 
       {showAddModal && (
         <div className="modal" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" style={{ padding: '20px', maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+          <div
+            className="modal-content"
+            style={{ padding: '20px', maxWidth: '400px' }}
+            onClick={e => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3>Новый сотрудник</h3>
               <span className="modal-close" onClick={() => setShowAddModal(false)}>×</span>
             </div>
             <div className="setting" style={{ marginBottom: '12px' }}>
-              <label>ФИО</label><input type="text" value={formName} onChange={e => setFormName(e.target.value)} />
+              <label>ФИО</label>
+              <input type="text" value={formName} onChange={e => setFormName(e.target.value)} />
             </div>
             <div className="setting" style={{ marginBottom: '12px' }}>
-              <label>Должность</label><input type="text" value={formPosition} onChange={e => setFormPosition(e.target.value)} />
+              <label>Должность</label>
+              <input type="text" value={formPosition} onChange={e => setFormPosition(e.target.value)} />
             </div>
             <div className="setting" style={{ marginBottom: '12px' }}>
-              <label>Отдел</label><input type="text" value={formDepartment} onChange={e => setFormDepartment(e.target.value)} />
+              <label>Отдел</label>
+              <input type="text" value={formDepartment} onChange={e => setFormDepartment(e.target.value)} />
             </div>
             <div className="setting" style={{ marginBottom: '12px' }}>
-              <label>Оклад (₽)</label><input type="number" value={formSalary} onChange={e => setFormSalary(Number(e.target.value))} />
+              <label>Оклад (₽)</label>
+              <input type="number" value={formSalary} onChange={e => setFormSalary(Number(e.target.value))} />
             </div>
             <div className="setting" style={{ marginBottom: '20px' }}>
-              <label>Дата выхода</label><input type="date" value={formHireDate} onChange={e => setFormHireDate(e.target.value)} />
+              <label>Дата выхода</label>
+              <input type="date" value={formHireDate} onChange={e => setFormHireDate(e.target.value)} />
             </div>
-            <button className="btn-primary" style={{ width: '100%' }} onClick={handleAdd}>Добавить</button>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={handleAdd}>
+              Добавить
+            </button>
           </div>
         </div>
       )}
