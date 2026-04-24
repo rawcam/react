@@ -154,7 +154,17 @@ export const EmployeesPage: React.FC = () => {
             />
           </div>
         </div>
-        <button className="btn-primary" onClick={() => { setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000); setFormHireDate(new Date().toISOString().slice(0,10)); setShowAddModal(true); }}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setFormName('');
+            setFormPosition('');
+            setFormDepartment('');
+            setFormSalary(100000);
+            setFormHireDate(new Date().toISOString().slice(0, 10));
+            setShowAddModal(true);
+          }}
+        >
           <i className="fas fa-user-plus"></i> Добавить
         </button>
       </div>
@@ -186,7 +196,13 @@ export const EmployeesPage: React.FC = () => {
                 <td>{new Date(emp.hire_date).toLocaleDateString('ru-RU')}</td>
                 <td>
                   <button className="btn-secondary" onClick={(e) => { e.stopPropagation(); handleRowClick(emp.id); }}>Подробнее</button>
-                  <button className="btn-secondary" style={{ marginLeft: 8, color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(emp.id, emp.full_name); }}>Удалить</button>
+                  <button
+                    className="btn-secondary"
+                    style={{ marginLeft: 8, color: 'var(--danger)' }}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(emp.id, emp.full_name); }}
+                  >
+                    Удалить
+                  </button>
                 </td>
               </tr>
             ))}
@@ -196,14 +212,38 @@ export const EmployeesPage: React.FC = () => {
 
       {showAddModal && (
         <div className="modal" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header"><h3>Новый сотрудник</h3><span className="modal-close" onClick={() => setShowAddModal(false)}>×</span></div>
-            <div className="setting"><label>ФИО</label><input type="text" value={formName} onChange={e => setFormName(e.target.value)} /></div>
-            <div className="setting"><label>Должность</label><input type="text" value={formPosition} onChange={e => setFormPosition(e.target.value)} /></div>
-            <div className="setting"><label>Отдел</label><input type="text" value={formDepartment} onChange={e => setFormDepartment(e.target.value)} /></div>
-            <div className="setting"><label>Оклад (₽)</label><input type="number" value={formSalary} onChange={e => setFormSalary(Number(e.target.value))} /></div>
-            <div className="setting"><label>Дата выхода</label><input type="date" value={formHireDate} onChange={e => setFormHireDate(e.target.value)} /></div>
-            <button className="btn-primary" style={{ width: '100%', marginTop: 16 }} onClick={handleAdd}>Добавить</button>
+          <div
+            className="modal-content"
+            style={{ padding: '20px', maxWidth: '400px' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3>Новый сотрудник</h3>
+              <span className="modal-close" onClick={() => setShowAddModal(false)}>×</span>
+            </div>
+            <div className="setting" style={{ marginBottom: '12px' }}>
+              <label>ФИО</label>
+              <input type="text" value={formName} onChange={e => setFormName(e.target.value)} />
+            </div>
+            <div className="setting" style={{ marginBottom: '12px' }}>
+              <label>Должность</label>
+              <input type="text" value={formPosition} onChange={e => setFormPosition(e.target.value)} />
+            </div>
+            <div className="setting" style={{ marginBottom: '12px' }}>
+              <label>Отдел</label>
+              <input type="text" value={formDepartment} onChange={e => setFormDepartment(e.target.value)} />
+            </div>
+            <div className="setting" style={{ marginBottom: '12px' }}>
+              <label>Оклад (₽)</label>
+              <input type="number" value={formSalary} onChange={e => setFormSalary(Number(e.target.value))} />
+            </div>
+            <div className="setting" style={{ marginBottom: '20px' }}>
+              <label>Дата выхода</label>
+              <input type="date" value={formHireDate} onChange={e => setFormHireDate(e.target.value)} />
+            </div>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={handleAdd}>
+              Добавить
+            </button>
           </div>
         </div>
       )}
