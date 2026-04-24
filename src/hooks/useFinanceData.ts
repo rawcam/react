@@ -1,6 +1,6 @@
 // src/hooks/useFinanceData.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../App';
 
 interface FinanceKPI {
   revenue: number;
