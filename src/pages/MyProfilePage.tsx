@@ -1,6 +1,7 @@
 // src/pages/MyProfilePage.tsx
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../App';
 import { RootState } from '../store';
 import { withAuthRetry } from '../utils/supabaseHelpers';
@@ -32,6 +33,7 @@ const inspiringQuotes = [
 ];
 
 export const MyProfilePage: React.FC = () => {
+  const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
