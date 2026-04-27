@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
 import { useFinanceData } from '../hooks/useFinanceData';
-import { FinanceDetailModal } from '../components/ui/FinanceDetailModal';
 import './FinancePage.css';
 
 type InformerCategory = 'all' | 'key' | 'taxes' | 'overhead' | 'staff';
@@ -22,9 +21,6 @@ export const FinancePage: React.FC = () => {
     periodType === 'custom' ? customEnd : undefined
   );
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState('');
-  const [modalCategory, setModalCategory] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [informerCategory, setInformerCategory] = useState<InformerCategory>('key');
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,16 +39,6 @@ export const FinancePage: React.FC = () => {
       });
     }
   }, [data, customStart, customEnd]);
-
-  const handleInformeClick = (title: string, category: string) => {
-    setModalTitle(title);
-    setModalCategory(category);
-    setModalOpen(true);
-  };
-
-  const handleReportClick = (reportType: string) => {
-    alert(`Отчёт "${reportType}" в разработке.`);
-  };
 
   const filteredTransactions = useMemo(() => {
     if (!data) return [];
@@ -107,7 +93,6 @@ export const FinancePage: React.FC = () => {
 
   return (
     <div className="finance-page">
-      {/* Статус 1С — маленькая иконка справа */}
       <div className="finance-header">
         <div className="status-badge-small">
           <i className="fas fa-link"></i>
@@ -115,7 +100,6 @@ export const FinancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Тулбар с выпадающим списком периода */}
       <div className="finance-toolbar">
         <div className="toolbar-left">
           <div className="filter-group">
@@ -137,7 +121,6 @@ export const FinancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Строка с категориями информеров и переключателем вида (справа) */}
       <div className="finance-control-row">
         <div className="informer-category-selector">
           <button className={`toggle-btn ${informerCategory === 'key' ? 'active' : ''}`} onClick={() => setInformerCategory('key')}>Ключевые</button>
@@ -156,7 +139,6 @@ export const FinancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Информеры */}
       {(informerCategory === 'key' || informerCategory === 'all') && (
         <>
           <div className="section-title"><i className="fas fa-chart-pie"></i> Ключевые показатели</div>
@@ -201,20 +183,20 @@ export const FinancePage: React.FC = () => {
         <>
           <div className="section-title"><i className="fas fa-landmark"></i> Налоги</div>
           <div className="informers-row">
-            <div className="informer clickable" style={{ borderLeftColor: '#8b5cf6' }} onClick={() => handleInformeClick('Все налоги', 'НДС')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#8b5cf6' }} onClick={() => navigate('/finance/taxes')}>
               <div className="label">Всего налогов</div>
               <div className="value">{formatAmount(data.kpi.totalTaxes)}</div>
               <div className="sub">НДС: {formatAmount(data.kpi.nds)} | Прибыль: {formatAmount(data.kpi.profitTax)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#a78bfa' }} onClick={() => handleInformeClick('НДС', 'НДС')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#a78bfa' }} onClick={() => navigate('/finance/taxes')}>
               <div className="label">НДС</div>
               <div className="value">{formatAmount(data.kpi.nds)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#c084fc' }} onClick={() => handleInformeClick('Налог на прибыль', 'Налог на прибыль')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#c084fc' }} onClick={() => navigate('/finance/taxes')}>
               <div className="label">Налог на прибыль</div>
               <div className="value">{formatAmount(data.kpi.profitTax)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#e879f9' }} onClick={() => handleInformeClick('Страховые взносы', 'Страховые взносы')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#e879f9' }} onClick={() => navigate('/finance/taxes')}>
               <div className="label">Страховые взносы</div>
               <div className="value">{formatAmount(data.kpi.insuranceContributions)}</div>
             </div>
@@ -226,23 +208,23 @@ export const FinancePage: React.FC = () => {
         <>
           <div className="section-title"><i className="fas fa-building"></i> Общехозяйственные расходы</div>
           <div className="informers-row">
-            <div className="informer clickable" style={{ borderLeftColor: '#06b6d4' }} onClick={() => handleInformeClick('Аренда', 'Аренда офиса')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#06b6d4' }} onClick={() => navigate('/finance/overhead')}>
               <div className="label">Аренда</div>
               <div className="value">{formatAmount(data.rent)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#3b82f6' }} onClick={() => handleInformeClick('Транспорт', 'Транспортные расходы')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#3b82f6' }} onClick={() => navigate('/finance/overhead')}>
               <div className="label">Транспорт</div>
               <div className="value">{formatAmount(data.overhead.transport)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#10b981' }} onClick={() => handleInformeClick('Связь/интернет', 'Интернет/Связь')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#10b981' }} onClick={() => navigate('/finance/overhead')}>
               <div className="label">Связь/интернет</div>
               <div className="value">{formatAmount(data.overhead.internet)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#f59e0b' }} onClick={() => handleInformeClick('Канцтовары', 'Канцтовары')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#f59e0b' }} onClick={() => navigate('/finance/overhead')}>
               <div className="label">Канцтовары</div>
               <div className="value">{formatAmount(data.overhead.stationery)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#ef4444' }} onClick={() => handleInformeClick('Прочее', 'Прочее')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#ef4444' }} onClick={() => navigate('/finance/overhead')}>
               <div className="label">Прочее</div>
               <div className="value">{formatAmount(data.overhead.other)}</div>
             </div>
@@ -254,23 +236,23 @@ export const FinancePage: React.FC = () => {
         <>
           <div className="section-title"><i className="fas fa-users"></i> Сотрудники</div>
           <div className="informers-row">
-            <div className="informer clickable" style={{ borderLeftColor: '#ec4899' }} onClick={() => handleInformeClick('ФОТ', 'Зарплата')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#ec4899' }} onClick={() => navigate('/finance/staff')}>
               <div className="label">ФОТ (всего)</div>
               <div className="value">{formatAmount(data.kpi.totalSalary)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#f472b6' }} onClick={() => handleInformeClick('Зарплата', 'Зарплата')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#f472b6' }} onClick={() => navigate('/finance/staff')}>
               <div className="label">Зарплата</div>
               <div className="value">{formatAmount(data.staff.salary)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#fb923c' }} onClick={() => handleInformeClick('Премии', 'Премия')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#fb923c' }} onClick={() => navigate('/finance/staff')}>
               <div className="label">Премии</div>
               <div className="value">{formatAmount(data.staff.bonus)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#fbbf24' }} onClick={() => handleInformeClick('Отпускные', 'Отпускные')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#fbbf24' }} onClick={() => navigate('/finance/staff')}>
               <div className="label">Отпускные</div>
               <div className="value">{formatAmount(data.staff.vacation)}</div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#34d399' }} onClick={() => handleInformeClick('Больничные', 'Больничный')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#34d399' }} onClick={() => navigate('/finance/staff')}>
               <div className="label">Больничные</div>
               <div className="value">{formatAmount(data.staff.sickLeave)}</div>
             </div>
@@ -281,15 +263,15 @@ export const FinancePage: React.FC = () => {
       {viewMode === 'grid' && (
         <>
           <div className="reports-grid">
-            <div className="report-card clickable" onClick={() => handleReportClick('ОПиУ')}>
+            <div className="report-card clickable" onClick={() => navigate('/finance/taxes')}>
               <div className="report-header"><span className="report-title">Отчёт о прибылях и убытках</span><i className="fas fa-chevron-right"></i></div>
               <div className="report-details">Детализация доходов и расходов</div>
             </div>
-            <div className="report-card clickable" onClick={() => handleReportClick('ДДС')}>
+            <div className="report-card clickable" onClick={() => navigate('/finance/staff')}>
               <div className="report-header"><span className="report-title">Движение денежных средств</span><i className="fas fa-chevron-right"></i></div>
               <div className="report-details">Поступления и списания по месяцам</div>
             </div>
-            <div className="report-card clickable" onClick={() => handleReportClick('Налоги')}>
+            <div className="report-card clickable" onClick={() => navigate('/finance/taxes')}>
               <div className="report-header"><span className="report-title">Налоговая нагрузка</span><i className="fas fa-chevron-right"></i></div>
               <div className="report-details">Сводка по всем налогам</div>
             </div>
@@ -354,8 +336,6 @@ export const FinancePage: React.FC = () => {
         <button className="btn-sync" onClick={syncWith1C}><i className="fas fa-sync-alt"></i> Синхронизировать</button>
         <div className="sync-info"><i className="fas fa-database"></i> Последняя синхронизация: {data.lastSync}</div>
       </div>
-
-      <FinanceDetailModal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={modalTitle} category={modalCategory} dateRange={dateRange} />
     </div>
   );
 };
