@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../App';
 import { VacationsTab } from './VacationsTab';
-import { withAuthRetry } from '../../utils/supabaseHelpers';
 import './EmployeeDetail.css';
 
 interface Employee {
@@ -49,15 +48,13 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
 
   const loadPayments = async () => {
     try {
-      const payments = await withAuthRetry<SalaryPayment[]>(async () => {
-        const { data, error } = await supabase
-          .from('salary_payments')
-          .select('*')
-          .eq('employee_id', employee.id)
-          .order('date', { ascending: false });
-        return { data: data as SalaryPayment[] | null, error };
-      });
-      setPayments(payments);
+      const { data, error } = await supabase
+        .from('salary_payments')
+        .select('*')
+        .eq('employee_id', employee.id)
+        .order('date', { ascending: false });
+      if (error) throw error;
+      setPayments(data || []);
     } catch (err) {
       console.error('Ошибка загрузки выплат:', err);
     }
@@ -124,7 +121,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
           <div className="detail-field"><label>Email</label><input type="email" value={editedEmployee.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
           <div className="detail-field"><label>Телефон</label><input type="text" value={editedEmployee.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
           <div className="detail-field"><label>Дата выхода</label><input type="date" value={editedEmployee.hire_date} onChange={e => handleChange('hire_date', e.target.value)} /></div>
-          <div className="detail-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div className="detail-actions">
             <button className="btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? 'Сохранение...' : 'Сохранить'}
             </button>
