@@ -1,12 +1,12 @@
 // src/utils/storage.ts
 import { db } from '../db';
 import { store } from '../store';
-import { setProjects, seedDemoProjects, ProjectCategory } from '../store/projectsSlice';
+import { setProjects } from '../store/projectsSlice';
 import { setTracts } from '../store/tractsSlice';
 import { setCompanyExpenses } from '../store/companyExpensesSlice';
 import { setServiceVisits } from '../store/serviceVisitsSlice';
 
-function generateShortId(category: ProjectCategory, existingIds: string[]): string {
+function generateShortId(category: string, existingIds: string[]): string {
   let rangeStart: number;
   switch (category) {
     case 'new': rangeStart = 0; break;
@@ -112,27 +112,9 @@ export const resetProject = async () => {
   await db.companyExpenses.clear();
   await db.serviceVisits.clear();
   localStorage.removeItem('sputnik_backup');
-  const demos = seedDemoProjects();
-  for (const demo of demos) {
-    const existing = await db.projects.toArray();
-    const existingShortIds = existing.map(p => p.shortId);
-    const shortId = generateShortId(demo.category, existingShortIds);
-    const newId = Date.now().toString();
-    const newProject = {
-      ...demo,
-      id: newId,
-      shortId,
-      actualIncome: demo.actualIncome ?? 0,
-      actualExpenses: demo.actualExpenses ?? 0,
-      roadmapPlanned: demo.roadmapPlanned ?? [],
-      roadmapActual: demo.roadmapActual ?? [],
-    };
-    await db.projects.add(newProject);
-  }
-  const projects = await db.projects.toArray();
-  store.dispatch(setProjects(projects));
+  store.dispatch(setProjects([]));
   store.dispatch(setTracts([]));
   store.dispatch(setCompanyExpenses([]));
   store.dispatch(setServiceVisits([]));
-  alert('Проект сброшен, загружены демо-данные');
+  alert('Проект сброшен, данные очищены.');
 };
