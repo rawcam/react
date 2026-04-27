@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../App';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { withAuthRetry } from '../utils/supabaseHelpers';
 import './VacationRequestsPage.css';
 
 interface VacationRequest {
@@ -29,16 +28,13 @@ export const VacationRequestsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry<any[]>(async (signal) =>
-        supabase
-          .from('vacations')
-          .select('id, employee_id, start_date, end_date, status, created_at, employees(full_name, department)')
-          .order('created_at', { ascending: false })
-          .abortSignal(signal)
-          .then(({ data, error }) => ({ data: data as any[] | null, error }))
-      );
+      const { data, error } = await supabase
+        .from('vacations')
+        .select('id, employee_id, start_date, end_date, status, created_at, employees(full_name, department)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
 
-      const formatted: VacationRequest[] = data.map((item: any) => ({
+      const formatted: VacationRequest[] = (data || []).map((item: any) => ({
         id: item.id,
         employee_id: item.employee_id,
         full_name: item.employees?.full_name || 'Неизвестный',
@@ -50,13 +46,8 @@ export const VacationRequestsPage: React.FC = () => {
       }));
       setRequests(formatted);
     } catch (err: any) {
-      if (err.message === 'SESSION_EXPIRED') {
-        await supabase.auth.signOut();
-        window.location.reload();
-      } else {
-        setError(err.message);
-        console.error('Load requests error:', err);
-      }
+      setError(err.message);
+      console.error('Load requests error:', err);
     } finally {
       setLoading(false);
     }
