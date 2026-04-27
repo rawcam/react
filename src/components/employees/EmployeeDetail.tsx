@@ -98,18 +98,6 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
     }
   };
 
-  // Единый стиль для кнопок действий
-  const actionButtonStyle = {
-    height: '40px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '0 24px',
-    fontSize: '0.85rem',
-    lineHeight: '1',
-    boxSizing: 'border-box' as const,
-  };
-
   return (
     <div className="employee-detail">
       <button className="btn-secondary" onClick={onBack}>
@@ -133,11 +121,11 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ employee, onBack
           <div className="detail-field"><label>Email</label><input type="email" value={editedEmployee.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
           <div className="detail-field"><label>Телефон</label><input type="text" value={editedEmployee.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
           <div className="detail-field"><label>Дата выхода</label><input type="date" value={editedEmployee.hire_date} onChange={e => handleChange('hire_date', e.target.value)} /></div>
-          <div className="detail-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <button className="btn-primary" style={actionButtonStyle} onClick={handleSave} disabled={saving}>
+          <div className="detail-actions">
+            <button className="btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? 'Сохранение...' : 'Сохранить'}
             </button>
-            <button className="btn-danger" style={actionButtonStyle} onClick={handleDelete}>
+            <button className="btn-danger" onClick={handleDelete}>
               Удалить сотрудника
             </button>
           </div>
