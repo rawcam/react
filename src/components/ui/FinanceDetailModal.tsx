@@ -19,19 +19,37 @@ export const FinanceDetailModal: React.FC<FinanceDetailModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
-    supabase
-      .from('finance_1c')
-      .select('*')
-      .eq('category', category)
-      .gte('date', dateRange.start)
-      .lte('date', dateRange.end)
-      .order('date', { ascending: false })
-      .then(({ data, error }) => {
-        if (!error && data) setTransactions(data);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('finance_1c')
+          .select('*')
+          .eq('category', category)
+          .gte('date', dateRange.start)
+          .lte('date', dateRange.end)
+          .order('date', { ascending: false });
+
+        if (!error && data && !cancelled) {
+          setTransactions(data);
+        } else if (error && !cancelled) {
+          console.error(error);
+        }
+      } catch (err) {
+        if (!cancelled) console.error(err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, category, dateRange]);
 
   if (!isOpen) return null;
