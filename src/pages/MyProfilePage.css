@@ -83,52 +83,36 @@
   color: var(--text-muted);
 }
 
-/* Кнопки в одну строку и одинаковой высоты */
+/* ЖЁСТКОЕ ВЫРАВНИВАНИЕ КНОПОК – перекрывает любые глобальные стили */
 .profile-actions {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: center;
+  display: flex !important;
+  gap: 16px !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
 }
 
 .profile-actions .btn-primary,
 .profile-actions .btn-secondary {
-  padding: 10px 24px;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  height: 40px;
-  box-sizing: border-box;
-  border-radius: 40px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.profile-actions .btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: white;
-  border: none;
-  box-shadow: 0 2px 8px var(--accent-glow);
-}
-
-.profile-actions .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--accent-glow);
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 20px !important;
+  font-size: 0.85rem !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
 }
 
 .profile-actions .btn-secondary {
-  background: transparent;
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
+  background: transparent !important;
+  border: 1px solid var(--border-light) !important;
+  color: var(--text-primary) !important;
 }
 
 .profile-actions .btn-secondary:hover {
-  background: var(--accent-glow);
-  border-color: var(--accent);
+  background: var(--accent-glow) !important;
+  border-color: var(--accent) !important;
 }
 
 .empty-state {
