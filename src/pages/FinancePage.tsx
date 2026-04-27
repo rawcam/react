@@ -161,35 +161,35 @@ export const FinancePage: React.FC = () => {
         <>
           <div className="section-title"><i className="fas fa-chart-pie"></i> Ключевые показатели</div>
           <div className="informers-row">
-            <div className="informer clickable" style={{ borderLeftColor: '#3b82f6' }} onClick={() => handleInformeClick('Выручка', 'Поступление от клиента')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#3b82f6' }} onClick={() => navigate('/finance/overview')}>
               <div className="label">Выручка</div>
               <div className="value">{formatAmount(data.kpi.revenue)}</div>
               <div className={`trend ${data.kpi.revenueTrend > 0 ? 'trend-up' : 'trend-down'}`}>
                 <i className={`fas fa-arrow-${data.kpi.revenueTrend > 0 ? 'up' : 'down'}`}></i> {Math.abs(data.kpi.revenueTrend)}%
               </div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#10b981' }} onClick={() => handleInformeClick('Чистая прибыль', '')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#10b981' }} onClick={() => navigate('/finance/overview')}>
               <div className="label">Чистая прибыль</div>
               <div className="value">{formatAmount(data.kpi.netProfit)}</div>
               <div className={`trend ${data.kpi.profitTrend > 0 ? 'trend-up' : 'trend-down'}`}>
                 <i className={`fas fa-arrow-${data.kpi.profitTrend > 0 ? 'up' : 'down'}`}></i> {Math.abs(data.kpi.profitTrend)}%
               </div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#f59e0b' }} onClick={() => handleInformeClick('Дебиторская задолженность', '')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#f59e0b' }} onClick={() => navigate('/finance/overview')}>
               <div className="label">Дебиторка</div>
               <div className="value">{formatAmount(data.kpi.receivables)}</div>
               <div className={`trend ${data.kpi.receivablesTrend < 0 ? 'trend-down' : 'trend-up'}`}>
                 <i className={`fas fa-arrow-${data.kpi.receivablesTrend < 0 ? 'down' : 'up'}`}></i> {Math.abs(data.kpi.receivablesTrend)}%
               </div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#ef4444' }} onClick={() => handleInformeClick('Кредиторская задолженность', '')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#ef4444' }} onClick={() => navigate('/finance/overview')}>
               <div className="label">Кредиторка</div>
               <div className="value">{formatAmount(data.kpi.payables)}</div>
               <div className={`trend ${data.kpi.payablesTrend > 0 ? 'trend-up' : 'trend-down'}`}>
                 <i className={`fas fa-arrow-${data.kpi.payablesTrend > 0 ? 'up' : 'down'}`}></i> {Math.abs(data.kpi.payablesTrend)}%
               </div>
             </div>
-            <div className="informer clickable" style={{ borderLeftColor: '#8b5cf6' }} onClick={() => handleInformeClick('Рентабельность', '')}>
+            <div className="informer clickable" style={{ borderLeftColor: '#8b5cf6' }} onClick={() => navigate('/finance/overview')}>
               <div className="label">Рентабельность</div>
               <div className="value">{data.kpi.revenue > 0 ? ((data.kpi.netProfit / data.kpi.revenue) * 100).toFixed(1) : '0.0'}%</div>
             </div>
