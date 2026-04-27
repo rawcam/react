@@ -48,12 +48,13 @@ export const EmployeesPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry<any[]>(async () => {
+      const data = await withAuthRetry<any[]>(async (signal) => {
         const { data, error } = await supabase
           .from('employees')
           .select('*')
-          .order('full_name');
-        return { data: data as any[], error };
+          .order('full_name')
+          .abortSignal(signal);
+        return { data: data as any[] | null, error };
       });
 
       const today = new Date().toISOString().slice(0, 10);
@@ -101,24 +102,21 @@ export const EmployeesPage: React.FC = () => {
   }, [employees, deptFilter, search, vacationFilter]);
 
   const handleAdd = async () => {
-    const dataToInsert = {
+    const { error } = await supabase.from('employees').insert({
       full_name: formName,
       position: formPosition,
       department: formDepartment,
       base_salary: formSalary,
       hire_date: formHireDate,
       email: formEmail,
-    };
-    console.log('[EmployeesPage] Inserting employee:', dataToInsert);
-    const { error } = await supabase.from('employees').insert(dataToInsert);
-    if (error) {
-      console.error('[EmployeesPage] Insert error:', error);
-      alert('Ошибка при добавлении: ' + error.message);
-    } else {
+    });
+    if (!error) {
       setShowAddModal(false);
       setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000);
       setFormEmail('');
       loadEmployees();
+    } else {
+      alert('Ошибка при добавлении: ' + error.message);
     }
   };
 
