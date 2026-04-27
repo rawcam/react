@@ -65,12 +65,13 @@ export const MyProfilePage: React.FC = () => {
     if (!user) return;
     const loadEmployee = async () => {
       try {
-        const emp = await withAuthRetry<Employee>(async () => {
+        const emp = await withAuthRetry<Employee>(async (signal) => {
           const { data, error } = await supabase
             .from('employees')
             .select('*')
             .eq('email', user.email)
-            .single();
+            .single()
+            .abortSignal(signal);
           return { data: data as Employee | null, error };
         });
         if (emp) {
@@ -78,7 +79,7 @@ export const MyProfilePage: React.FC = () => {
           setPredictedBonus(Math.round(emp.base_salary * 0.15));
 
           const today = new Date().toISOString().slice(0, 10);
-          const vacations = await withAuthRetry<Vacation[]>(async () => {
+          const vacations = await withAuthRetry<Vacation[]>(async (signal) => {
             const { data, error } = await supabase
               .from('vacations')
               .select('*')
@@ -86,7 +87,8 @@ export const MyProfilePage: React.FC = () => {
               .eq('status', 'approved')
               .gte('start_date', today)
               .order('start_date', { ascending: true })
-              .limit(1);
+              .limit(1)
+              .abortSignal(signal);
             return { data: data as Vacation[] | null, error };
           });
           if (vacations && vacations.length > 0) {
@@ -119,14 +121,15 @@ export const MyProfilePage: React.FC = () => {
     setVacationError('');
 
     try {
-      const conflicts = await withAuthRetry<any[]>(async () => {
+      const conflicts = await withAuthRetry<any[]>(async (signal) => {
         const { data, error } = await supabase
           .from('vacations')
           .select('*, employees!inner(*)')
           .eq('employees.position', 'Инженер-проектировщик')
           .neq('employee_id', employee.id)
           .gte('start_date', startDate)
-          .lte('end_date', endDate);
+          .lte('end_date', endDate)
+          .abortSignal(signal);
         return { data: data as any[] | null, error };
       });
 
