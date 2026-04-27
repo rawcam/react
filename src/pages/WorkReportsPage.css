@@ -1,0 +1,25 @@
+/* src/pages/WorkReportsPage.css */
+.work-reports-page { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-header h2 { font-size: 1.8rem; font-weight: 600; background: linear-gradient(135deg, var(--text-primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.informers-row { display: flex; gap: 16px; margin-bottom: 24px; }
+.informer { flex: 1 1 200px; background: var(--bg-panel-solid); border-radius: 20px; padding: 20px; border-left: 4px solid; box-shadow: var(--shadow); }
+.informer .label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; }
+.informer .value { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); }
+.informer .sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+.reports-toolbar { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-group label { font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); }
+.filter-group input, .filter-group select { padding: 8px 14px; border-radius: 40px; border: 1px solid var(--border-light); background: var(--bg-panel-solid); color: var(--text-primary); font-size: 0.8rem; }
+.table-wrapper { background: var(--bg-panel); backdrop-filter: blur(12px); border-radius: 16px; padding: 20px; border: 1px solid var(--border-light); overflow-x: auto; }
+.reports-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+.reports-table th { text-align: left; padding: 12px 10px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border-light); }
+.reports-table td { padding: 12px 10px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); vertical-align: middle; }
+.reports-table tbody tr:hover td { background-color: var(--accent-glow); }
+.actions { white-space: nowrap; }
+.actions button { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: var(--transition); }
+.actions button:hover { background: var(--border-light); }
+.actions .btn-delete:hover { color: var(--danger); }
+.empty-cell { text-align: center; padding: 40px; color: var(--text-muted); }
+.page-message { text-align: center; padding: 60px; }
+/* используем общие стили модалок */
