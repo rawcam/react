@@ -35,12 +35,13 @@ export const WorkReportsPage: React.FC = () => {
   const loadReports = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await withAuthRetry<WorkReport[]>(async () => {
+      const data = await withAuthRetry<WorkReport[]>(async (signal) => {
         const { data, error } = await supabase
           .from('work_reports')
           .select('*')
           .eq('user_id', user.id)
-          .order('date', { ascending: false });
+          .order('date', { ascending: false })
+          .abortSignal(signal);
         return { data: data as WorkReport[] | null, error };
       });
       setReports(data || []);
