@@ -82,7 +82,7 @@ export const useFinanceData = (
           .gte('date', start)
           .lte('date', end)
           .abortSignal(signal);
-        return { data: data as any[], error };
+        return { data: data as any[] | null, error };
       });
 
       const payments = await withAuthRetry<any[]>(async () => {
@@ -92,10 +92,10 @@ export const useFinanceData = (
           .gte('date', start)
           .lte('date', end)
           .abortSignal(signal);
-        return { data: data as any[], error };
+        return { data: data as any[] | null, error };
       });
 
-      // all calculations (unchanged)
+      // Расчёты (без изменений)
       let income = 0, expense = 0, receivables = 0, payables = 0;
       const catSums: Record<string, number> = {};
       txList.forEach((t: any) => {
