@@ -18,6 +18,7 @@ import { CalculationsPage } from './pages/CalculationsPage';
 import { EmployeesPage } from './pages/EmployeesPage';
 import { MyProfilePage } from './pages/MyProfilePage';
 import { VacationRequestsPage } from './pages/VacationRequestsPage';
+import { WorkReportsPage } from './pages/WorkReportsPage';
 import './index.css';
 
 // Очистка старых данных
