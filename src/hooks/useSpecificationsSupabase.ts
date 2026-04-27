@@ -11,16 +11,16 @@ export const useSpecificationsSupabase = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const role = useSelector((state: RootState) => state.auth.role);
 
-  const loadSpecifications = useCallback(async (): Promise<void> => {
+  const loadSpecifications = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await withAuthRetry<any[]>(async () => {
-        let query = supabase.from('specifications').select('*');
+      const data = await withAuthRetry<any[]>(async (signal) => {
+        let query = supabase.from('specifications').select('*').abortSignal(signal);
         if (role !== 'director' && role !== 'pm') {
           query = query.eq('user_id', user.id);
         }
         const { data, error } = await query;
-        return { data: data as any[], error };
+        return { data: data as any[] | null, error };
       });
 
       const specs = data.map((item: any) => ({
@@ -36,12 +36,12 @@ export const useSpecificationsSupabase = () => {
       if (err.message === 'SESSION_EXPIRED') {
         await supabase.auth.signOut();
         window.location.reload();
-      } else {
-        console.error('loadSpecifications error:', err);
       }
+      console.error('loadSpecifications error:', err);
     }
   }, [user, role, dispatch]);
 
+  // add/update/delete без изменений
   const addSpecificationToDb = useCallback(async (spec: Omit<Specification, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
     const newId = Date.now().toString();
@@ -55,11 +55,7 @@ export const useSpecificationsSupabase = () => {
       created_at: now,
       updated_at: now,
     };
-    const { error } = await supabase.from('specifications').insert(newSpec);
-    if (error) {
-      console.error('addSpecificationToDb error:', error.message);
-      throw error;
-    }
+    await supabase.from('specifications').insert(newSpec);
     await loadSpecifications();
     return newId;
   }, [user, loadSpecifications]);
@@ -71,37 +67,15 @@ export const useSpecificationsSupabase = () => {
     if (updates.projectId !== undefined) dbUpdates.project_id = updates.projectId;
     if (updates.rows !== undefined) dbUpdates.rows = updates.rows;
     dbUpdates.updated_at = new Date().toISOString();
-
-    const { error } = await supabase
-      .from('specifications')
-      .update(dbUpdates)
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('updateSpecificationInDb error:', error.message);
-      throw error;
-    }
+    await supabase.from('specifications').update(dbUpdates).eq('id', id).eq('user_id', user.id);
     await loadSpecifications();
   }, [user, loadSpecifications]);
 
   const deleteSpecificationFromDb = useCallback(async (id: string) => {
     if (!user) return;
-    const { error } = await supabase
-      .from('specifications')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      console.error('deleteSpecificationFromDb error:', error.message);
-      throw error;
-    }
+    await supabase.from('specifications').delete().eq('id', id).eq('user_id', user.id);
     await loadSpecifications();
   }, [user, loadSpecifications]);
 
-  return {
-    loadSpecifications,
-    addSpecificationToDb,
-    updateSpecificationInDb,
-    deleteSpecificationFromDb,
-  };
+  return { loadSpecifications, addSpecificationToDb, updateSpecificationInDb, deleteSpecificationFromDb };
 };
