@@ -1,0 +1,34 @@
+/* src/pages/FinanceAnalytics.css */
+.finance-analytics-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.finance-analytics-page h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+}
+
+.chart-card {
+  background: var(--bg-panel);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow);
+}
+
+.chart-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.page-message {
+  text-align: center;
+  padding: 60px;
+  color: var(--text-muted);
+}
