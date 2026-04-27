@@ -1,5 +1,6 @@
 // src/pages/FinanceOverviewPage.tsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend, LineChart, Line,
@@ -24,6 +25,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export const FinanceOverviewPage: React.FC = () => {
+  const navigate = useNavigate();
   const { data, loading } = useFinanceAnalytics();
 
   if (loading) {
@@ -36,7 +38,10 @@ export const FinanceOverviewPage: React.FC = () => {
 
   return (
     <div className="finance-analytics-page">
-      <h2>Финансовый обзор</h2>
+      <button className="btn-secondary" onClick={() => navigate('/finance')}>
+        <i className="fas fa-arrow-left"></i> Назад к финансам
+      </button>
+      <h2 style={{ marginTop: 16 }}>Финансовый обзор</h2>
 
       {/* Выручка и прибыль */}
       <div className="chart-card" style={{ marginBottom: 24 }}>
