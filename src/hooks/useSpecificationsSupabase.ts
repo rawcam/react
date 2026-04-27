@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { supabase } from '../App';
 import { setSpecifications, Specification } from '../store/specificationsSlice';
-import { withAuthRetry } from '../utils/supabaseHelpers';
 
 export const useSpecificationsSupabase = () => {
   const dispatch = useDispatch();
@@ -14,16 +13,13 @@ export const useSpecificationsSupabase = () => {
   const loadSpecifications = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await withAuthRetry<any[]>(async (signal) => {
-        let query = supabase.from('specifications').select('*').abortSignal(signal);
-        if (role !== 'director' && role !== 'pm') {
-          query = query.eq('user_id', user.id);
-        }
-        const { data, error } = await query;
-        return { data: data as any[] | null, error };
-      });
-
-      const specs = data.map((item: any) => ({
+      let query = supabase.from('specifications').select('*');
+      if (role !== 'director' && role !== 'pm') {
+        query = query.eq('user_id', user.id);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      const specs = (data || []).map((item: any) => ({
         id: item.id,
         name: item.name,
         projectId: item.project_id,
@@ -33,15 +29,10 @@ export const useSpecificationsSupabase = () => {
       }));
       dispatch(setSpecifications(specs));
     } catch (err: any) {
-      if (err.message === 'SESSION_EXPIRED') {
-        await supabase.auth.signOut();
-        window.location.reload();
-      }
       console.error('loadSpecifications error:', err);
     }
   }, [user, role, dispatch]);
 
-  // add/update/delete без изменений
   const addSpecificationToDb = useCallback(async (spec: Omit<Specification, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
     const newId = Date.now().toString();
@@ -55,7 +46,11 @@ export const useSpecificationsSupabase = () => {
       created_at: now,
       updated_at: now,
     };
-    await supabase.from('specifications').insert(newSpec);
+    const { error } = await supabase.from('specifications').insert(newSpec);
+    if (error) {
+      console.error('addSpecificationToDb error:', error.message);
+      return;
+    }
     await loadSpecifications();
     return newId;
   }, [user, loadSpecifications]);
@@ -67,15 +62,37 @@ export const useSpecificationsSupabase = () => {
     if (updates.projectId !== undefined) dbUpdates.project_id = updates.projectId;
     if (updates.rows !== undefined) dbUpdates.rows = updates.rows;
     dbUpdates.updated_at = new Date().toISOString();
-    await supabase.from('specifications').update(dbUpdates).eq('id', id).eq('user_id', user.id);
+
+    const { error } = await supabase
+      .from('specifications')
+      .update(dbUpdates)
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('updateSpecificationInDb error:', error.message);
+      return;
+    }
     await loadSpecifications();
   }, [user, loadSpecifications]);
 
   const deleteSpecificationFromDb = useCallback(async (id: string) => {
     if (!user) return;
-    await supabase.from('specifications').delete().eq('id', id).eq('user_id', user.id);
+    const { error } = await supabase
+      .from('specifications')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('deleteSpecificationFromDb error:', error.message);
+      return;
+    }
     await loadSpecifications();
   }, [user, loadSpecifications]);
 
-  return { loadSpecifications, addSpecificationToDb, updateSpecificationInDb, deleteSpecificationFromDb };
+  return {
+    loadSpecifications,
+    addSpecificationToDb,
+    updateSpecificationInDb,
+    deleteSpecificationFromDb,
+  };
 };
