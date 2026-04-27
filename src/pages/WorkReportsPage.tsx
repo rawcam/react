@@ -16,7 +16,7 @@ interface WorkReport {
   description: string;
 }
 
-const HOURLY_RATE = 2500; // ставка, позже будет из профиля сотрудника
+const HOURLY_RATE = 2500;
 
 export const WorkReportsPage: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -35,14 +35,14 @@ export const WorkReportsPage: React.FC = () => {
   const loadReports = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await withAuthRetry<WorkReport[]>(() =>
-        supabase
+      const data = await withAuthRetry<WorkReport[]>(async () => {
+        const { data, error } = await supabase
           .from('work_reports')
           .select('*')
           .eq('user_id', user.id)
-          .order('date', { ascending: false })
-          .then(({ data, error }) => ({ data: data as WorkReport[] | null, error }))
-      );
+          .order('date', { ascending: false });
+        return { data: data as WorkReport[] | null, error };
+      });
       setReports(data || []);
     } catch (err) {
       console.error('Ошибка загрузки отчётов:', err);
@@ -131,7 +131,6 @@ export const WorkReportsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Информер ожидаемой зарплаты */}
       <div className="informers-row">
         <div className="informer" style={{ borderLeftColor: '#f59e0b' }}>
           <div className="label">Ожидаемая зарплата</div>
@@ -195,7 +194,6 @@ export const WorkReportsPage: React.FC = () => {
         </table>
       </div>
 
-      {/* Модальное окно */}
       {modalOpen && (
         <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
