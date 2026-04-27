@@ -19,9 +19,10 @@ import { EmployeesPage } from './pages/EmployeesPage';
 import { MyProfilePage } from './pages/MyProfilePage';
 import { VacationRequestsPage } from './pages/VacationRequestsPage';
 import { WorkReportsPage } from './pages/WorkReportsPage';
+import { useProjectsSupabase } from './hooks/useProjectsSupabase';
+import { useSpecificationsSupabase } from './hooks/useSpecificationsSupabase';
 import './index.css';
 
-// Очистка старых данных
 const clearStorage = () => {
   const keysToRemove = ['userRole', 'userName', 'theme'];
   keysToRemove.forEach(key => localStorage.removeItem(key));
@@ -39,7 +40,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: false,
+    autoRefreshToken: true,   // теперь Supabase сам обновляет токен
   },
 });
 
@@ -54,6 +55,8 @@ const AppContent: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const isLoading = useSelector((state: RootState) => state.auth.isLoading);
   const [initError, setInitError] = useState<string | null>(null);
+  const { loadProjects } = useProjectsSupabase();
+  const { loadSpecifications } = useSpecificationsSupabase();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -97,6 +100,14 @@ const AppContent: React.FC = () => {
 
     return () => listener?.subscription.unsubscribe();
   }, [dispatch]);
+
+  // Предзагрузка всех данных после логина
+  useEffect(() => {
+    if (user) {
+      loadProjects().catch(console.error);
+      loadSpecifications().catch(console.error);
+    }
+  }, [user, loadProjects, loadSpecifications]);
 
   if (isLoading) return <LoadingScreen />;
   if (initError) {
