@@ -203,6 +203,9 @@ export const MyProfilePage: React.FC = () => {
         <button className="btn-secondary" onClick={() => setShowVacationModal(true)}>
           🏖️ Запланировать отпуск
         </button>
+        <button className="btn-secondary" onClick={() => navigate('/work-reports')}>
+          📊 Отчёты
+        </button>
       </div>
 
       {showVacationModal && (
