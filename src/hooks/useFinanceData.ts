@@ -1,7 +1,6 @@
 // src/hooks/useFinanceData.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../App';
-import { withAuthRetry } from '../utils/supabaseHelpers';
 
 interface FinanceKPI {
   revenue: number; revenueTrend: number;
@@ -75,30 +74,20 @@ export const useFinanceData = (
     try {
       const { start, end } = getDateRange();
 
-      const txList = await withAuthRetry<any[]>(async () => {
-        const { data, error } = await supabase
-          .from('finance_1c')
-          .select('*')
-          .gte('date', start)
-          .lte('date', end)
-          .abortSignal(signal);
-        return { data: data as any[] | null, error };
-      });
+      const [txRes, salaryRes] = await Promise.all([
+        supabase.from('finance_1c').select('*').gte('date', start).lte('date', end).abortSignal(signal),
+        supabase.from('salary_payments').select('amount, type').gte('date', start).lte('date', end).abortSignal(signal),
+      ]);
 
-      const payments = await withAuthRetry<any[]>(async () => {
-        const { data, error } = await supabase
-          .from('salary_payments')
-          .select('amount, type')
-          .gte('date', start)
-          .lte('date', end)
-          .abortSignal(signal);
-        return { data: data as any[] | null, error };
-      });
+      if (txRes.error) throw txRes.error;
+      if (salaryRes.error) throw salaryRes.error;
 
-      // Расчёты (без изменений)
+      const txList = txRes.data || [];
+      const payments = salaryRes.data || [];
+
       let income = 0, expense = 0, receivables = 0, payables = 0;
       const catSums: Record<string, number> = {};
-      txList.forEach((t: any) => {
+      txList.forEach(t => {
         const cat = t.category;
         catSums[cat] = (catSums[cat] || 0) + t.amount;
         if (t.type === 'income') {
@@ -127,7 +116,7 @@ export const useFinanceData = (
       const other = catSums['Прочее'] || 0;
 
       let staffSalary = 0, staffBonus = 0, staffVacation = 0, staffSickLeave = 0;
-      payments.forEach((p: any) => {
+      payments.forEach(p => {
         switch (p.type) {
           case 'salary': staffSalary += p.amount; break;
           case 'bonus': staffBonus += p.amount; break;
@@ -144,9 +133,9 @@ export const useFinanceData = (
         { name: 'Школа будущего (0003)', plan: 22100000, fact: 15400000, progress: 70, margin: 18 },
       ];
       const latestTransactions = [...txList]
-        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 50)
-        .map((t: any) => ({
+        .map(t => ({
           id: t.id,
           date: new Date(t.date).toLocaleDateString('ru-RU'),
           description: t.description,
