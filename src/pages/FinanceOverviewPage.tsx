@@ -13,7 +13,6 @@ const formatMillions = (value: number) => {
   return `${(value / 1_000).toFixed(0)}K`;
 };
 
-/* Кастомный тултип в стиле демо */
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
@@ -28,29 +27,42 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-/* Простая текстовая аналитика – в реальности будет генерироваться на основе данных */
-const getInsight = (revenueData: { value: number }[], profitData: { value: number }[]) => {
-  if (revenueData.length < 2) return 'Недостаточно данных для анализа.';
-  const lastRev = revenueData[revenueData.length - 1].value;
-  const prevRev = revenueData[revenueData.length - 2].value;
-  const change = lastRev - prevRev;
-  const percent = prevRev ? ((change / prevRev) * 100).toFixed(1) : '0';
-  const direction = change >= 0 ? 'выросла' : 'снизилась';
-  return `📊 За последний месяц выручка ${direction} на ${Math.abs(Number(percent))}% по сравнению с предыдущим. Общая прибыль демонстрирует стабильную динамику.`;
+const getRevenueInsight = (data: { value: number }[]) => {
+  if (data.length < 2) return 'Недостаточно данных.';
+  const last = data[data.length - 1].value;
+  const prev = data[data.length - 2].value;
+  const change = last - prev;
+  const dir = change >= 0 ? 'выросла' : 'снизилась';
+  return `📊 За последний месяц выручка ${dir} на ${Math.abs(change).toLocaleString()} ₽.`;
+};
+
+const getReceivablesInsight = (data: { value: number }[]) => {
+  if (data.length < 2) return '';
+  const last = data[data.length - 1].value;
+  const avg = data.reduce((s, d) => s + d.value, 0) / data.length;
+  return last > avg
+    ? `🔴 Дебиторка выше среднего (${avg.toLocaleString()} ₽). Рекомендуется усилить контроль.`
+    : `🟢 Дебиторка ниже среднего. Платёжная дисциплина на хорошем уровне.`;
+};
+
+const getPayablesInsight = (data: { value: number }[]) => {
+  if (data.length < 2) return '';
+  const last = data[data.length - 1].value;
+  const avg = data.reduce((s, d) => s + d.value, 0) / data.length;
+  return last > avg
+    ? `🔴 Кредиторка выросла выше среднего. Проверьте сроки оплат.`
+    : `🟢 Кредиторка в норме, просрочек нет.`;
 };
 
 export const FinanceOverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const { data, loading } = useFinanceAnalytics();
 
-  if (loading) {
-    return <div className="page-message">Загрузка аналитики...</div>;
-  }
-
+  if (loading) return <div className="page-message">Загрузка аналитики...</div>;
   if (!data || data.revenue.length === 0) {
     return (
       <div className="page-message">
-        <p>Нет данных для отображения. Обновите материализованное представление.</p>
+        <p>Нет данных. Обновите материализованное представление.</p>
         <button className="btn-secondary" onClick={() => navigate('/finance')}>
           <i className="fas fa-arrow-left"></i> Назад
         </button>
@@ -58,14 +70,11 @@ export const FinanceOverviewPage: React.FC = () => {
     );
   }
 
-  // Готовим объединённые данные для графика
-  const combinedData = data.revenue.map((r, i) => ({
+  const combined = data.revenue.map((r, i) => ({
     month: r.month,
     revenue: r.value,
     profit: data.profit[i]?.value || 0,
   }));
-
-  const insight = getInsight(data.revenue, data.profit);
 
   return (
     <div className="finance-analytics-page">
@@ -78,7 +87,7 @@ export const FinanceOverviewPage: React.FC = () => {
       <div className="chart-card" style={{ marginBottom: 24 }}>
         <div className="chart-title">Выручка и чистая прибыль</div>
         <ResponsiveContainer width="100%" height={320}>
-          <AreaChart data={combinedData}>
+          <AreaChart data={combined}>
             <defs>
               <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
@@ -98,7 +107,7 @@ export const FinanceOverviewPage: React.FC = () => {
             <Area type="monotone" dataKey="profit" name="Прибыль" stroke="#10b981" fill="url(#colorProfit)" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
-        <div className="chart-insight">{insight}</div>
+        <div className="chart-insight">{getRevenueInsight(data.revenue)}</div>
       </div>
 
       {/* Дебиторка и кредиторка */}
@@ -114,6 +123,7 @@ export const FinanceOverviewPage: React.FC = () => {
               <Line type="monotone" dataKey="value" name="Дебиторка" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
+          <div className="chart-insight">{getReceivablesInsight(data.receivables)}</div>
         </div>
         <div className="chart-card">
           <div className="chart-title">Кредиторская задолженность</div>
@@ -126,6 +136,7 @@ export const FinanceOverviewPage: React.FC = () => {
               <Line type="monotone" dataKey="value" name="Кредиторка" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
+          <div className="chart-insight">{getPayablesInsight(data.payables)}</div>
         </div>
       </div>
     </div>
