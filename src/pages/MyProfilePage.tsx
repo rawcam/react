@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../App';
 import { RootState } from '../store';
-import { withAuthRetry } from '../utils/supabaseHelpers';
 import './MyProfilePage.css';
 
 interface Employee {
@@ -65,32 +64,26 @@ export const MyProfilePage: React.FC = () => {
     if (!user) return;
     const loadEmployee = async () => {
       try {
-        const emp = await withAuthRetry<Employee>(async (signal) => {
-          const { data, error } = await supabase
-            .from('employees')
-            .select('*')
-            .eq('email', user.email)
-            .abortSignal(signal)
-            .single();
-          return { data: data as Employee | null, error };
-        });
+        const { data: emp, error } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('email', user.email)
+          .single();
+        if (error) throw error;
         if (emp) {
           setEmployee(emp);
           setPredictedBonus(Math.round(emp.base_salary * 0.15));
 
           const today = new Date().toISOString().slice(0, 10);
-          const vacations = await withAuthRetry<Vacation[]>(async (signal) => {
-            const { data, error } = await supabase
-              .from('vacations')
-              .select('*')
-              .eq('employee_id', emp.id)
-              .eq('status', 'approved')
-              .gte('start_date', today)
-              .order('start_date', { ascending: true })
-              .limit(1)
-              .abortSignal(signal);
-            return { data: data as Vacation[] | null, error };
-          });
+          const { data: vacations, error: vacError } = await supabase
+            .from('vacations')
+            .select('*')
+            .eq('employee_id', emp.id)
+            .eq('status', 'approved')
+            .gte('start_date', today)
+            .order('start_date', { ascending: true })
+            .limit(1);
+          if (vacError) console.error(vacError);
           if (vacations && vacations.length > 0) {
             const start = new Date(vacations[0].start_date);
             const diff = Math.ceil((start.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -121,19 +114,16 @@ export const MyProfilePage: React.FC = () => {
     setVacationError('');
 
     try {
-      const conflicts = await withAuthRetry<any[]>(async (signal) => {
-        const { data, error } = await supabase
-          .from('vacations')
-          .select('*, employees!inner(*)')
-          .eq('employees.position', 'Инженер-проектировщик')
-          .neq('employee_id', employee.id)
-          .gte('start_date', startDate)
-          .lte('end_date', endDate)
-          .abortSignal(signal);
-        return { data: data as any[] | null, error };
-      });
+      const { data: conflicts, error: conflictError } = await supabase
+        .from('vacations')
+        .select('*, employees!inner(*)')
+        .eq('employees.position', 'Инженер-проектировщик')
+        .neq('employee_id', employee.id)
+        .gte('start_date', startDate)
+        .lte('end_date', endDate);
+      if (conflictError) throw conflictError;
 
-      if (conflicts.length > 0) {
+      if (conflicts && conflicts.length > 0) {
         setVacationError('В выбранный период уже есть инженеры в отпуске. Выберите другие даты.');
         setSubmitting(false);
         return;
