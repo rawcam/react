@@ -12,6 +12,8 @@ type PeriodType = 'month' | 'quarter' | 'year' | 'custom';
 export const FinancePage: React.FC = () => {
   const navigate = useNavigate();
   const userRole = useSelector((state: RootState) => state.auth.role);
+  const projects = useSelector((state: RootState) => state.projects.list);
+
   const [periodType, setPeriodType] = useState<PeriodType>('month');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -50,6 +52,21 @@ export const FinancePage: React.FC = () => {
       t.amount.toString().includes(q)
     );
   }, [data, searchQuery]);
+
+  // Топ-3 проекта по марже (фактическая)
+  const topProjectsByMargin = useMemo(() => {
+    return projects
+      .filter(p => p.status !== 'done')
+      .map(p => ({
+        id: p.id,
+        name: `[${p.shortId}] ${p.name}`,
+        margin: (p.actualIncome || 0) - (p.actualExpenses || 0),
+        income: p.actualIncome || 0,
+        expenses: p.actualExpenses || 0,
+      }))
+      .sort((a, b) => b.margin - a.margin)
+      .slice(0, 3);
+  }, [projects]);
 
   if (loading) {
     return (
@@ -262,28 +279,29 @@ export const FinancePage: React.FC = () => {
 
       {viewMode === 'grid' && (
         <>
-          <div className="reports-grid">
-            <div className="report-card clickable" onClick={() => navigate('/finance/taxes')}>
-              <div className="report-header"><span className="report-title">Отчёт о прибылях и убытках</span><i className="fas fa-chevron-right"></i></div>
-              <div className="report-details">Детализация доходов и расходов</div>
-            </div>
-            <div className="report-card clickable" onClick={() => navigate('/finance/staff')}>
-              <div className="report-header"><span className="report-title">Движение денежных средств</span><i className="fas fa-chevron-right"></i></div>
-              <div className="report-details">Поступления и списания по месяцам</div>
-            </div>
-            <div className="report-card clickable" onClick={() => navigate('/finance/taxes')}>
-              <div className="report-header"><span className="report-title">Налоговая нагрузка</span><i className="fas fa-chevron-right"></i></div>
-              <div className="report-details">Сводка по всем налогам</div>
-            </div>
-          </div>
+          <button className="btn-primary" style={{ marginBottom: 24 }} onClick={() => navigate('/finance/statistics')}>
+            📊 Общая статистика
+          </button>
 
-          <div className="section-title"><i className="fas fa-tasks"></i> План/факт по проектам</div>
+          <div className="section-title"><i className="fas fa-tasks"></i> Топ проектов по марже</div>
           <div className="reports-grid">
-            {data.projectsPlanFact.map((p, idx) => (
-              <div className="report-card clickable" key={idx} onClick={() => navigate(`/projects?id=${p.name.split('(')[1]?.replace(')', '') || '0001'}`)}>
-                <div className="report-header"><span>{p.name}</span><span>{formatAmount(p.fact)} / {formatAmount(p.plan)}</span></div>
-                <div className="progress-bar"><div className="progress-fill" style={{ width: `${p.progress}%` }}></div></div>
-                <div className="report-details"><span>План: {formatAmount(p.plan)}</span><span>Факт: {formatAmount(p.fact)}</span><span>Маржа: {p.margin}%</span></div>
+            {topProjectsByMargin.map((p) => (
+              <div
+                className="report-card clickable"
+                key={p.id}
+                onClick={() => navigate(`/projects?id=${p.id}`)}
+              >
+                <div className="report-header">
+                  <span>{p.name}</span>
+                  <span className="report-amount">{formatAmount(p.margin)}</span>
+                </div>
+                <div className="report-details">
+                  <span>Доход: {formatAmount(p.income)}</span>
+                  <span>Расход: {formatAmount(p.expenses)}</span>
+                </div>
+                <div className="report-details" style={{ marginTop: 8 }}>
+                  <span>Маржа: {((p.income ? (p.margin / p.income) : 0) * 100).toFixed(1)}%</span>
+                </div>
               </div>
             ))}
           </div>
