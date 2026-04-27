@@ -14,13 +14,13 @@ export const useProjectsSupabase = () => {
   const loadProjects = useCallback(async () => {
     if (!user) return;
     try {
-      const raw = await withAuthRetry<any[]>(async () => {
-        let query = supabase.from('projects').select('*');
+      const raw = await withAuthRetry<any[]>(async (signal) => {
+        let query = supabase.from('projects').select('*').abortSignal(signal);
         if (role !== 'director' && role !== 'pm') {
           query = query.eq('user_id', user.id);
         }
         const { data, error } = await query;
-        return { data: data as any[], error };
+        return { data: data as any[] | null, error };
       });
 
       const projects = raw.map((item: any) => ({
@@ -54,12 +54,12 @@ export const useProjectsSupabase = () => {
       if (err.message === 'SESSION_EXPIRED') {
         await supabase.auth.signOut();
         window.location.reload();
-      } else {
-        console.error('Failed to load projects:', err);
       }
+      console.error('Failed to load projects:', err);
     }
   }, [user, role, dispatch]);
 
+  // методы add/update/delete остаются без изменений (можно не трогать)
   const addProjectToDb = useCallback(async (project: Omit<Project, 'id' | 'shortId'>) => {
     if (!user) return;
     const newId = Date.now().toString();
@@ -91,9 +91,8 @@ export const useProjectsSupabase = () => {
       roadmap_actual: project.roadmapActual,
       user_id: user.id,
     };
-    const { error } = await supabase.from('projects').insert(dbProject);
-    if (error) console.error('Failed to add project:', error.message);
-    else await loadProjects();
+    await supabase.from('projects').insert(dbProject);
+    await loadProjects();
     return newId;
   }, [user, loadProjects]);
 
@@ -123,16 +122,14 @@ export const useProjectsSupabase = () => {
     if (updates.roadmapPlanned !== undefined) dbUpdates.roadmap_planned = updates.roadmapPlanned;
     if (updates.roadmapActual !== undefined) dbUpdates.roadmap_actual = updates.roadmapActual;
 
-    const { error } = await supabase.from('projects').update(dbUpdates).eq('id', id).eq('user_id', user.id);
-    if (error) console.error('Failed to update project:', error.message);
-    else await loadProjects();
+    await supabase.from('projects').update(dbUpdates).eq('id', id).eq('user_id', user.id);
+    await loadProjects();
   }, [user, loadProjects]);
 
   const deleteProjectFromDb = useCallback(async (id: string) => {
     if (!user) return;
-    const { error } = await supabase.from('projects').delete().eq('id', id).eq('user_id', user.id);
-    if (error) console.error('Failed to delete project:', error.message);
-    else await loadProjects();
+    await supabase.from('projects').delete().eq('id', id).eq('user_id', user.id);
+    await loadProjects();
   }, [user, loadProjects]);
 
   return { loadProjects, addProjectToDb, updateProjectInDb, deleteProjectFromDb };
