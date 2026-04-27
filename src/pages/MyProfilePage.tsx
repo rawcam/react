@@ -70,8 +70,8 @@ export const MyProfilePage: React.FC = () => {
             .from('employees')
             .select('*')
             .eq('email', user.email)
-            .single()
-            .abortSignal(signal);
+            .abortSignal(signal)
+            .single();
           return { data: data as Employee | null, error };
         });
         if (emp) {
