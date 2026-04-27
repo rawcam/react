@@ -20,7 +20,7 @@ import { MyProfilePage } from './pages/MyProfilePage';
 import { VacationRequestsPage } from './pages/VacationRequestsPage';
 import './index.css';
 
-// Синхронная очистка хранилища
+// Очистка старых данных
 const clearStorage = () => {
   const keysToRemove = ['userRole', 'userName', 'theme'];
   keysToRemove.forEach(key => localStorage.removeItem(key));
@@ -31,34 +31,14 @@ const clearStorage = () => {
     if (key.startsWith('sb-')) sessionStorage.removeItem(key);
   });
 };
-
 clearStorage();
-
-// Кастомный fetch с таймаутом 10 секунд
-const fetchWithTimeout = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  return new Promise((resolve, reject) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-    fetch(input, { ...init, signal: controller.signal })
-      .then(response => {
-        clearTimeout(timeout);
-        resolve(response);
-      })
-      .catch(err => {
-        clearTimeout(timeout);
-        reject(err);
-      });
-  });
-};
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_PROXY_URL || import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: false,
-  },
-  global: {
-    fetch: fetchWithTimeout,
+    autoRefreshToken: true, // ← Supabase обновляет токен сам
   },
 });
 
@@ -117,10 +97,7 @@ const AppContent: React.FC = () => {
     return () => listener?.subscription.unsubscribe();
   }, [dispatch]);
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
+  if (isLoading) return <LoadingScreen />;
   if (initError) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0a1120', color: 'white', flexDirection: 'column' }}>
@@ -130,7 +107,6 @@ const AppContent: React.FC = () => {
       </div>
     );
   }
-
   if (!user) {
     return (
       <HashRouter>
