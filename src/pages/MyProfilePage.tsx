@@ -191,7 +191,7 @@ export const MyProfilePage: React.FC = () => {
         </div>
       </div>
 
-      <div className="profile-actions" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      <div className="profile-actions" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
         <button className="btn-primary" onClick={() => alert('Функция запроса расчётного листа пока недоступна')}>
           📄 Запросить расчётный лист
         </button>
