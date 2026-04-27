@@ -1,6 +1,7 @@
 // src/pages/WorkReportsPage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../App';
 import { RootState } from '../store';
 import './WorkReportsPage.css';
