@@ -19,6 +19,7 @@ interface WorkReport {
 const HOURLY_RATE = 2500;
 
 export const WorkReportsPage: React.FC = () => {
+  const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
   const projects = useSelector((state: RootState) => state.projects.list);
   const [reports, setReports] = useState<WorkReport[]>([]);
@@ -122,7 +123,11 @@ export const WorkReportsPage: React.FC = () => {
 
   return (
     <div className="work-reports-page">
-      <div className="page-header">
+      <button className="btn-secondary" onClick={() => navigate('/my-profile')}>
+        <i className="fas fa-arrow-left"></i> Личный кабинет
+      </button>
+
+      <div className="page-header" style={{ marginTop: 16 }}>
         <h2>Отчёты о рабочем времени</h2>
         <button className="btn-primary" onClick={() => handleOpenModal()}>
           <i className="fas fa-plus"></i> Новая запись
