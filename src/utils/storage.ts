@@ -7,13 +7,14 @@ import { setCompanyExpenses } from '../store/companyExpensesSlice';
 import { setServiceVisits } from '../store/serviceVisitsSlice';
 
 function generateShortId(category: string, existingIds: string[]): string {
-  let rangeStart: number;
+  let rangeStart = 0; // значение по умолчанию
   switch (category) {
     case 'new': rangeStart = 0; break;
     case 'modernization': rangeStart = 2000; break;
     case 'service': rangeStart = 4000; break;
     case 'standard': rangeStart = 6000; break;
     case 'pilot': rangeStart = 8000; break;
+    default: rangeStart = 0; // на всякий случай
   }
   const rangeEnd = rangeStart + 1999;
   const taken = new Set(existingIds.map(id => parseInt(id, 10)));
