@@ -21,6 +21,7 @@ import { VacationRequestsPage } from './pages/VacationRequestsPage';
 import { WorkReportsPage } from './pages/WorkReportsPage';
 import { useProjectsSupabase } from './hooks/useProjectsSupabase';
 import { useSpecificationsSupabase } from './hooks/useSpecificationsSupabase';
+import { FinanceOverviewPage } from './pages/FinanceOverviewPage';
 import './index.css';
 
 const clearStorage = () => {
@@ -151,6 +152,7 @@ const AppContent: React.FC = () => {
                 <Route path="/my-profile" element={<MyProfilePage />} />
                 <Route path="/vacation-requests" element={<VacationRequestsPage />} />
                 <Route path="/work-reports" element={<WorkReportsPage />} />
+                <Route path="/finance/overview" element={<FinanceOverviewPage />} />
               </Routes>
             </main>
           </div>
