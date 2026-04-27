@@ -156,6 +156,18 @@ export const MyProfilePage: React.FC = () => {
   if (loading) return <div className="profile-page"><div className="empty-state">Загрузка...</div></div>;
   if (!employee) return <div className="profile-page"><div className="empty-state">Профиль не найден. Обратитесь к администратору.</div></div>;
 
+  // Единый стиль для всех кнопок в строке
+  const buttonStyle = {
+    height: '40px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0 20px',
+    fontSize: '0.85rem',
+    lineHeight: '1',
+    boxSizing: 'border-box' as const,
+  };
+
   return (
     <div className="profile-page">
       <div className="profile-header">
@@ -192,13 +204,13 @@ export const MyProfilePage: React.FC = () => {
       </div>
 
       <div className="profile-actions" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <button className="btn-primary" onClick={() => alert('Функция запроса расчётного листа пока недоступна')}>
+        <button className="btn-primary" style={buttonStyle} onClick={() => alert('Функция запроса расчётного листа пока недоступна')}>
           📄 Запросить расчётный лист
         </button>
-        <button className="btn-secondary" onClick={() => setShowVacationModal(true)}>
+        <button className="btn-secondary" style={buttonStyle} onClick={() => setShowVacationModal(true)}>
           🏖️ Запланировать отпуск
         </button>
-        <button className="btn-secondary" onClick={() => navigate('/work-reports')}>
+        <button className="btn-secondary" style={buttonStyle} onClick={() => navigate('/work-reports')}>
           📊 Отчёты
         </button>
       </div>
