@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../App';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { withAuthRetry } from '../../utils/supabaseHelpers';
 
 interface Vacation {
   id: string;
@@ -33,15 +32,13 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
 
   const loadVacations = async () => {
     try {
-      const vacations = await withAuthRetry<Vacation[]>(async () => {
-        const { data, error } = await supabase
-          .from('vacations')
-          .select('*')
-          .eq('employee_id', employeeId)
-          .order('start_date', { ascending: false });
-        return { data: data as Vacation[] | null, error };
-      });
-      setVacations(vacations);
+      const { data, error } = await supabase
+        .from('vacations')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .order('start_date', { ascending: false });
+      if (error) throw error;
+      setVacations(data || []);
     } catch (err) {
       console.error('Ошибка загрузки отпусков:', err);
     }
@@ -61,18 +58,16 @@ export const VacationsTab: React.FC<VacationsTabProps> = ({ employeeId }) => {
     setError('');
 
     try {
-      const conflicts = await withAuthRetry<any[]>(async () => {
-        const { data, error } = await supabase
-          .from('vacations')
-          .select('*, employees!inner(*)')
-          .eq('employees.position', 'Инженер-проектировщик')
-          .neq('employee_id', employeeId)
-          .gte('start_date', startDate)
-          .lte('end_date', endDate);
-        return { data: data as any[] | null, error };
-      });
+      const { data: conflicts, error: conflictError } = await supabase
+        .from('vacations')
+        .select('*, employees!inner(*)')
+        .eq('employees.position', 'Инженер-проектировщик')
+        .neq('employee_id', employeeId)
+        .gte('start_date', startDate)
+        .lte('end_date', endDate);
+      if (conflictError) throw conflictError;
 
-      if (conflicts.length > 0) {
+      if (conflicts && conflicts.length > 0) {
         setError('В выбранный период уже есть инженеры в отпуске. Выберите другие даты.');
         setLoading(false);
         return;
