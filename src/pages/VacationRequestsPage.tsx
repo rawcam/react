@@ -20,7 +20,7 @@ interface VacationRequest {
 export const VacationRequestsPage: React.FC = () => {
   const [requests, setRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>('pending');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deptFilter, setDeptFilter] = useState<string>('all');
   const [error, setError] = useState<string | null>(null);
   const userRole = useSelector((state: RootState) => state.auth.role);
@@ -29,13 +29,13 @@ export const VacationRequestsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry<any[]>(async () => {
-        const { data, error } = await supabase
+      const data = await withAuthRetry<any[]>(() =>
+        supabase
           .from('vacations')
           .select('id, employee_id, start_date, end_date, status, created_at, employees(full_name, department)')
-          .order('created_at', { ascending: false });
-        return { data: data as any[], error };
-      });
+          .order('created_at', { ascending: false })
+          .then(({ data, error }) => ({ data: data as any[], error }))
+      );
 
       const formatted: VacationRequest[] = data.map((item: any) => ({
         id: item.id,
@@ -54,7 +54,6 @@ export const VacationRequestsPage: React.FC = () => {
         window.location.reload();
       } else {
         setError(err.message);
-        console.error('Load requests error:', err);
       }
     } finally {
       setLoading(false);
@@ -74,14 +73,19 @@ export const VacationRequestsPage: React.FC = () => {
   }, [requests, statusFilter, deptFilter]);
 
   const handleAction = async (id: string, action: 'approved' | 'rejected') => {
-    const { error } = await supabase
-      .from('vacations')
-      .update({ status: action })
-      .eq('id', id);
-    if (!error) {
+    try {
+      await withAuthRetry<any>(() =>
+        supabase
+          .from('vacations')
+          .update({ status: action })
+          .eq('id', id)
+          .then(({ data, error }) => ({ data, error }))
+      );
+      // Обновляем локальный список
       setRequests(prev => prev.map(r => r.id === id ? { ...r, status: action } : r));
-    } else {
-      alert('Ошибка при обновлении статуса');
+    } catch (err: any) {
+      console.error('Ошибка обновления статуса:', err);
+      alert('Не удалось обновить статус. Проверьте права доступа.');
     }
   };
 
@@ -92,16 +96,14 @@ export const VacationRequestsPage: React.FC = () => {
 
   if (loading) return <div className="requests-page"><div className="empty-state">Загрузка заявок...</div></div>;
 
-  if (error) {
-    return (
-      <div className="requests-page">
-        <div className="empty-state">
-          <p>Ошибка: {error}</p>
-          <button onClick={loadRequests}>Повторить</button>
-        </div>
+  if (error) return (
+    <div className="requests-page">
+      <div className="empty-state">
+        <p>Ошибка: {error}</p>
+        <button onClick={loadRequests}>Повторить</button>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="requests-page">
@@ -110,10 +112,10 @@ export const VacationRequestsPage: React.FC = () => {
           <div className="filter-group">
             <label>Статус</label>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <option value="all">Все</option>
               <option value="pending">На рассмотрении</option>
               <option value="approved">Одобренные</option>
               <option value="rejected">Отклонённые</option>
-              <option value="all">Все</option>
             </select>
           </div>
           <div className="filter-group">
