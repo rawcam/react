@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../App';
 import { EmployeeDetail } from '../components/employees/EmployeeDetail';
-import { withAuthRetry } from '../utils/supabaseHelpers';
 import './EmployeesPage.css';
 
 interface Employee {
@@ -48,14 +47,11 @@ export const EmployeesPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry<any[]>(async (signal) => {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('*')
-          .order('full_name')
-          .abortSignal(signal);
-        return { data: data as any[] | null, error };
-      });
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .order('full_name');
+      if (error) throw error;
 
       const today = new Date().toISOString().slice(0, 10);
       const { data: vacData, error: vacError } = await supabase
@@ -67,19 +63,14 @@ export const EmployeesPage: React.FC = () => {
 
       if (vacError) console.error('Vacations error:', vacError);
       const onVacationIds = new Set(vacData?.map(v => v.employee_id) || []);
-      const merged = data.map(emp => ({
+      const merged = (data || []).map(emp => ({
         ...emp,
         onVacation: onVacationIds.has(emp.id),
       }));
       setEmployees(merged);
     } catch (err: any) {
-      if (err.message === 'SESSION_EXPIRED') {
-        await supabase.auth.signOut();
-        window.location.reload();
-      } else {
-        setError(err.message);
-        console.error('Load employees error:', err);
-      }
+      setError(err.message);
+      console.error('Load employees error:', err);
     } finally {
       setLoading(false);
     }
