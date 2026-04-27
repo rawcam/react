@@ -51,7 +51,7 @@ export interface Project {
   status: ProjectStatus;
   statusStartDate: string;
   startDate: string;
-  endDate?: string;                 // добавлено
+  endDate?: string;
   progress: number;
   contractAmount: number;
   engineer: string;
@@ -75,64 +75,11 @@ interface ProjectsState {
   selectedProjectId: string | null;
 }
 
-const demoProjects: Project[] = [
-  {
-    id: '1',
-    shortId: '0001',
-    name: 'Офис продаж (демо)',
-    category: 'new',
-    status: 'design',
-    statusStartDate: '2025-01-15',
-    startDate: '2025-01-10',
-    endDate: '2025-06-30',
-    progress: 35,
-    contractAmount: 2500000,
-    engineer: 'Иванов А.А.',
-    projectManager: 'Петров В.С.',
-    priority: true,
-    meetings: [
-      { date: '2025-02-01', subject: 'Обсуждение ТЗ' },
-      { date: '2025-02-15', subject: 'Промежуточный отчёт' },
-    ],
-    purchases: [
-      { name: 'Коммутатор Cisco', status: 'paid', date: '2025-01-20' },
-      { name: 'Кабель UTP', status: 'delivered', date: '2025-01-25' },
-    ],
-    incomeSchedule: [
-      { date: '2025-02-10', amount: 1000000, paid: true },
-      { date: '2025-03-10', amount: 1500000, paid: false },
-    ],
-    expenseSchedule: [
-      { date: '2025-01-20', amount: 500000, type: 'purchase', paid: true },
-      { date: '2025-02-20', amount: 300000, type: 'salary', paid: false },
-    ],
-    serviceVisits: [
-      { id: 's1', date: '2025-03-01', type: 'Плановое ТО', status: 'planned', responsible: 'Сидоров М.В.', cost: 15000 },
-    ],
-    actualIncome: 1000000,
-    actualExpenses: 500000,
-    nextStatus: 'ready',
-    nextStatusDate: '2025-03-01',
-    roadmapPlanned: [
-      { status: 'presale', date: '2025-01-01' },
-      { status: 'design', date: '2025-02-01' },
-      { status: 'ready', date: '2025-03-01' },
-      { status: 'construction', date: '2025-04-01' },
-      { status: 'done', date: '2025-05-01' },
-    ],
-    roadmapActual: [
-      { status: 'presale', date: '2025-01-05' },
-      { status: 'design', date: '2025-02-10' },
-    ],
-  },
-];
-
+// начальное состояние – пустой список, чтобы не было демо-проектов после сбоя
 const initialState: ProjectsState = {
-  list: demoProjects,
+  list: [],
   selectedProjectId: null,
 };
-
-export const seedDemoProjects = (): Project[] => demoProjects;
 
 const projectsSlice = createSlice({
   name: 'projects',
