@@ -29,13 +29,13 @@ export const VacationRequestsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await withAuthRetry<any[]>(() =>
-        supabase
+      const data = await withAuthRetry<any[]>(async () => {
+        const { data, error } = await supabase
           .from('vacations')
           .select('id, employee_id, start_date, end_date, status, created_at, employees(full_name, department)')
-          .order('created_at', { ascending: false })
-          .then(({ data, error }) => ({ data: data as any[], error }))
-      );
+          .order('created_at', { ascending: false });
+        return { data: data as any[] | null, error };
+      });
 
       const formatted: VacationRequest[] = data.map((item: any) => ({
         id: item.id,
@@ -74,18 +74,17 @@ export const VacationRequestsPage: React.FC = () => {
 
   const handleAction = async (id: string, action: 'approved' | 'rejected') => {
     try {
-      await withAuthRetry<any>(() =>
-        supabase
+      await withAuthRetry<any>(async () => {
+        const { data, error } = await supabase
           .from('vacations')
           .update({ status: action })
-          .eq('id', id)
-          .then(({ data, error }) => ({ data, error }))
-      );
-      // Обновляем локальный список
+          .eq('id', id);
+        return { data, error };
+      });
       setRequests(prev => prev.map(r => r.id === id ? { ...r, status: action } : r));
-    } catch (err: any) {
+    } catch (err) {
       console.error('Ошибка обновления статуса:', err);
-      alert('Не удалось обновить статус. Проверьте права доступа.');
+      alert('Не удалось обновить статус');
     }
   };
 
@@ -95,7 +94,6 @@ export const VacationRequestsPage: React.FC = () => {
   }, [requests]);
 
   if (loading) return <div className="requests-page"><div className="empty-state">Загрузка заявок...</div></div>;
-
   if (error) return (
     <div className="requests-page">
       <div className="empty-state">
