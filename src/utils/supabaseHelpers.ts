@@ -1,71 +1,58 @@
-// src/utils/supabaseHelpers.ts
 import { supabase } from '../App';
 
-const REQUEST_TIMEOUT = 8000;     // 8 секунд на запрос
-const REFRESH_TIMEOUT = 5000;    // 5 секунд на обновление токена
-
-async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let id: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_, reject) => {
-    id = setTimeout(() => reject(new Error('TIMEOUT')), ms);
-  });
-  try {
-    return await Promise.race([promise, timeout]);
-  } finally {
-    clearTimeout(id!);
-  }
-}
-
+/**
+ * Выполняет запрос к Supabase с тайм‑аутом 8 секунд.
+ * При ошибке JWT-expired/401 пробует обновить сессию и повторить запрос один раз.
+ */
 export async function withAuthRetry<T>(
-  queryFn: () => Promise<{ data: T | null; error: any }>
+  queryFn: (signal: AbortSignal) => Promise<{ data: T | null; error: any }>
 ): Promise<T> {
-  const MAX_RETRIES = 2; // одна попытка после тайм-аута/ошибки токена
+  const MAX_RETRIES = 1;
+  const REQUEST_TIMEOUT = 8000; // 8 секунд на одну попытку
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
     try {
-      const { data, error } = await withTimeout(queryFn(), REQUEST_TIMEOUT);
+      const { data, error } = await queryFn(controller.signal);
 
-      if (!error && data !== null && data !== undefined) return data;
+      if (!error && data !== null && data !== undefined) {
+        return data;
+      }
 
-      // Если запрос упал не из-за прав, а из-за токена – пробуем обновить сессию
-      if (error?.message?.includes('JWT expired') || error?.status === 401) {
+      // Если ошибка связана с токеном – пробуем обновить сессию и повторить
+      if (
+        error?.message?.includes('JWT expired') ||
+        error?.status === 401
+      ) {
         if (attempt < MAX_RETRIES) {
-          await refreshSessionSafe();
-          continue; // повторяем запрос с новым токеном
+          try {
+            await supabase.auth.refreshSession();
+          } catch (refreshError) {
+            // не критично, продолжаем
+          }
+          continue; // повторяем запрос
         }
         throw new Error('SESSION_EXPIRED');
       }
 
-      // Пустой или null ответ без ошибки
-      if (!error && (data === null || data === undefined)) {
-        throw new Error('NO_DATA');
-      }
-
       // Любая другая ошибка
-      throw error;
-
+      throw error || new Error('NO_DATA');
     } catch (err: any) {
-      // Тайм-аут: возможно, токен протух и запрос завис, пробуем обновить и повторить
-      if (err.message === 'TIMEOUT') {
+      if (err.name === 'AbortError') {
+        // тайм‑аут
         if (attempt < MAX_RETRIES) {
-          await refreshSessionSafe();
+          await supabase.auth.refreshSession();
           continue;
         }
         throw new Error('SESSION_EXPIRED');
       }
-
-      // Другие ошибки, включая SESSION_EXPIRED, NO_DATA – пробрасываем дальше
       throw err;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
   throw new Error('UNREACHABLE');
-}
-
-async function refreshSessionSafe() {
-  try {
-    await withTimeout(supabase.auth.refreshSession(), REFRESH_TIMEOUT);
-  } catch (e) {
-    // не удалось обновить – ничего не делаем, следующая попытка запроса сама упадет
-  }
 }
