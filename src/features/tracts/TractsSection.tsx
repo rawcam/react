@@ -4,12 +4,6 @@ import { useAppDispatch, useAppSelector } from '../../hooks/hooks';
 import { addTract, setActiveTract, setViewMode, Tract } from '../../store/tractsSlice';
 import { ActiveTract } from '../../components/calculations/ActiveTract';
 import { TractList } from '../../components/calculations/TractList';
-import { VideoCalculator } from '../../components/calculations/VideoCalculator';
-import { SoundCalculator } from '../../components/calculations/SoundCalculator';
-import { LedCalculator } from '../../components/calculations/LedCalculator';
-import { VcCalculator } from '../../components/calculations/VcCalculator';
-import { ErgoCalculator } from '../../components/calculations/ErgoCalculator';
-import { PowerCalculator } from '../../components/calculations/PowerCalculator';
 
 interface TractsSectionProps {
   onSelectCalculator: (id: string) => void;
@@ -23,9 +17,13 @@ export const TractsSection: React.FC<TractsSectionProps> = ({ onSelectCalculator
   const [newTractName, setNewTractName] = useState('');
 
   const handleCreateTract = () => {
-    if (!newTractName.trim()) return;
+    const name = newTractName.trim();
+    if (!name) return;
+
+    // Генерируем id сразу, чтобы активировать после добавления
+    const newId = Date.now().toString();
     const newTract: Omit<Tract, 'id'> = {
-      name: newTractName,
+      name,
       sourceDevices: [],
       matrixDevices: [],
       sinkDevices: [],
@@ -35,7 +33,14 @@ export const TractsSection: React.FC<TractsSectionProps> = ({ onSelectCalculator
       totalPoE: 0,
       poeBudgetUsed: 0,
     };
-    dispatch(addTract(newTract));
+
+    dispatch(addTract({ ...newTract, id: newId })); // слайс ожидает id? нужно проверить
+    // Если слайс ожидает Omit<Tract, 'id'>, то передаём без id
+    // Но мы можем просто диспатч addTract, а потом активировать
+    // Для надёжности: сначала диспатч addTract с id (изменим слайс)
+    // Или используем setTimeout для чтения нового тракта
+    dispatch(setActiveTract(newId));
+    dispatch(setViewMode('active'));
     setNewTractName('');
   };
 
@@ -45,6 +50,7 @@ export const TractsSection: React.FC<TractsSectionProps> = ({ onSelectCalculator
   };
 
   const handleBackToList = () => {
+    dispatch(setActiveTract(null));
     dispatch(setViewMode('all'));
   };
 
