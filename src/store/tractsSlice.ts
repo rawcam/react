@@ -168,9 +168,9 @@ const tractsSlice = createSlice({
     setTracts: (state, action: PayloadAction<Tract[]>) => {
       state.tracts = action.payload;
     },
-    addTract: (state, action: PayloadAction<Omit<Tract, 'id'>>) => {
-      const newId = Date.now().toString();
-      state.tracts.push({ ...action.payload, id: newId });
+    addTract: (state, action: PayloadAction<Omit<Tract, 'id'> & { id?: string }>) => {
+      const newId = action.payload.id || Date.now().toString();
+      state.tracts.push({ ...action.payload, id: newId } as Tract);
     },
     updateTract: (state, action: PayloadAction<Tract>) => {
       const index = state.tracts.findIndex(t => t.id === action.payload.id);
