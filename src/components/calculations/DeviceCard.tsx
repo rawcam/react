@@ -1,33 +1,33 @@
 // src/components/calculations/DeviceCard.tsx
 import React from 'react';
-import { TractDevice } from '../../store/tractsSlice';
+import { TractDevice, MatrixDevice } from '../../store/tractsSlice';
 
 interface DeviceCardProps {
-  device: TractDevice;
+  device: TractDevice | MatrixDevice;
   onClick: () => void;
   onDelete: (e: React.MouseEvent) => void;
   onToggleExpand: (e: React.MouseEvent) => void;
 }
 
 export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onClick, onDelete, onToggleExpand }) => {
-  // Определяем, свёрнут ли компонент (по умолчанию развёрнут)
   const isExpanded = device.expanded !== false;
 
-  // Короткое имя, если свёрнут
+  // Для матрицы имя хранится в 'name', для остальных – в 'modelName'
+  const modelName = 'modelName' in device ? device.modelName : device.name;
   const shortName = device.shortName || device.shortPrefix || '?';
-  const displayName = isExpanded ? device.modelName : shortName;
+  const displayName = isExpanded ? modelName : shortName;
 
-  // Детали для развёрнутого состояния
+  // Собираем детали
   const details: string[] = [];
-  if (device.latency !== undefined) details.push(`⏱️ ${device.latency} мс`);
-  if (device.powerW) details.push(`💡 ${device.powerW} Вт`);
-  if (device.poeEnabled) details.push(`🔌 PoE ${device.poePower} Вт`);
-  if (device.ethernet && !device.poeEnabled) details.push(`🌐 Ethernet`);
-  if (device.inputs !== undefined && device.outputs !== undefined) {
+  if ('latency' in device && device.latency !== undefined) details.push(`⏱️ ${device.latency} мс`);
+  if ('powerW' in device && device.powerW) details.push(`💡 ${device.powerW} Вт`);
+  if ('poeEnabled' in device && device.poeEnabled) details.push(`🔌 PoE ${device.poePower} Вт`);
+  if ('ethernet' in device && device.ethernet && !('poeEnabled' in device && device.poeEnabled)) details.push(`🌐 Ethernet`);
+  if ('inputs' in device && device.inputs !== undefined && device.outputs !== undefined) {
     details.push(`Вх/вых: ${device.inputs}/${device.outputs}`);
   }
-  if (device.ports) details.push(`Портов: ${device.ports}`);
-  if (device.switchingLatency) details.push(`Коммутация: ${device.switchingLatency} мс`);
+  if ('ports' in device) details.push(`Портов: ${device.ports}`);
+  if ('switchingLatency' in device && device.switchingLatency) details.push(`Коммутация: ${device.switchingLatency} мс`);
 
   const detailText = details.join(' · ');
 
@@ -56,7 +56,6 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onClick, onDelet
           <div className="device-card-stats" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 6 }}>
             {detailText}
           </div>
-          {/* Дополнительные элементы управления PoE, Ethernet, питание могут быть здесь, но они редактируются через модальное окно */}
         </>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
