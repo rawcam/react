@@ -38,14 +38,14 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
 
   useEffect(() => {
     if (activeTract) {
-      const state = {
+      const stateMock = {
         tracts,
-        projectSwitches: activeTract.matrixDevices, // временно, чтобы работал пересчёт
+        projectSwitches: activeTract.matrixDevices, // временная подмена для пересчёта
         activeTractId,
         viewMode: 'active' as const,
         activeCalculator: null,
       };
-      recalcAll(state, videoSettings, networkSettings);
+      recalcAll(stateMock, videoSettings, networkSettings);
     }
   }, [activeTract?.sourceDevices, activeTract?.sinkDevices, activeTract?.matrixDevices, videoSettings, networkSettings]);
 
@@ -86,13 +86,11 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
 
   const handleToggleExpand = (deviceId: string) => {
     if (!activeTract) return;
-    // пробуем TractDevice
     const tractDevice = [...activeTract.sourceDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId);
     if (tractDevice) {
       dispatch(updateDevice({ tractId: activeTract.id, deviceId, updates: { expanded: !tractDevice.expanded } }));
       return;
     }
-    // пробуем MatrixDevice
     const matrixDevice = activeTract.matrixDevices.find(d => d.id === deviceId);
     if (matrixDevice) {
       const updated = activeTract.matrixDevices.map(d => d.id === deviceId ? { ...d, expanded: !d.expanded } : d);
@@ -125,12 +123,7 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
           <i className="fas fa-arrow-left"></i> Все тракты
         </button>
         <div className="tract-name">
-          <input
-            type="text"
-            value={activeTract.name}
-            onChange={e => handleRename(e.target.value)}
-            className="tract-name-input"
-          />
+          <input type="text" value={activeTract.name} onChange={e => handleRename(e.target.value)} className="tract-name-input" />
         </div>
         <div className="tract-stats-summary">
           <div className="stat-badge">⏱️ {activeTract.totalLatency.toFixed(2)} мс</div>
