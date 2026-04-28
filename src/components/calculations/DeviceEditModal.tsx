@@ -59,6 +59,9 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
 
   if (!isOpen) return null;
 
+  // Поддержка PoE: показываем, если устройство поддерживает PoE (poe === true) или уже poeEnabled
+  const supportsPoE = device.poe === true || device.poeEnabled;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ width: '420px', maxWidth: '90vw', padding: '24px' }}>
@@ -91,12 +94,12 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
           </div>
         )}
 
-        {device.poe !== undefined && device.poe === true && (
+        {supportsPoE && (
           <div className="form-group">
             <label>
               <input type="checkbox" checked={poeEnabled} onChange={e => {
                 setPoeEnabled(e.target.checked);
-                if (e.target.checked) setEthernet(false); // несовместимы
+                if (e.target.checked) setEthernet(false);
               }} />
               Использовать PoE
             </label>
@@ -127,7 +130,7 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
           </div>
         )}
 
-        {device.type === 'matrix' && (
+        {(device.type === 'matrix' || device.inputs !== undefined) && (
           <>
             <div className="form-group">
               <label>Входов</label>
