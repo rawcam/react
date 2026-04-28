@@ -1,7 +1,7 @@
 // src/components/calculations/DeviceEditModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/hooks';
-import { updateDevice, TractDevice, MatrixDevice, updateTract } from '../../store/tractsSlice';
+import { updateDevice, updateTract, TractDevice, MatrixDevice } from '../../store/tractsSlice';
 
 interface DeviceEditModalProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface DeviceEditModalProps {
 
 export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, tractId }) => {
   const dispatch = useAppDispatch();
+  const isMatrix = device.type === 'matrix';
 
   const [latency, setLatency] = useState<number>(0);
   const [powerW, setPowerW] = useState<number>(0);
@@ -24,12 +25,10 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
   const [inputs, setInputs] = useState<number>(0);
   const [outputs, setOutputs] = useState<number>(0);
 
-  const isMatrix = device.type === 'matrix';
-
   useEffect(() => {
     if (isMatrix) {
       const m = device as MatrixDevice;
-      setLatency((m.latencyIn || 0) + (m.latencyOut || 0)); // общая задержка
+      setLatency((m.latencyIn || 0) + (m.latencyOut || 0));
       setPowerW(m.powerW || 0);
       setInputs(m.inputs || 0);
       setOutputs(m.outputs || 0);
@@ -52,19 +51,12 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
   const handleSave = () => {
     if (isMatrix) {
       const m = device as MatrixDevice;
-      // делим задержку поровну между входом и выходом (упрощённо)
       const halfLatency = latency / 2;
-      const updatedMatrix: MatrixDevice = {
+      dispatch(updateTract({
         ...m,
-        latencyIn: halfLatency,
-        latencyOut: halfLatency,
-        powerW,
-        inputs,
-        outputs,
-        shortName,
-        expanded: m.expanded,
-      };
-      dispatch(updateTract({ id: tractId, ...{ matrixDevices: [updatedMatrix] } } as any));
+        id: tractId,
+        matrixDevices: [{ ...m, latencyIn: halfLatency, latencyOut: halfLatency, powerW, inputs, outputs, shortName }],
+      } as any));
     } else {
       dispatch(updateDevice({
         tractId,
@@ -88,8 +80,8 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
 
   if (!isOpen) return null;
 
-  const supportsPoE = 'poe' in device ? device.poe === true : false;
-  const hasNetwork = 'hasNetwork' in device ? device.hasNetwork !== false : false;
+  const supportsPoE = 'poe' in device ? (device as TractDevice).poe === true : false;
+  const hasNetwork = 'hasNetwork' in device ? (device as TractDevice).hasNetwork !== false : false;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -99,18 +91,36 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
           <button className="modal-close" onClick={onClose}>&times;</button>
         </div>
 
-        {!isMatrix && (
+        <div className="form-group">
+          <label>Короткое имя</label>
+          <input type="text" value={shortName} onChange={e => setShortName(e.target.value)} />
+        </div>
+
+        {isMatrix ? (
           <>
             <div className="form-group">
-              <label>Короткое имя</label>
-              <input type="text" value={shortName} onChange={e => setShortName(e.target.value)} />
+              <label>Общая задержка (мс)</label>
+              <input type="number" step="0.1" value={latency} onChange={e => setLatency(parseFloat(e.target.value) || 0)} />
             </div>
-
+            <div className="form-group">
+              <label>Мощность (Вт)</label>
+              <input type="number" value={powerW} onChange={e => setPowerW(parseFloat(e.target.value) || 0)} />
+            </div>
+            <div className="form-group">
+              <label>Входов</label>
+              <input type="number" value={inputs} onChange={e => setInputs(parseInt(e.target.value) || 0)} />
+            </div>
+            <div className="form-group">
+              <label>Выходов</label>
+              <input type="number" value={outputs} onChange={e => setOutputs(parseInt(e.target.value) || 0)} />
+            </div>
+          </>
+        ) : (
+          <>
             <div className="form-group">
               <label>Задержка (мс)</label>
               <input type="number" step="0.1" value={latency} onChange={e => setLatency(parseFloat(e.target.value) || 0)} />
             </div>
-
             <div className="form-group">
               <label>Мощность (Вт)</label>
               <input type="number" value={powerW} onChange={e => setPowerW(parseFloat(e.target.value) || 0)} />
@@ -173,31 +183,6 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
                 </div>
               </>
             )}
-          </>
-        )}
-
-        {isMatrix && (
-          <>
-            <div className="form-group">
-              <label>Короткое имя</label>
-              <input type="text" value={shortName} onChange={e => setShortName(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Общая задержка (мс)</label>
-              <input type="number" step="0.1" value={latency} onChange={e => setLatency(parseFloat(e.target.value) || 0)} />
-            </div>
-            <div className="form-group">
-              <label>Мощность (Вт)</label>
-              <input type="number" value={powerW} onChange={e => setPowerW(parseFloat(e.target.value) || 0)} />
-            </div>
-            <div className="form-group">
-              <label>Входов</label>
-              <input type="number" value={inputs} onChange={e => setInputs(parseInt(e.target.value) || 0)} />
-            </div>
-            <div className="form-group">
-              <label>Выходов</label>
-              <input type="number" value={outputs} onChange={e => setOutputs(parseInt(e.target.value) || 0)} />
-            </div>
           </>
         )}
 
