@@ -26,7 +26,6 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
   const dispatch = useAppDispatch();
   const tracts = useAppSelector(state => state.tracts.tracts);
   const activeTractId = useAppSelector(state => state.tracts.activeTractId);
-  const projectSwitches = useAppSelector(state => state.tracts.projectSwitches);
   const videoSettings = useAppSelector(state => state.video);
   const networkSettings = useAppSelector(state => state.network);
 
@@ -41,14 +40,14 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
     if (activeTract) {
       const state = {
         tracts,
-        projectSwitches,
+        projectSwitches: activeTract.matrixDevices, // временно, чтобы работал пересчёт
         activeTractId,
         viewMode: 'active' as const,
         activeCalculator: null,
       };
       recalcAll(state, videoSettings, networkSettings);
     }
-  }, [activeTract?.sourceDevices, activeTract?.sinkDevices, projectSwitches, videoSettings, networkSettings]);
+  }, [activeTract?.sourceDevices, activeTract?.sinkDevices, activeTract?.matrixDevices, videoSettings, networkSettings]);
 
   const handleAddDevice = (model: DeviceModel, type: string) => {
     if (!activeTract) return;
@@ -77,14 +76,27 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
 
   const handleDeleteDevice = (deviceId: string, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return;
+    if (column === 'matrix') {
+      const updatedMatrices = activeTract.matrixDevices.filter(d => d.id !== deviceId);
+      dispatch(updateTract({ ...activeTract, matrixDevices: updatedMatrices }));
+      return;
+    }
     dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId }));
   };
 
   const handleToggleExpand = (deviceId: string) => {
     if (!activeTract) return;
-    const device = [...activeTract.sourceDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId);
-    if (device) {
-      dispatch(updateDevice({ tractId: activeTract.id, deviceId, updates: { expanded: !device.expanded } }));
+    // пробуем TractDevice
+    const tractDevice = [...activeTract.sourceDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId);
+    if (tractDevice) {
+      dispatch(updateDevice({ tractId: activeTract.id, deviceId, updates: { expanded: !tractDevice.expanded } }));
+      return;
+    }
+    // пробуем MatrixDevice
+    const matrixDevice = activeTract.matrixDevices.find(d => d.id === deviceId);
+    if (matrixDevice) {
+      const updated = activeTract.matrixDevices.map(d => d.id === deviceId ? { ...d, expanded: !d.expanded } : d);
+      dispatch(updateTract({ ...activeTract, matrixDevices: updated }));
     }
   };
 
