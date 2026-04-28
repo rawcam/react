@@ -1,7 +1,7 @@
 /* src/components/layout/Sidebar.css */
 :root {
-  --sidebar-width: 280px;
-  --sidebar-collapsed-width: 70px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 50px;
 }
 
 .sidebar {
@@ -139,7 +139,7 @@
   margin-top: auto;
 }
 
-/* Стили элементов внутри контента */
+/* Элементы внутри контента */
 .section-content .mode-btn {
   display: block;
   width: 100%;
