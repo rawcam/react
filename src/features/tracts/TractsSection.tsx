@@ -20,9 +20,7 @@ export const TractsSection: React.FC<TractsSectionProps> = ({ onSelectCalculator
     const name = newTractName.trim();
     if (!name) return;
 
-    // Генерируем id сразу, чтобы активировать после добавления
-    const newId = Date.now().toString();
-    const newTract: Omit<Tract, 'id'> = {
+    dispatch(addTract({
       name,
       sourceDevices: [],
       matrixDevices: [],
@@ -32,15 +30,7 @@ export const TractsSection: React.FC<TractsSectionProps> = ({ onSelectCalculator
       totalPower: 0,
       totalPoE: 0,
       poeBudgetUsed: 0,
-    };
-
-    dispatch(addTract({ ...newTract, id: newId })); // слайс ожидает id? нужно проверить
-    // Если слайс ожидает Omit<Tract, 'id'>, то передаём без id
-    // Но мы можем просто диспатч addTract, а потом активировать
-    // Для надёжности: сначала диспатч addTract с id (изменим слайс)
-    // Или используем setTimeout для чтения нового тракта
-    dispatch(setActiveTract(newId));
-    dispatch(setViewMode('active'));
+    }));
     setNewTractName('');
   };
 
