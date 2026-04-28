@@ -12,18 +12,16 @@ interface DeviceCardProps {
 export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onClick, onDelete, onToggleExpand }) => {
   const isExpanded = device.expanded !== false;
 
-  // Для матрицы имя хранится в 'name', для остальных – в 'modelName'
   const modelName = 'modelName' in device ? device.modelName : device.name;
-  const shortName = device.shortName || device.shortPrefix || '?';
+  const shortName = 'shortName' in device ? device.shortName : (device.shortPrefix || '?');
   const displayName = isExpanded ? modelName : shortName;
 
-  // Собираем детали
   const details: string[] = [];
   if ('latency' in device && device.latency !== undefined) details.push(`⏱️ ${device.latency} мс`);
   if ('powerW' in device && device.powerW) details.push(`💡 ${device.powerW} Вт`);
   if ('poeEnabled' in device && device.poeEnabled) details.push(`🔌 PoE ${device.poePower} Вт`);
   if ('ethernet' in device && device.ethernet && !('poeEnabled' in device && device.poeEnabled)) details.push(`🌐 Ethernet`);
-  if ('inputs' in device && device.inputs !== undefined && device.outputs !== undefined) {
+  if ('inputs' in device && device.inputs !== undefined && 'outputs' in device && device.outputs !== undefined) {
     details.push(`Вх/вых: ${device.inputs}/${device.outputs}`);
   }
   if ('ports' in device) details.push(`Портов: ${device.ports}`);
