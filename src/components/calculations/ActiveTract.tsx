@@ -1,20 +1,20 @@
 // src/components/calculations/ActiveTract.tsx
-import React, { useState, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../hooks';
+import React, { useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../../hooks/hooks';
 import {
-  updateTract,
+  addDeviceToTract,
+  removeDeviceFromTract,
+  updateDevice,
   deleteTract,
   setActiveTract,
   setViewMode,
-  addDeviceToTract,
-  updateDeviceThunk,
-  recalcTractThunk,
-  removeDeviceThunk,
+  recalcAll,
   TractDevice,
 } from '../../store/tractsSlice';
 import { AddDeviceModal } from './AddDeviceModal';
 import { DeviceCard } from './DeviceCard';
 import { DeviceEditModal } from './DeviceEditModal';
+import { DeviceModel, DEVICE_MODELS } from '../../utils/tractCalculations';
 
 interface ActiveTractProps {
   onBack: () => void;
@@ -25,62 +25,65 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
   const dispatch = useAppDispatch();
   const tracts = useAppSelector(state => state.tracts.tracts);
   const activeTractId = useAppSelector(state => state.tracts.activeTractId);
+  const projectSwitches = useAppSelector(state => state.tracts.projectSwitches);
   const videoSettings = useAppSelector(state => state.video);
   const networkSettings = useAppSelector(state => state.network);
+
   const activeTract = tracts.find(t => t.id === activeTractId) || null;
+
   const [showModal, setShowModal] = useState(false);
   const [modalColumn, setModalColumn] = useState<'source' | 'matrix' | 'sink'>('source');
   const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
+  // Пересчёт всех метрик при любом изменении
+  React.useEffect(() => {
     if (activeTract) {
-      dispatch(recalcTractThunk(activeTract.id));
+      const state = {
+        tracts,
+        projectSwitches,
+        activeTractId,
+        viewMode: 'active' as const,
+        activeCalculator: null,
+      };
+      recalcAll(state, videoSettings, networkSettings);
     }
-  }, [videoSettings, networkSettings, activeTract?.id, dispatch]);
+  }, [activeTract?.sourceDevices, activeTract?.sinkDevices, projectSwitches, videoSettings, networkSettings]);
 
-  const handleAddDevice = (device: any, column: 'source' | 'matrix' | 'sink') => {
+  const handleAddDevice = (model: DeviceModel, type: string) => {
     if (!activeTract) return;
     const newDevice: TractDevice = {
       id: Date.now().toString(),
-      type: device.type,
-      modelName: device.name,
-      latency: device.latency || 0,
-      poe: device.poe || false,
-      poeEnabled: false,
-      poePower: 0,
-      powerW: device.powerW || 0,
+      modelName: model.name,
+      type,
+      latency: model.latency || 0,
+      powerW: model.powerW || 0,
       shortName: '',
       ethernet: false,
-      bitrateFactor: device.bitrateFactor,
-      hasNetwork: device.hasNetwork !== undefined ? device.hasNetwork : true,
-      shortPrefix: device.shortPrefix,
-      usb: false,
-      usbVersion: undefined,
+      poeEnabled: false,
+      poePower: model.poePower || 0,
+      bitrateFactor: model.bitrateFactor,
+      hasNetwork: model.hasNetwork,
+      shortPrefix: model.shortPrefix,
+      icon: `fas ${model.icon || 'fa-question-circle'}`,
       expanded: true,
-      ports: device.ports,
-      poeBudget: device.poeBudget,
-      switchingLatency: device.switchingLatency,
-      inputs: device.inputs,
-      outputs: device.outputs,
-      latencyIn: device.latencyIn,
-      latencyOut: device.latencyOut,
-      speed: device.speed,
+      inputs: model.inputs,
+      outputs: model.outputs,
     };
-    dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice, column }));
+    dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice, column: modalColumn }));
     setShowModal(false);
   };
 
   const handleDeleteDevice = (deviceId: string, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return;
-    dispatch(removeDeviceThunk({ tractId: activeTract.id, deviceId, column }));
+    dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId }));
   };
 
   const handleToggleExpand = (deviceId: string) => {
     if (!activeTract) return;
-    const device = [...activeTract.sourceDevices, ...activeTract.matrixDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId);
+    const device = [...activeTract.sourceDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId);
     if (device) {
-      dispatch(updateDeviceThunk({ tractId: activeTract.id, deviceId, updates: { expanded: !device.expanded } }));
+      dispatch(updateDevice({ tractId: activeTract.id, deviceId, updates: { expanded: !device.expanded } }));
     }
   };
 
@@ -209,7 +212,7 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
       <AddDeviceModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onAdd={(device) => handleAddDevice(device, modalColumn)}
+        onAddDevice={handleAddDevice}
         column={modalColumn}
       />
 
