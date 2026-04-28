@@ -1,5 +1,5 @@
 // src/pages/EmployeesPage.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../App';
 import { EmployeeDetail } from '../components/employees/EmployeeDetail';
@@ -17,11 +17,13 @@ interface Employee {
   onVacation?: boolean;
 }
 
+let cachedEmployees: Employee[] | null = null;
+
 export const EmployeesPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [employees, setEmployees] = useState<Employee[]>(cachedEmployees || []);
+  const [loading, setLoading] = useState(!cachedEmployees);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState<string>('all');
@@ -34,6 +36,8 @@ export const EmployeesPage: React.FC = () => {
   const [formHireDate, setFormHireDate] = useState(new Date().toISOString().slice(0, 10));
   const [formEmail, setFormEmail] = useState('');
 
+  const abortRef = useRef<AbortController | null>(null);
+
   const searchParams = new URLSearchParams(location.search);
   const employeeId = searchParams.get('id');
   const selectedEmployee = employeeId ? employees.find(e => e.id === employeeId) || null : null;
@@ -44,13 +48,26 @@ export const EmployeesPage: React.FC = () => {
   }, [employees]);
 
   const loadEmployees = async () => {
-    setLoading(true);
-    setError(null);
+    // Если есть кеш – показываем его, но всё равно обновляем
+    if (cachedEmployees) {
+      setEmployees(cachedEmployees);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
+      const timer = setTimeout(() => controller.abort(), 10_000);
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .order('full_name');
+        .order('full_name')
+        .abortSignal(controller.signal);
+      clearTimeout(timer);
       if (error) throw error;
 
       const today = new Date().toISOString().slice(0, 10);
@@ -59,7 +76,8 @@ export const EmployeesPage: React.FC = () => {
         .select('employee_id')
         .eq('status', 'approved')
         .lte('start_date', today)
-        .gte('end_date', today);
+        .gte('end_date', today)
+        .abortSignal(controller.signal);
 
       if (vacError) console.error('Vacations error:', vacError);
       const onVacationIds = new Set(vacData?.map(v => v.employee_id) || []);
@@ -67,10 +85,17 @@ export const EmployeesPage: React.FC = () => {
         ...emp,
         onVacation: onVacationIds.has(emp.id),
       }));
+
+      cachedEmployees = merged;
       setEmployees(merged);
+      setError(null);
     } catch (err: any) {
-      setError(err.message);
-      console.error('Load employees error:', err);
+      if (err.name === 'AbortError') {
+        console.warn('Запрос сотрудников прерван по таймауту');
+      } else {
+        setError(err.message);
+        console.error('Load employees error:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -78,6 +103,7 @@ export const EmployeesPage: React.FC = () => {
 
   useEffect(() => {
     loadEmployees();
+    return () => abortRef.current?.abort();
   }, []);
 
   const filteredEmployees = useMemo(() => {
@@ -105,6 +131,8 @@ export const EmployeesPage: React.FC = () => {
       setShowAddModal(false);
       setFormName(''); setFormPosition(''); setFormDepartment(''); setFormSalary(100000);
       setFormEmail('');
+      // Сбрасываем кеш и перезагружаем
+      cachedEmployees = null;
       loadEmployees();
     } else {
       alert('Ошибка при добавлении: ' + error.message);
@@ -115,6 +143,7 @@ export const EmployeesPage: React.FC = () => {
     if (!confirm(`Удалить сотрудника "${name}"? Это действие необратимо.`)) return;
     const { error } = await supabase.from('employees').delete().eq('id', empId);
     if (!error) {
+      cachedEmployees = null;
       loadEmployees();
     } else {
       alert('Ошибка при удалении: ' + error.message);
@@ -129,11 +158,11 @@ export const EmployeesPage: React.FC = () => {
     navigate('/employees', { replace: true });
   };
 
-  if (loading) {
+  if (loading && !employees.length) {
     return <div className="employees-page"><div className="empty-state">Загрузка...</div></div>;
   }
 
-  if (error) {
+  if (error && !employees.length) {
     return (
       <div className="employees-page">
         <div className="empty-state">
