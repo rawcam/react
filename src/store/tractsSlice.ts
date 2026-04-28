@@ -37,7 +37,7 @@ export interface TractDevice {
   area?: number;
   attachedSwitchId?: string;
   attachedPortNumber?: number;
-  poe?: boolean; // поддерживает ли устройство PoE
+  poe?: boolean;
 }
 
 export interface NetworkSwitchDevice {
@@ -68,6 +68,7 @@ export interface MatrixDevice {
   powerW: number;
   icon?: string;
   shortPrefix: string;
+  shortName?: string;
   expanded?: boolean;
   hasNetwork?: boolean;
 }
@@ -353,7 +354,7 @@ const tractsSlice = createSlice({
       }
     },
     recalcAllTracts: (state) => {
-      // placeholder – actual recalculation happens in component
+      // placeholder
     },
   },
 });
