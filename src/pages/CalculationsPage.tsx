@@ -21,30 +21,31 @@ export const CalculationsPage: React.FC = () => {
 
   const handleBack = () => {
     dispatch(setActiveCalculator(null));
+    dispatch(setViewMode('all'));
   };
 
-  // Определяем, нужно ли показать пустое состояние
-  const showEmptyState = viewMode === 'all' ? tracts.length === 0 : !activeTract;
+  // Если открыт калькулятор – показываем его вместо трактов, но внутри того же layout
+  const renderContent = () => {
+    if (activeCalculator) {
+      return (
+        <div className="calculator-view" style={{ padding: 0 }}>
+          <button className="btn-secondary" onClick={handleBack} style={{ marginBottom: 16 }}>
+            <i className="fas fa-arrow-left"></i> Назад к трактам
+          </button>
+          {activeCalculator === 'video' && <VideoCalculator onBack={handleBack} />}
+          {activeCalculator === 'sound' && <SoundCalculator onBack={handleBack} />}
+          {activeCalculator === 'led' && <LedCalculator onBack={handleBack} />}
+          {activeCalculator === 'vc' && <VcCalculator onBack={handleBack} />}
+          {activeCalculator === 'ergo' && <ErgoCalculator onBack={handleBack} />}
+          {activeCalculator === 'power' && <PowerCalculator onBack={handleBack} />}
+        </div>
+      );
+    }
 
-  if (activeCalculator) {
-    return (
-      <div className="calculator-view">
-        <button className="btn-secondary" onClick={handleBack} style={{ marginBottom: 16 }}>
-          <i className="fas fa-arrow-left"></i> Назад
-        </button>
-        {activeCalculator === 'video' && <VideoCalculator onBack={handleBack} />}
-        {activeCalculator === 'sound' && <SoundCalculator onBack={handleBack} />}
-        {activeCalculator === 'led' && <LedCalculator onBack={handleBack} />}
-        {activeCalculator === 'vc' && <VcCalculator onBack={handleBack} />}
-        {activeCalculator === 'ergo' && <ErgoCalculator onBack={handleBack} />}
-        {activeCalculator === 'power' && <PowerCalculator onBack={handleBack} />}
-      </div>
-    );
-  }
-
-  return (
-    <CalculationsLayout sidebarCollapsed={false} onToggleSidebar={() => {}}>
-      {showEmptyState ? (
+    // Нет открытого калькулятора – показываем тракты или пустое состояние
+    const showEmpty = viewMode === 'all' ? tracts.length === 0 : !activeTract;
+    if (showEmpty) {
+      return (
         <div className="empty-calculations">
           <i className="fas fa-calculator"></i>
           <h3>Начните работу</h3>
@@ -54,16 +55,24 @@ export const CalculationsPage: React.FC = () => {
           </p>
           <small>Все расчёты сохраняются автоматически.</small>
         </div>
-      ) : (
-        <div className="calculations-main">
-          <TractsSection
-            onSelectCalculator={(id) => {
-              dispatch(setActiveCalculator(id));
-              dispatch(setViewMode('calculator'));
-            }}
-          />
-        </div>
-      )}
+      );
+    }
+
+    return (
+      <div className="calculations-main">
+        <TractsSection
+          onSelectCalculator={(id) => {
+            dispatch(setActiveCalculator(id));
+            dispatch(setViewMode('calculator'));
+          }}
+        />
+      </div>
+    );
+  };
+
+  return (
+    <CalculationsLayout sidebarCollapsed={false} onToggleSidebar={() => {}}>
+      {renderContent()}
     </CalculationsLayout>
   );
 };
