@@ -1,5 +1,5 @@
 // src/pages/CalculationsPage.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { CalculationsLayout } from '../components/layout/CalculationsLayout';
 import { TractsSection } from '../features/tracts/TractsSection';
 import { VideoCalculator } from '../components/calculations/VideoCalculator';
@@ -8,34 +8,29 @@ import { LedCalculator } from '../components/calculations/LedCalculator';
 import { VcCalculator } from '../components/calculations/VcCalculator';
 import { ErgoCalculator } from '../components/calculations/ErgoCalculator';
 import { PowerCalculator } from '../components/calculations/PowerCalculator';
-import { useAppSelector } from '../hooks/hooks';
+import { useAppDispatch, useAppSelector } from '../hooks/hooks';
+import { setActiveCalculator, setViewMode } from '../store/tractsSlice';
 
 export const CalculationsPage: React.FC = () => {
-  const [activeCalculator, setActiveCalculator] = useState<string | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const dispatch = useAppDispatch();
+  const activeCalculator = useAppSelector(state => state.tracts.activeCalculator);
   const viewMode = useAppSelector(state => state.tracts.viewMode);
-  const activeTractId = useAppSelector(state => state.tracts.activeTractId);
   const tracts = useAppSelector(state => state.tracts.tracts);
+  const activeTractId = useAppSelector(state => state.tracts.activeTractId);
   const activeTract = tracts.find(t => t.id === activeTractId);
 
-  const handleSelectCalculator = (id: string) => {
-    setActiveCalculator(id);
-  };
-
   const handleBack = () => {
-    setActiveCalculator(null);
+    dispatch(setActiveCalculator(null));
   };
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed(prev => !prev);
-  };
+  // Определяем, нужно ли показать пустое состояние
+  const showEmptyState = viewMode === 'all' ? tracts.length === 0 : !activeTract;
 
-  // Если открыт конкретный калькулятор
   if (activeCalculator) {
     return (
       <div className="calculator-view">
         <button className="btn-secondary" onClick={handleBack} style={{ marginBottom: 16 }}>
-          <i className="fas fa-arrow-left"></i> Назад к трактам
+          <i className="fas fa-arrow-left"></i> Назад
         </button>
         {activeCalculator === 'video' && <VideoCalculator onBack={handleBack} />}
         {activeCalculator === 'sound' && <SoundCalculator onBack={handleBack} />}
@@ -47,11 +42,8 @@ export const CalculationsPage: React.FC = () => {
     );
   }
 
-  // Определяем, нужно ли показать пустое состояние
-  const showEmptyState = viewMode === 'all' ? tracts.length === 0 : !activeTract;
-
   return (
-    <CalculationsLayout sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar}>
+    <CalculationsLayout sidebarCollapsed={false} onToggleSidebar={() => {}}>
       {showEmptyState ? (
         <div className="empty-calculations">
           <i className="fas fa-calculator"></i>
@@ -64,7 +56,12 @@ export const CalculationsPage: React.FC = () => {
         </div>
       ) : (
         <div className="calculations-main">
-          <TractsSection onSelectCalculator={handleSelectCalculator} />
+          <TractsSection
+            onSelectCalculator={(id) => {
+              dispatch(setActiveCalculator(id));
+              dispatch(setViewMode('calculator'));
+            }}
+          />
         </div>
       )}
     </CalculationsLayout>
