@@ -76,6 +76,8 @@ export const LedCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       resW: result.resW,
       resH: result.resH,
       area: result.area,
+      shortPrefix: 'LED',
+      icon: 'fas fa-border-all',
     };
     dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }));
     alert('Устройство добавлено в тракт');
