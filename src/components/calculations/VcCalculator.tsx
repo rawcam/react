@@ -51,6 +51,8 @@ export const VcCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       powerW: 0,
       shortName: `VC${Math.floor(Math.random() * 1000)}`,
       ethernet: true,
+      shortPrefix: 'VC',
+      icon: 'fas fa-chalkboard',
     };
     dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }));
     alert('Устройство добавлено в тракт');
