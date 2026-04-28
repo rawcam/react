@@ -18,7 +18,6 @@ export interface TractDevice {
   shortPrefix: string;
   icon: string;
   expanded?: boolean;
-  // Дополнительные поля
   inputs?: number;
   outputs?: number;
   switchingLatency?: number;
@@ -38,6 +37,7 @@ export interface TractDevice {
   area?: number;
   attachedSwitchId?: string;
   attachedPortNumber?: number;
+  poe?: boolean; // поддерживает ли устройство PoE
 }
 
 export interface NetworkSwitchDevice {
@@ -54,6 +54,7 @@ export interface NetworkSwitchDevice {
   shortName?: string;
   icon: string;
   expanded?: boolean;
+  hasNetwork?: boolean;
 }
 
 export interface MatrixDevice {
@@ -68,6 +69,7 @@ export interface MatrixDevice {
   icon?: string;
   shortPrefix: string;
   expanded?: boolean;
+  hasNetwork?: boolean;
 }
 
 export type AnyDevice = TractDevice | NetworkSwitchDevice | MatrixDevice;
@@ -106,7 +108,6 @@ const initialState: TractsState = {
   projectSwitches: [],
 };
 
-// Кэш для коротких имён
 let shortNameCounters: Record<string, number> = {};
 
 const generateShortName = (prefix: string, existing: string[]): string => {
@@ -124,7 +125,6 @@ const generateShortName = (prefix: string, existing: string[]): string => {
   return `${prefix}${shortNameCounters[prefix]}`;
 };
 
-// Сброс кэша коротких имён при полной перестройке
 const resetShortNames = () => { shortNameCounters = {}; };
 
 const createDeviceFromModel = (model: DeviceModel, type: string, pathId: string, segment: string): TractDevice => {
@@ -144,6 +144,7 @@ const createDeviceFromModel = (model: DeviceModel, type: string, pathId: string,
     shortPrefix: model.shortPrefix,
     icon: `fas ${model.icon || 'fa-question-circle'}`,
     expanded: true,
+    poe: model.poe,
   };
 
   if (model.inputs) base.inputs = model.inputs;
@@ -163,7 +164,6 @@ const createDeviceFromModel = (model: DeviceModel, type: string, pathId: string,
 };
 
 const reassignPorts = (devices: TractDevice[], switches: (NetworkSwitchDevice | MatrixDevice)[]) => {
-  // Очищаем порты
   switches.forEach(sw => {
     if (sw.type === 'networkSwitch') {
       sw.ports.forEach(p => p.deviceId = null);
@@ -200,18 +200,16 @@ const recalcTract = (
   networkSettings: any,
   allSwitches: (NetworkSwitchDevice | MatrixDevice)[]
 ): Tract => {
-  const codecFactor = getResolutionFactor(videoSettings) * 0.8; // упрощённо
+  const codecFactor = getResolutionFactor(videoSettings) * 0.8;
   let totalLatency = 0;
   let totalBitrate = 0;
   let totalPower = 0;
   let totalPoE = 0;
   let poeBudgetUsed = 0;
 
-  // Берём все устройства из тракта и свитчей проекта
   const allDevices = [...tract.sourceDevices, ...tract.sinkDevices];
   const matrixDevices = allSwitches.filter(s => s.type === 'matrix') as MatrixDevice[];
 
-  // Источники и приёмники
   allDevices.forEach(dev => {
     let devLatency = dev.latency || 0;
     if (dev.usb) devLatency += 0.5;
@@ -230,7 +228,6 @@ const recalcTract = (
     }
   });
 
-  // Матрицы
   matrixDevices.forEach(m => {
     totalLatency += (m.latencyIn || 0) + (m.latencyOut || 0);
     totalPower += m.powerW || 0;
@@ -239,8 +236,9 @@ const recalcTract = (
     }
   });
 
-  // Сетевые коммутаторы
-  allSwitches.filter(s => s.type === 'networkSwitch').forEach(sw => {
+  const networkSwitches = allSwitches.filter(s => s.type === 'networkSwitch') as NetworkSwitchDevice[];
+  let totalPoEBudget = 0;
+  networkSwitches.forEach(sw => {
     totalLatency += sw.switchingLatency || 0;
     totalPower += sw.powerW || 0;
     if (sw.poeBudget) totalPoEBudget += sw.poeBudget;
@@ -249,11 +247,8 @@ const recalcTract = (
   if (networkSettings.multicast) totalBitrate *= 1.1;
   if (networkSettings.qos) totalBitrate *= 1.05;
 
-  // Порты
-  const networkSwitches = allSwitches.filter(s => s.type === 'networkSwitch') as NetworkSwitchDevice[];
   const totalPorts = networkSwitches.reduce((s, sw) => s + sw.ports.length, 0);
   const usedPorts = networkSwitches.reduce((s, sw) => s + sw.ports.filter(p => p.deviceId !== null).length, 0);
-  const totalPoEBudget = networkSwitches.reduce((s, sw) => s + (sw.poeBudget || 0), 0);
   const usedPoE = networkSwitches.reduce((s, sw) => {
     return s + sw.ports.filter(p => p.deviceId).reduce((sum, p) => {
       const dev = allDevices.find(d => d.id === p.deviceId);
@@ -358,7 +353,7 @@ const tractsSlice = createSlice({
       }
     },
     recalcAllTracts: (state) => {
-      // Будет вызываться извне после любых изменений
+      // placeholder – actual recalculation happens in component
     },
   },
 });
@@ -370,13 +365,11 @@ export const {
   addSwitch, removeSwitch, updateDevice,
 } = tractsSlice.actions;
 
-// Пересчёт всех трактов – вызывается в компонентах после изменений
 export const recalcAll = (state: TractsState, videoSettings: any, networkSettings: any) => {
   state.tracts.forEach(tract => {
     const updated = recalcTract(tract, videoSettings, networkSettings, state.projectSwitches);
     Object.assign(tract, updated);
   });
-  // Обновление портов
   state.tracts.forEach(tract => {
     reassignPorts([...tract.sourceDevices, ...tract.sinkDevices], state.projectSwitches);
   });
