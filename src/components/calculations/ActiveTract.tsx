@@ -1,20 +1,21 @@
 // src/components/calculations/ActiveTract.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks/hooks';
 import {
   addDeviceToTract,
   removeDeviceFromTract,
   updateDevice,
+  updateTract,
   deleteTract,
   setActiveTract,
-  setViewMode,
   recalcAll,
   TractDevice,
+  MatrixDevice,
 } from '../../store/tractsSlice';
 import { AddDeviceModal } from './AddDeviceModal';
 import { DeviceCard } from './DeviceCard';
 import { DeviceEditModal } from './DeviceEditModal';
-import { DeviceModel, DEVICE_MODELS } from '../../utils/tractCalculations';
+import { DeviceModel } from '../../utils/tractCalculations';
 
 interface ActiveTractProps {
   onBack: () => void;
@@ -33,11 +34,10 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
 
   const [showModal, setShowModal] = useState(false);
   const [modalColumn, setModalColumn] = useState<'source' | 'matrix' | 'sink'>('source');
-  const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null);
+  const [selectedDevice, setSelectedDevice] = useState<TractDevice | MatrixDevice | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // Пересчёт всех метрик при любом изменении
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeTract) {
       const state = {
         tracts,
@@ -69,6 +69,7 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
       expanded: true,
       inputs: model.inputs,
       outputs: model.outputs,
+      poe: model.poe,
     };
     dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice, column: modalColumn }));
     setShowModal(false);
@@ -140,89 +141,37 @@ export const ActiveTract: React.FC<ActiveTractProps> = ({ onBack, onSelectCalcul
 
       <div className="tract-columns">
         <div className="tract-column">
-          <div className="column-header">
-            <span>📡 Начало тракта</span>
-            <button className="btn-icon" onClick={() => onSelectCalculator('video')}>
-              <i className="fas fa-calculator"></i>
-            </button>
-          </div>
+          <div className="column-header"><span>📡 Начало тракта</span></div>
           <div className="devices-list">
             {activeTract.sourceDevices.map(device => (
-              <DeviceCard
-                key={device.id}
-                device={device}
-                onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
-                onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'source'); }}
-                onToggleExpand={(e) => { e.stopPropagation(); handleToggleExpand(device.id); }}
-              />
+              <DeviceCard key={device.id} device={device} onClick={() => { setSelectedDevice(device); setShowEditModal(true); }} onDelete={e => { e.stopPropagation(); handleDeleteDevice(device.id, 'source'); }} onToggleExpand={e => { e.stopPropagation(); handleToggleExpand(device.id); }} />
             ))}
           </div>
-          <button className="add-btn" onClick={() => { setModalColumn('source'); setShowModal(true); }}>
-            + Добавить устройство
-          </button>
+          <button className="add-btn" onClick={() => { setModalColumn('source'); setShowModal(true); }}>+ Добавить устройство</button>
         </div>
-
         <div className="tract-column">
-          <div className="column-header">
-            <span>🔄 Коммутация</span>
-            <button className="btn-icon" onClick={() => onSelectCalculator('network')}>
-              <i className="fas fa-calculator"></i>
-            </button>
-          </div>
+          <div className="column-header"><span>🔄 Коммутация</span></div>
           <div className="devices-list">
             {activeTract.matrixDevices.map(device => (
-              <DeviceCard
-                key={device.id}
-                device={device}
-                onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
-                onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'matrix'); }}
-                onToggleExpand={(e) => { e.stopPropagation(); handleToggleExpand(device.id); }}
-              />
+              <DeviceCard key={device.id} device={device} onClick={() => { setSelectedDevice(device); setShowEditModal(true); }} onDelete={e => { e.stopPropagation(); handleDeleteDevice(device.id, 'matrix'); }} onToggleExpand={e => { e.stopPropagation(); handleToggleExpand(device.id); }} />
             ))}
           </div>
-          <button className="add-btn" onClick={() => { setModalColumn('matrix'); setShowModal(true); }}>
-            + Добавить коммутатор/матрицу
-          </button>
+          <button className="add-btn" onClick={() => { setModalColumn('matrix'); setShowModal(true); }}>+ Добавить коммутатор/матрицу</button>
         </div>
-
         <div className="tract-column">
-          <div className="column-header">
-            <span>🖥️ Конец тракта</span>
-            <button className="btn-icon" onClick={() => onSelectCalculator('video')}>
-              <i className="fas fa-calculator"></i>
-            </button>
-          </div>
+          <div className="column-header"><span>🖥️ Конец тракта</span></div>
           <div className="devices-list">
             {activeTract.sinkDevices.map(device => (
-              <DeviceCard
-                key={device.id}
-                device={device}
-                onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
-                onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'sink'); }}
-                onToggleExpand={(e) => { e.stopPropagation(); handleToggleExpand(device.id); }}
-              />
+              <DeviceCard key={device.id} device={device} onClick={() => { setSelectedDevice(device); setShowEditModal(true); }} onDelete={e => { e.stopPropagation(); handleDeleteDevice(device.id, 'sink'); }} onToggleExpand={e => { e.stopPropagation(); handleToggleExpand(device.id); }} />
             ))}
           </div>
-          <button className="add-btn" onClick={() => { setModalColumn('sink'); setShowModal(true); }}>
-            + Добавить устройство
-          </button>
+          <button className="add-btn" onClick={() => { setModalColumn('sink'); setShowModal(true); }}>+ Добавить устройство</button>
         </div>
       </div>
 
-      <AddDeviceModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onAddDevice={handleAddDevice}
-        column={modalColumn}
-      />
-
+      <AddDeviceModal isOpen={showModal} onClose={() => setShowModal(false)} onAddDevice={handleAddDevice} column={modalColumn} />
       {selectedDevice && (
-        <DeviceEditModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          device={selectedDevice}
-          tractId={activeTract.id}
-        />
+        <DeviceEditModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} device={selectedDevice} tractId={activeTract.id} />
       )}
     </div>
   );
