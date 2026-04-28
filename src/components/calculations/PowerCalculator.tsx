@@ -38,6 +38,8 @@ export const PowerCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) =>
       powerW: 0,
       shortName: `UPS${Math.floor(Math.random() * 1000)}`,
       ethernet: false,
+      shortPrefix: 'UPS',
+      icon: 'fas fa-battery-full',
     };
     dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }));
     alert('Устройство добавлено в тракт');
