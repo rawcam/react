@@ -1,25 +1,46 @@
 // src/hooks/useProjectsSupabase.ts
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { supabase } from '../App';
 import { setProjects, Project } from '../store/projectsSlice';
 
+let cachedProjects: Project[] | null = null;
+
 export const useProjectsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
   const role = useSelector((state: RootState) => state.auth.role);
+  const abortRef = useRef<AbortController | null>(null);
 
   const loadProjects = useCallback(async () => {
     if (!user) return;
+
+    // Если есть кеш — сразу показываем его
+    if (cachedProjects) {
+      dispatch(setProjects(cachedProjects));
+    }
+
+    // Прерываем предыдущий зависший запрос
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      let query = supabase.from('projects').select('*');
+      // Ждём ответа максимум 10 секунд
+      const timer = setTimeout(() => controller.abort(), 10_000);
+
+      let query = supabase.from('projects').select('*').abortSignal(controller.signal);
       if (role !== 'director' && role !== 'pm') {
         query = query.eq('user_id', user.id);
       }
+
       const { data, error } = await query;
+      clearTimeout(timer);
+
       if (error) throw error;
-      const projects = (data || []).map((item: any) => ({
+
+      const projects: Project[] = (data || []).map((item: any) => ({
         id: item.id,
         shortId: item.short_id,
         name: item.name,
@@ -45,9 +66,16 @@ export const useProjectsSupabase = () => {
         roadmapPlanned: item.roadmap_planned,
         roadmapActual: item.roadmap_actual,
       }));
+
+      cachedProjects = projects;
       dispatch(setProjects(projects));
     } catch (err: any) {
-      console.error('loadProjects error:', err);
+      if (err.name === 'AbortError') {
+        // запрос был принудительно прерван, оставляем старые данные
+        console.warn('Запрос проектов прерван по таймауту');
+      } else {
+        console.error('loadProjects error:', err);
+      }
     }
   }, [user, role, dispatch]);
 
@@ -87,6 +115,8 @@ export const useProjectsSupabase = () => {
       console.error('Failed to add project:', error.message);
       return;
     }
+    // Сбросим кеш и перезагрузим
+    cachedProjects = null;
     await loadProjects();
     return newId;
   }, [user, loadProjects]);
@@ -122,6 +152,7 @@ export const useProjectsSupabase = () => {
       console.error('Failed to update project:', error.message);
       return;
     }
+    cachedProjects = null;
     await loadProjects();
   }, [user, loadProjects]);
 
@@ -132,6 +163,7 @@ export const useProjectsSupabase = () => {
       console.error('Failed to delete project:', error.message);
       return;
     }
+    cachedProjects = null;
     await loadProjects();
   }, [user, loadProjects]);
 
