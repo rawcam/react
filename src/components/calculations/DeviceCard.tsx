@@ -19,13 +19,13 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onClick, onDelet
   const details: string[] = [];
   if ('latency' in device && device.latency !== undefined) details.push(`⏱️ ${device.latency} мс`);
   if ('powerW' in device && device.powerW) details.push(`💡 ${device.powerW} Вт`);
-  if ('poeEnabled' in device && device.poeEnabled) details.push(`🔌 PoE ${device.poePower} Вт`);
+  if ('poeEnabled' in device && device.poeEnabled) details.push(`🔌 PoE ${(device as any).poePower} Вт`);
   if ('ethernet' in device && device.ethernet && !('poeEnabled' in device && device.poeEnabled)) details.push(`🌐 Ethernet`);
   if ('inputs' in device && device.inputs !== undefined && 'outputs' in device && device.outputs !== undefined) {
     details.push(`Вх/вых: ${device.inputs}/${device.outputs}`);
   }
-  if ('ports' in device) details.push(`Портов: ${device.ports}`);
-  if ('switchingLatency' in device && device.switchingLatency) details.push(`Коммутация: ${device.switchingLatency} мс`);
+  if ('ports' in device) details.push(`Портов: ${(device as any).ports}`);
+  if ('switchingLatency' in device && (device as any).switchingLatency) details.push(`Коммутация: ${(device as any).switchingLatency} мс`);
 
   const detailText = details.join(' · ');
 
