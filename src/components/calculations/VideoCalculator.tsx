@@ -1,5 +1,5 @@
 // src/components/calculations/VideoCalculator.tsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setVideoSettings, calcVideoBitrate } from '../../store/videoSlice';
@@ -32,6 +32,8 @@ export const VideoCalculator: React.FC<{ onBack?: () => void }> = ({ onBack }) =
       shortName: `VID${Math.floor(Math.random() * 1000)}`,
       ethernet: true,
       bitrateFactor: 1,
+      shortPrefix: 'VID',
+      icon: 'fas fa-video',
     };
     dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'source' }));
     alert('Устройство добавлено в тракт');
@@ -44,24 +46,21 @@ export const VideoCalculator: React.FC<{ onBack?: () => void }> = ({ onBack }) =
         {onBack && <button className="btn-secondary" onClick={onBack}>Назад к трактам</button>}
       </div>
       <div className="calculator-form">
-        <div className="setting">
-          <label>Разрешение:</label>
+        <div className="setting"><label>Разрешение:</label>
           <select value={settings.resolution} onChange={e => handleChange('resolution', e.target.value)}>
             <option value="1080p">1080p</option>
             <option value="4K">4K</option>
             <option value="8K">8K</option>
           </select>
         </div>
-        <div className="setting">
-          <label>Субдискретизация:</label>
+        <div className="setting"><label>Субдискретизация:</label>
           <select value={settings.chroma} onChange={e => handleChange('chroma', e.target.value)}>
             <option value="444">4:4:4</option>
             <option value="422">4:2:2</option>
             <option value="420">4:2:0</option>
           </select>
         </div>
-        <div className="setting">
-          <label>FPS:</label>
+        <div className="setting"><label>FPS:</label>
           <select value={settings.fps} onChange={e => handleChange('fps', Number(e.target.value))}>
             <option value="24">24</option>
             <option value="25">25</option>
@@ -70,15 +69,13 @@ export const VideoCalculator: React.FC<{ onBack?: () => void }> = ({ onBack }) =
             <option value="60">60</option>
           </select>
         </div>
-        <div className="setting">
-          <label>Цветовое пространство:</label>
+        <div className="setting"><label>Цветовое пространство:</label>
           <select value={settings.colorSpace} onChange={e => handleChange('colorSpace', e.target.value)}>
             <option value="RGB">RGB</option>
             <option value="YCbCr">YCbCr</option>
           </select>
         </div>
-        <div className="setting">
-          <label>Глубина цвета (бит):</label>
+        <div className="setting"><label>Глубина цвета (бит):</label>
           <select value={settings.bitDepth} onChange={e => handleChange('bitDepth', Number(e.target.value))}>
             <option value="8">8</option>
             <option value="10">10</option>
