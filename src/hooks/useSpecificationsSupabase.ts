@@ -1,25 +1,44 @@
 // src/hooks/useSpecificationsSupabase.ts
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { supabase } from '../App';
 import { setSpecifications, Specification } from '../store/specificationsSlice';
 
+let cachedSpecs: Specification[] | null = null;
+
 export const useSpecificationsSupabase = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
   const role = useSelector((state: RootState) => state.auth.role);
+  const abortRef = useRef<AbortController | null>(null);
 
   const loadSpecifications = useCallback(async () => {
     if (!user) return;
+
+    // Показываем кеш сразу
+    if (cachedSpecs) {
+      dispatch(setSpecifications(cachedSpecs));
+    }
+
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      let query = supabase.from('specifications').select('*');
+      const timer = setTimeout(() => controller.abort(), 10_000);
+
+      let query = supabase.from('specifications').select('*').abortSignal(controller.signal);
       if (role !== 'director' && role !== 'pm') {
         query = query.eq('user_id', user.id);
       }
+
       const { data, error } = await query;
+      clearTimeout(timer);
+
       if (error) throw error;
-      const specs = (data || []).map((item: any) => ({
+
+      const specs: Specification[] = (data || []).map((item: any) => ({
         id: item.id,
         name: item.name,
         projectId: item.project_id,
@@ -27,9 +46,15 @@ export const useSpecificationsSupabase = () => {
         updatedAt: item.updated_at,
         rows: item.rows || [],
       }));
+
+      cachedSpecs = specs;
       dispatch(setSpecifications(specs));
     } catch (err: any) {
-      console.error('loadSpecifications error:', err);
+      if (err.name === 'AbortError') {
+        console.warn('Запрос спецификаций прерван по таймауту');
+      } else {
+        console.error('loadSpecifications error:', err);
+      }
     }
   }, [user, role, dispatch]);
 
@@ -51,6 +76,7 @@ export const useSpecificationsSupabase = () => {
       console.error('addSpecificationToDb error:', error.message);
       return;
     }
+    cachedSpecs = null;
     await loadSpecifications();
     return newId;
   }, [user, loadSpecifications]);
@@ -72,6 +98,7 @@ export const useSpecificationsSupabase = () => {
       console.error('updateSpecificationInDb error:', error.message);
       return;
     }
+    cachedSpecs = null;
     await loadSpecifications();
   }, [user, loadSpecifications]);
 
@@ -86,6 +113,7 @@ export const useSpecificationsSupabase = () => {
       console.error('deleteSpecificationFromDb error:', error.message);
       return;
     }
+    cachedSpecs = null;
     await loadSpecifications();
   }, [user, loadSpecifications]);
 
