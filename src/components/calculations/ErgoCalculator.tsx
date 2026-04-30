@@ -3,12 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setErgoConfig } from '../../store/ergoSlice';
-import { addDeviceToTract } from '../../store/tractsSlice';
 
-export const ErgoCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+interface ErgoCalculatorProps {
+  onBack: () => void;
+  engine: any; // ReturnType<typeof useTractEngine>
+}
+
+export const ErgoCalculator: React.FC<ErgoCalculatorProps> = ({ onBack, engine }) => {
   const dispatch = useDispatch();
   const ergo = useSelector((state: RootState) => state.ergo);
-  const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId);
+  const activeTractId = engine.activeTractId;
 
   const [screenWidth, setScreenWidth] = useState(ergo.screenWidth);
   const [screenHeight, setScreenHeight] = useState(ergo.screenHeight);
@@ -28,21 +32,16 @@ export const ErgoCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => 
       alert('Нет активного тракта. Сначала создайте или выберите тракт.');
       return;
     }
-    const newDevice = {
-      id: Date.now().toString(),
-      type: 'display',
-      modelName: `ЭКП ${screenWidth}x${screenHeight} см`,
+    engine.addDevice(activeTractId, {
+      name: `ЭКП ${screenWidth}x${screenHeight} см`,
       latency: 0,
-      poe: false,
-      poePower: 0,
-      poeEnabled: false,
       powerW: 0,
-      shortName: `ECP${Math.floor(Math.random() * 1000)}`,
-      ethernet: false,
       shortPrefix: 'ECP',
       icon: 'fas fa-chalkboard-user',
-    };
-    dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }));
+      bitrateFactor: undefined,
+      poe: false,
+      hasNetwork: false,
+    }, 'display', 'sink');
     alert('Устройство добавлено в тракт');
   };
 
