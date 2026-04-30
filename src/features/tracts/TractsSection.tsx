@@ -1,57 +1,54 @@
 // src/features/tracts/TractsSection.tsx
 import React, { useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../hooks/hooks';
-import { addTract, setActiveTract, setViewMode, Tract } from '../../store/tractsSlice';
+import { useTractEngine } from '../../hooks/useTractEngine';
 import { ActiveTract } from '../../components/calculations/ActiveTract';
 import { TractList } from '../../components/calculations/TractList';
 
 interface TractsSectionProps {
+  engine: ReturnType<typeof useTractEngine>;
   onSelectCalculator: (id: string) => void;
 }
 
-export const TractsSection: React.FC<TractsSectionProps> = ({ onSelectCalculator }) => {
-  const dispatch = useAppDispatch();
-  const tracts = useAppSelector(state => state.tracts.tracts);
-  const activeTractId = useAppSelector(state => state.tracts.activeTractId);
-  const viewMode = useAppSelector(state => state.tracts.viewMode);
+export const TractsSection: React.FC<TractsSectionProps> = ({ engine, onSelectCalculator }) => {
   const [newTractName, setNewTractName] = useState('');
 
   const handleCreateTract = () => {
     const name = newTractName.trim();
     if (!name) return;
-
-    dispatch(addTract({
-      name,
-      sourceDevices: [],
-      matrixDevices: [],
-      sinkDevices: [],
-      totalLatency: 0,
-      totalBitrate: 0,
-      totalPower: 0,
-      totalPoE: 0,
-      poeBudgetUsed: 0,
-    }));
+    engine.addTract(name);
     setNewTractName('');
   };
 
   const handleSelectTract = (id: string) => {
-    dispatch(setActiveTract(id));
-    dispatch(setViewMode('active'));
+    engine.setActiveTractId(id);
+    engine.setShowAll(false);
   };
 
   const handleBackToList = () => {
-    dispatch(setActiveTract(null));
-    dispatch(setViewMode('all'));
+    engine.setActiveTractId(null);
+    engine.setShowAll(true);
   };
 
-  if (viewMode === 'active' && activeTractId) {
-    return <ActiveTract onBack={handleBackToList} onSelectCalculator={onSelectCalculator} />;
+  // Если активен конкретный тракт, показываем его
+  if (engine.activeTractId && !engine.showAll) {
+    const activeTract = engine.tracts.find(t => t.id === engine.activeTractId);
+    if (activeTract) {
+      return (
+        <ActiveTract
+          tract={activeTract}
+          engine={engine}
+          onBack={handleBackToList}
+          onSelectCalculator={onSelectCalculator}
+        />
+      );
+    }
   }
 
+  // Иначе показываем список всех трактов
   return (
     <TractList
-      tracts={tracts}
-      activeTractId={activeTractId}
+      tracts={engine.tracts}
+      activeTractId={engine.activeTractId}
       newTractName={newTractName}
       onNewTractNameChange={setNewTractName}
       onCreateTract={handleCreateTract}
