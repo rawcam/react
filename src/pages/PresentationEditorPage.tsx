@@ -35,7 +35,7 @@ interface LayerItem {
   vy: number;
 }
 
-// ---------- иконки (юникоды Font Awesome 6 Free, версия 6.4+) ----------
+// ---------- иконки (юникоды Font Awesome 6 Free) ----------
 const ICON_NAMES = [
   'fa-heart', 'fa-star', 'fa-cloud', 'fa-bolt', 'fa-music', 'fa-camera',
   'fa-smile', 'fa-fire', 'fa-leaf', 'fa-rocket', 'fa-crown', 'fa-gem',
@@ -44,8 +44,7 @@ const ICON_NAMES = [
   'fa-car', 'fa-plane', 'fa-robot', 'fa-trophy', 'fa-gift', 'fa-tree',
   'fa-paw', 'fa-bug', 'fa-fish', 'fa-kiwi-bird', 'fa-spider',
   'fa-apple-whole', 'fa-carrot', 'fa-lemon', 'fa-seedling', 'fa-umbrella',
-  'fa-bolt', 'fa-moon', 'fa-sun', 'fa-cloud', 'fa-bolt', 'fa-music',
-  'fa-camera', 'fa-smile', 'fa-fire', 'fa-leaf', 'fa-rocket'
+  'fa-moon', 'fa-sun'
 ];
 
 const ICON_UNICODE: Record<string, number> = {
@@ -95,7 +94,7 @@ const PresentationEditorPage: React.FC = () => {
     font: "'Segoe UI', sans-serif", textColor: '#333333'
   });
 
-  const [emblaRef, emblaApi] = EmblaCarousel({ axis: 'y', loop: false, align: 'start', skipSnaps: false });
+  const [emblaRef, emblaApi] = EmblaCarousel({ axis: 'y', skipSnaps: false });
 
   // инициализация частиц
   const initLayerItems = useCallback(() => {
@@ -209,16 +208,6 @@ const PresentationEditorPage: React.FC = () => {
     return () => { emblaApi.off('select', onSelect); };
   }, [emblaApi]);
 
-  // блокировка прокрутки при редактировании
-  useEffect(() => {
-    if (!emblaApi) return;
-    if (activeSlideId) {
-      emblaApi.reInit({ axis: 'y', draggable: false });
-    } else {
-      emblaApi.reInit({ axis: 'y', draggable: true });
-    }
-  }, [activeSlideId, emblaApi]);
-
   // слайды
   const addSlide = () => setSlides(prev => [...prev, { id: Date.now().toString(), html: '<h2>Новый слайд</h2><p>Описание</p>' }]);
   const removeSlide = () => setSlides(prev => prev.length > 1 ? prev.filter((_, i) => i !== currentSlide) : prev);
@@ -229,7 +218,7 @@ const PresentationEditorPage: React.FC = () => {
     setActiveSlideId(null);
   };
 
-  // форматирование (используем современный подход)
+  // форматирование
   const execCmd = (cmd: string, arg?: string) => document.execCommand(cmd, false, arg);
   const changeFontSize = (delta: number) => {
     const sel = window.getSelection();
@@ -316,15 +305,15 @@ const PresentationEditorPage: React.FC = () => {
     inp.click();
   };
 
-  // экспорт (упрощённый, но рабочий)
+  // экспорт
   const handleExport = () => {
     const htmlContent = slides.map(s => `<section>${s.html}</section>`).join('');
-    const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>body{margin:0;overflow:hidden;background:#f0f0f0}${document.querySelector('style')?.innerHTML||''}</style></head><body>${htmlContent}<script>/* анимация слоёв */</`+`script></body></html>`;
+    const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>body{margin:0;overflow:hidden;background:#f0f0f0}</style></head><body>${htmlContent}<script>/* анимация */</`+`script></body></html>`;
     const blob = new Blob([fullHtml], {type:'text/html'});
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'presentation.html'; a.click();
   };
 
-  // стиль карточки (фикс круга, overflow)
+  // стиль карточки
   const cardInline: React.CSSProperties = {
     background: cardStyle.bg,
     width: cardStyle.shape === 'circle' ? cardStyle.radius * 2 + 'px' : cardStyle.width,
