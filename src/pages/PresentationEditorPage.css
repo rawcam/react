@@ -249,3 +249,47 @@ button.secondary:hover {
   background: var(--editor-accent);
   transform: scale(1.4);
 }
+/* TipTap стили */
+.tiptap-editor {
+  outline: none;
+  min-height: 200px;
+}
+
+.tiptap-editor h1 { font-size: 2em; }
+.tiptap-editor h2 { font-size: 1.5em; }
+
+.formatting-toolbar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  background: var(--editor-panel-bg);
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--editor-border);
+}
+.formatting-toolbar button {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  margin: 0;
+}
+.formatting-toolbar button.is-active {
+  background: var(--editor-accent);
+  color: white;
+}
+
+/* Убираем Embla */
+.slides-viewport {
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  height: 100vh;
+}
+.slides-container {
+  flex-direction: column;
+  height: auto;
+}
+.slide {
+  scroll-snap-align: start;
+  height: 100vh;
+}
