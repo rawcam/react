@@ -57,7 +57,6 @@ const DEFAULT_LAYERS: Layer[] = [
 const PresentationEditorPage: React.FC = () => {
   /* ---- динамическая загрузка Font Awesome 6.4.2 (Solid, 900) ---- */
   useEffect(() => {
-    // Проверяем, не загружен ли уже Font Awesome 6.4.2 (чтобы не дублировать)
     const existingLink = document.querySelector('link[href*="font-awesome@6.4.2"]');
     if (!existingLink) {
       const link = document.createElement('link');
@@ -301,12 +300,16 @@ const PresentationEditorPage: React.FC = () => {
     inp.click();
   };
 
-  /* экспорт с правильными стилями и анимацией */
+  /* экспорт с корректной разметкой слайдов */
   const exportHTML = () => {
     const layersConfig = layers.map(l => ({ ...l, items: [] }));
 
     const styles = `
-body { margin:0; overflow:hidden; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { overflow:hidden; }
+#bg-canvas { position:absolute; top:0; left:0; z-index:0; }
+.slides-viewport { position:relative; z-index:1; height:100vh; overflow-y:scroll; scroll-snap-type:y mandatory; scroll-behavior:smooth; }
+.slides-container { display:flex; flex-direction:column; }
 .slide { scroll-snap-align:start; height:100vh; display:flex; align-items:center; justify-content:center; padding:40px; }
 .card {
   background: ${card.bg}; border-radius: ${card.shape==='circle' ? '50%' : card.radius+'px'};
@@ -330,7 +333,7 @@ layers.forEach(l => {
     vx:(Math.random()-0.5)*1.5, vy:(Math.random()-0.5)*1.5
   }));
 });
-const canvas = document.getElementById('c');
+const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = W; canvas.height = H;
 function draw() {
@@ -379,11 +382,16 @@ window.addEventListener('resize', () => {
   });
 });
 `;
+
     const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <style>${styles}</style></head><body>
-<canvas id="c"></canvas>
-<div id="slides">${slides.map(s => `<div class="slide"><div class="card">${s.html}</div></div>`).join('')}</div>
+<canvas id="bg-canvas"></canvas>
+<div class="slides-viewport">
+  <div class="slides-container">
+    ${slides.map(s => `<div class="slide"><div class="card">${s.html}</div></div>`).join('')}
+  </div>
+</div>
 <script>${animCode}</script></body></html>`;
 
     const blob = new Blob([fullHtml], { type: 'text/html' });
