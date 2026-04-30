@@ -1,22 +1,10 @@
 // src/pages/PresentationEditorPage.tsx
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
-import Image from '@tiptap/extension-image';
-import Table from '@tiptap/extension-table';
-import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
-import TableHeader from '@tiptap/extension-table-header';
-
 import './PresentationEditorPage.css';
 
 // Типы
 interface SlideData {
   id: string;
-  content: any; // TipTap JSON
   html: string;
 }
 
@@ -46,7 +34,7 @@ interface LayerItem {
   vy: number;
 }
 
-// Все иконки из рабочего прототипа + юникоды
+// Иконки и юникоды из вашего рабочего HTML
 const ICON_NAMES = [
   'fa-heart','fa-star','fa-cloud','fa-bolt','fa-music','fa-search',
   'fa-envelope','fa-camera','fa-moon','fa-sun','fa-smile','fa-thumbs-up',
@@ -73,28 +61,18 @@ const ICON_UNICODE: Record<string, number> = {
 };
 
 const DEFAULT_SLIDES: SlideData[] = [
-  {
-    id: '1',
-    content: { type: 'doc', content: [{ type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Добро пожаловать!' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'Это редактор презентаций Sputnik Studio.' }] }] },
-    html: '<h1>Добро пожаловать!</h1><p>Это редактор презентаций Sputnik Studio.</p>'
-  },
-  {
-    id: '2',
-    content: { type: 'doc', content: [{ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Второй слайд' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'Редактируйте текст как в привычном редакторе.' }] }] },
-    html: '<h2>Второй слайд</h2><p>Редактируйте текст как в привычном редакторе.</p>'
-  }
+  { id: '1', html: '<h1>Добро пожаловать!</h1><p>Это редактор презентаций Sputnik Studio.</p>' },
+  { id: '2', html: '<h2>Второй слайд</h2><p>Дважды кликните, чтобы редактировать.</p>' }
 ];
 
 const DEFAULT_LAYERS: Layer[] = [
   {
     id: 'layer1', name: 'Круги', type: 'circle', color: '#5b8c42',
-    minSize: 30, maxSize: 60, opacity: 0.6, anim: 'fallDown', rot: 0.4, count: 10,
-    items: [], collapsed: false
+    minSize: 30, maxSize: 60, opacity: 0.6, anim: 'fallDown', rot: 0.4, count: 10, items: [], collapsed: false
   },
   {
     id: 'layer2', name: 'Сердечки', type: 'icon', color: '#e63950', iconName: 'fa-heart',
-    minSize: 40, maxSize: 70, opacity: 0.7, anim: 'fallDown', rot: 0.3, count: 8,
-    items: [], collapsed: false
+    minSize: 40, maxSize: 70, opacity: 0.7, anim: 'fallDown', rot: 0.3, count: 8, items: [], collapsed: false
   }
 ];
 
@@ -107,14 +85,16 @@ const PresentationEditorPage: React.FC = () => {
   const animFrameRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
+  // Стили карточки
   const [cardStyle, setCardStyle] = useState({
     bg: '#ffffff', width: '100%', height: 'auto', shape: 'rounded',
     radius: 28, borderWidth: 2, borderColor: '#000000',
     font: "'Segoe UI', sans-serif", textColor: '#333333'
   });
 
-  // Инициализация частиц
+  // Инициализация частиц слоёв
   const initLayerItems = useCallback(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -136,7 +116,7 @@ const PresentationEditorPage: React.FC = () => {
 
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
 
-  // Анимация канваса
+  // Анимация фона
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -218,7 +198,7 @@ const PresentationEditorPage: React.FC = () => {
     };
   }, [layers, globalSpeed]);
 
-  // Переключение слайдов при скролле
+  // Отслеживание скролла для смены слайдов
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -238,14 +218,21 @@ const PresentationEditorPage: React.FC = () => {
     containerRef.current?.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
   };
 
-  // Закрытие редактирования при клике вне слайда
+  // Клик по фону снимает редактирование
   const handleBackgroundClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.slide-card')) return;
-    setActiveSlideId(null);
+    if (activeSlideId) {
+      // сохраняем содержимое
+      const card = cardRefs.current.get(activeSlideId);
+      if (card) {
+        setSlides(prev => prev.map(s => s.id === activeSlideId ? { ...s, html: card.innerHTML } : s));
+      }
+      setActiveSlideId(null);
+    }
   };
 
   const addSlide = () => {
-    setSlides(prev => [...prev, { id: Date.now().toString(), content: { type: 'doc', content: [{ type: 'paragraph' }] }, html: '<p></p>' }]);
+    setSlides(prev => [...prev, { id: Date.now().toString(), html: '<h2>Новый слайд</h2><p>Описание</p>' }]);
   };
   const removeSlide = () => {
     if (slides.length <= 1) return;
@@ -253,8 +240,17 @@ const PresentationEditorPage: React.FC = () => {
     if (currentSlide >= slides.length - 1) setCurrentSlide(slides.length - 2);
   };
 
-  const updateSlideContent = (id: string, json: any, html: string) => {
-    setSlides(prev => prev.map(s => s.id === id ? { ...s, content: json, html } : s));
+  // Активация редактирования по двойному клику
+  const handleDoubleClick = (id: string) => {
+    setActiveSlideId(id);
+  };
+
+  // Форматирование текста (execCommand)
+  const execCmd = (cmd: string, arg?: string) => {
+    document.execCommand(cmd, false, arg);
+    // фокус на активную карточку
+    const card = cardRefs.current.get(activeSlideId!);
+    card?.focus();
   };
 
   const cardInline: React.CSSProperties = {
@@ -267,70 +263,13 @@ const PresentationEditorPage: React.FC = () => {
     color: cardStyle.textColor,
     overflow: 'hidden',
     aspectRatio: cardStyle.shape === 'circle' ? '1' : 'auto',
-  };
-
-  // Компонент редактора TipTap для одного слайда
-  const SlideEditor: React.FC<{ slide: SlideData; isActive: boolean; onActivate: () => void }> = ({ slide, isActive, onActivate }) => {
-    const editor = useEditor({
-      extensions: [
-        StarterKit.configure({ heading: { levels: [1, 2] } }),
-        Placeholder.configure({ placeholder: 'Начните писать...' }),
-        Underline,
-        TextAlign.configure({ types: ['heading', 'paragraph'] }),
-        Image,
-        Table.configure({ resizable: true }),
-        TableRow, TableCell, TableHeader,
-      ],
-      content: slide.content,
-      editable: isActive,
-      onUpdate: ({ editor }) => {
-        const json = editor.getJSON();
-        const html = editor.getHTML();
-        updateSlideContent(slide.id, json, html);
-      },
-      editorProps: {
-        attributes: {
-          class: 'tiptap-editor',
-        },
-      },
-    });
-
-    if (!editor) return null;
-
-    const addImage = () => {
-      const url = prompt('Введите URL изображения:');
-      if (url) editor.chain().focus().setImage({ src: url }).run();
-    };
-
-    const addVideo = () => {
-      const url = prompt('Введите URL видео (YouTube/Vimeo embed):');
-      if (url) {
-        editor.chain().focus().insertContent(`<iframe width="560" height="315" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-      }
-    };
-
-    return (
-      <div className={`slide-card ${isActive ? 'active' : ''}`} style={cardInline} onClick={onActivate}>
-        {isActive && (
-          <div className="formatting-toolbar">
-            <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'is-active' : ''}><b>B</b></button>
-            <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'is-active' : ''}><i>I</i></button>
-            <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? 'is-active' : ''}><u>U</u></button>
-            <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'is-active' : ''}><s>S</s></button>
-            <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}>⫷</button>
-            <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}>⫸</button>
-            <button onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}>⫹</button>
-            <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}>H1</button>
-            <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}>H2</button>
-            <button onClick={() => editor.chain().focus().toggleBulletList().run()}>•</button>
-            <button onClick={() => editor.chain().focus().toggleOrderedList().run()}>1.</button>
-            <button onClick={addImage}>🖼️</button>
-            <button onClick={addVideo}>🎬</button>
-          </div>
-        )}
-        <EditorContent editor={editor} />
-      </div>
-    );
+    padding: '50px',
+    outline: 'none',
+    wordWrap: 'break-word',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'stretch',
   };
 
   const updateLayer = (id: string, patch: Partial<Layer>) => {
@@ -493,12 +432,29 @@ const PresentationEditorPage: React.FC = () => {
 
         <div className="slides-viewport" ref={containerRef}>
           <div className="slides-container">
-            {slides.map((slide, index) => (
+            {slides.map((slide) => (
               <div className="slide" key={slide.id}>
-                <SlideEditor
-                  slide={slide}
-                  isActive={activeSlideId === slide.id}
-                  onActivate={() => setActiveSlideId(slide.id)}
+                {/* Тулбар показывается только для активного слайда */}
+                {activeSlideId === slide.id && (
+                  <div className="formatting-toolbar">
+                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('bold'); }}><b>B</b></button>
+                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('italic'); }}><i>I</i></button>
+                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('underline'); }}><u>U</u></button>
+                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('strikeThrough'); }}><s>S</s></button>
+                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', 'h1'); }}>H1</button>
+                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', 'h2'); }}>H2</button>
+                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('insertUnorderedList'); }}>•</button>
+                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('insertOrderedList'); }}>1.</button>
+                  </div>
+                )}
+                <div
+                  ref={(el) => { if (el) cardRefs.current.set(slide.id, el); }}
+                  className={`slide-card ${activeSlideId === slide.id ? 'active' : ''}`}
+                  contentEditable={activeSlideId === slide.id}
+                  suppressContentEditableWarning
+                  dangerouslySetInnerHTML={{ __html: slide.html }}
+                  style={cardInline}
+                  onDoubleClick={() => handleDoubleClick(slide.id)}
                 />
               </div>
             ))}
