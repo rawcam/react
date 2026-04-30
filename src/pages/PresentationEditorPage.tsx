@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import './PresentationEditorPage.css';
 
-// ---------- Типы ----------
+// Типы
 interface SlideData {
   id: string;
   html: string;
@@ -34,7 +34,7 @@ interface LayerItem {
   vy: number;
 }
 
-// ---------- Иконки ----------
+// Иконки
 const ICON_NAMES = [
   'fa-heart','fa-star','fa-cloud','fa-bolt','fa-music','fa-search',
   'fa-envelope','fa-camera','fa-moon','fa-sun','fa-smile','fa-thumbs-up',
@@ -59,7 +59,6 @@ const ICON_UNICODE: Record<string, number> = {
   'fa-bus':0xf207, 'fa-car':0xf1b9, 'fa-plane':0xf072, 'fa-robot':0xf544
 };
 
-// ---------- Начальные данные ----------
 const DEFAULT_SLIDES: SlideData[] = [
   { id: '1', html: '<h1 style="text-align:center">Добро пожаловать!</h1><p style="text-align:center">Это редактор презентаций Sputnik Studio.</p>' },
   { id: '2', html: '<h2 style="text-align:center">Второй слайд</h2><p style="text-align:center">Дважды кликните, чтобы редактировать.</p>' }
@@ -81,21 +80,18 @@ const PresentationEditorPage: React.FC = () => {
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  // Фон
   const [bgType, setBgType] = useState<'solid' | 'gradient'>('solid');
   const [solidColor, setSolidColor] = useState('#ffffff');
   const [gradientAngle, setGradientAngle] = useState(45);
   const [gradColors, setGradColors] = useState(['#ffaa00', '#dd2a7b', '#8134af']);
   const [blur, setBlur] = useState(0);
 
-  // Стили карточки
   const [cardStyle, setCardStyle] = useState({
     bg: '#ffffff', width: '100%', height: 'auto', shape: 'rounded',
     radius: 28, borderWidth: 2, borderColor: '#000000',
     font: "'Segoe UI', sans-serif", textColor: '#333333'
   });
 
-  // Инициализация частиц
   const initLayerItems = useCallback(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -117,7 +113,6 @@ const PresentationEditorPage: React.FC = () => {
 
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
 
-  // Анимация канваса
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -219,7 +214,6 @@ const PresentationEditorPage: React.FC = () => {
     };
   }, [layers, globalSpeed, bgType, solidColor, gradientAngle, gradColors, blur]);
 
-  // Переключение слайдов при скролле
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -239,7 +233,6 @@ const PresentationEditorPage: React.FC = () => {
     containerRef.current?.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
   };
 
-  // Клик по фону снимает редактирование и сохраняет HTML
   const handleBackgroundClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.slide-card') || (e.target as HTMLElement).closest('.formatting-toolbar')) return;
     if (activeSlideId) {
@@ -251,18 +244,14 @@ const PresentationEditorPage: React.FC = () => {
     }
   };
 
-  const addSlide = () => {
-    setSlides(prev => [...prev, { id: Date.now().toString(), html: '<h2 style="text-align:center">Новый слайд</h2><p style="text-align:center">Описание</p>' }]);
-  };
+  const addSlide = () => setSlides(prev => [...prev, { id: Date.now().toString(), html: '<h2 style="text-align:center">Новый слайд</h2><p style="text-align:center">Описание</p>' }]);
   const removeSlide = () => {
     if (slides.length <= 1) return;
     setSlides(prev => prev.filter((_, i) => i !== currentSlide));
     if (currentSlide >= slides.length - 1) setCurrentSlide(slides.length - 2);
   };
 
-  // Активация редактирования по двойному клику
   const handleDoubleClick = (id: string) => {
-    // сохраняем предыдущий
     if (activeSlideId && activeSlideId !== id) {
       const prevCard = cardRefs.current.get(activeSlideId);
       if (prevCard) {
@@ -272,16 +261,14 @@ const PresentationEditorPage: React.FC = () => {
     setActiveSlideId(id);
   };
 
-  // Форматирование текста
   const execCmd = (cmd: string, arg?: string) => {
     document.execCommand(cmd, false, arg);
-    const card = cardRefs.current.get(activeSlideId!);
-    card?.focus();
+    cardRefs.current.get(activeSlideId!)?.focus();
   };
 
   const changeFontSize = (delta: number) => {
     const sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return;
+    if (!sel?.rangeCount) return;
     const range = sel.getRangeAt(0);
     if (range.collapsed) return;
     const span = document.createElement('span');
@@ -316,10 +303,9 @@ const PresentationEditorPage: React.FC = () => {
     if (url) execCmd('insertHTML', `<iframe width="560" height="315" src="${url}" frameborder="0" allowfullscreen></iframe>`);
   };
 
-  // Стиль карточки (без тени, с правильной обводкой)
+  // Стиль карточки (исправлено дублирование width)
   const cardInline: React.CSSProperties = {
     background: cardStyle.bg,
-    width: cardStyle.shape === 'circle' ? cardStyle.radius * 2 + 'px' : cardStyle.width,
     height: cardStyle.shape === 'circle' ? cardStyle.radius * 2 + 'px' : cardStyle.height,
     borderRadius: cardStyle.shape === 'circle' ? '50%' : cardStyle.radius,
     border: `${cardStyle.borderWidth}px solid ${cardStyle.borderColor}`,
@@ -337,10 +323,9 @@ const PresentationEditorPage: React.FC = () => {
     boxShadow: '0 30px 40px rgba(0,0,0,0.1)',
     transition: 'all 0.3s',
     maxWidth: '800px',
-    width: '100%',
+    width: cardStyle.width,
   };
 
-  // Управление слоями
   const updateLayer = (id: string, patch: Partial<Layer>) => {
     setLayers(prev => prev.map(l => {
       if (l.id !== id) return l;
@@ -378,22 +363,44 @@ const PresentationEditorPage: React.FC = () => {
     inp.click();
   };
 
-  // Экспорт с полным оформлением и анимацией
+  // Экспорт с рабочим CSS и анимацией
   const handleExport = () => {
     const styles = document.querySelector('style')?.innerHTML || '';
     const animCode = `
-      const ICONS = ${JSON.stringify(ICON_UNICODE)};
-      const LAYERS = ${JSON.stringify(layers.map(l => ({ ...l, items: [] })))};
-      const SPEED = ${globalSpeed};
-      const BG = '${bgType}';
-      const SOLID = '${solidColor}';
-      const GRAD_ANGLE = ${gradientAngle};
-      const GRAD_COLORS = ${JSON.stringify(gradColors)};
-      const BLUR = ${blur};
-      // инициализация и запуск анимации как в редакторе...
+const layers = ${JSON.stringify(layers.map(l => ({...l, items:[]})))};
+const speed = ${globalSpeed};
+const W = window.innerWidth, H = window.innerHeight;
+layers.forEach(l => l.items = Array.from({length: l.count}, () => ({x:Math.random()*W,y:Math.random()*H,size:l.minSize+Math.random()*(l.maxSize-l.minSize),rot:Math.random()*360,rotV:l.rot*(Math.random()-0.5)*2,vx:(Math.random()-0.5)*1.5,vy:(Math.random()-0.5)*1.5})));
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = W; canvas.height = H;
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  layers.forEach(l => l.items.forEach(it => {
+    if (l.anim==='fallDown') it.y+=speed*0.8;
+    else if (l.anim==='fallUp') it.y-=speed*0.8;
+    else if (l.anim==='float') { it.x+=it.vx*speed*0.3; it.y+=it.vy*speed*0.3; if(it.x<0||it.x>W)it.vx*=-1; if(it.y<0||it.y>H)it.vy*=-1; }
+    it.rot+=it.rotV*speed;
+    if (it.y>H+it.size) it.y=-it.size;
+    if (it.y<-it.size) it.y=H+it.size;
+    ctx.save();
+    ctx.translate(it.x, it.y);
+    ctx.rotate(it.rot*Math.PI/180);
+    ctx.globalAlpha = l.opacity;
+    if (l.type==='circle') { ctx.beginPath(); ctx.arc(0,0,it.size/2,0,Math.PI*2); ctx.fillStyle=l.color; ctx.fill(); }
+    else if (l.type==='icon') { ctx.font='900 '+it.size+'px "Font Awesome 6 Free"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=l.color; ctx.fillText(String.fromCharCode(0xf004),0,0); }
+    ctx.restore();
+  }));
+  requestAnimationFrame(draw);
+}
+draw();
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  layers.forEach(l => l.items = Array.from({length: l.count}, () => ({x:Math.random()*W,y:Math.random()*H,size:l.minSize+Math.random()*(l.maxSize-l.minSize),rot:Math.random()*360,rotV:l.rot*(Math.random()-0.5)*2,vx:(Math.random()-0.5)*1.5,vy:(Math.random()-0.5)*1.5})));
+});
     `;
-
-    const full = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>${styles} body{margin:0;overflow:hidden} .slide{scroll-snap-align:start;height:100vh;display:flex;align-items:center;justify-content:center;padding:40px} .card{${cardInline.cssText}}</style></head><body><canvas id="canvas"></canvas><div id="slides">${slides.map(s => `<div class="slide"><div class="card">${s.html}</div></div>`).join('')}</div><script>${animCode}</` + `script></body></html>`;
+    const full = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>${styles} body{margin:0;overflow:hidden} .slide{scroll-snap-align:start;height:100vh;display:flex;align-items:center;justify-content:center;padding:40px} .card{background:${cardStyle.bg};border-radius:${cardStyle.shape==='circle'?'50%':cardStyle.radius+'px'};border:${cardStyle.borderWidth}px solid ${cardStyle.borderColor};font-family:${cardStyle.font};color:${cardStyle.textColor};overflow:hidden;padding:50px;max-width:800px;width:${cardStyle.width};box-shadow:0 30px 40px rgba(0,0,0,0.1);word-wrap:break-word;display:flex;flex-direction:column;justify-content:center;align-items:stretch}</style></head><body><canvas id="canvas"></canvas><div id="slides">${slides.map(s => `<div class="slide"><div class="card">${s.html}</div></div>`).join('')}</div><script>${animCode}</`+`script></body></html>`;
     const blob = new Blob([full], { type: 'text/html' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -405,10 +412,8 @@ const PresentationEditorPage: React.FC = () => {
     <div className="presentation-editor" onClick={handleBackgroundClick}>
       <canvas ref={canvasRef} className="bg-canvas" />
       <div className="editor-layout">
-        {/* Компактный сайдбар */}
         <div className="sidebar">
           <h3>Настройки</h3>
-
           <div className="section">
             <label>Слайды</label>
             <div className="btn-row">
@@ -416,56 +421,39 @@ const PresentationEditorPage: React.FC = () => {
               <button onClick={removeSlide} className="secondary"><i className="fas fa-minus"/> Удалить</button>
             </div>
           </div>
-
-          {/* Фон */}
           <div className="section">
             <label>Фон</label>
-            <select value={bgType} onChange={e => setBgType(e.target.value as 'solid' | 'gradient')}>
+            <select value={bgType} onChange={e => setBgType(e.target.value as 'solid'|'gradient')}>
               <option value="solid">Сплошной цвет</option>
               <option value="gradient">Градиент</option>
             </select>
             {bgType === 'solid' ? (
-              <div>
-                <label>Цвет</label>
-                <input type="color" value={solidColor} onChange={e => setSolidColor(e.target.value)} />
-              </div>
+              <div><label>Цвет</label><input type="color" value={solidColor} onChange={e => setSolidColor(e.target.value)} /></div>
             ) : (
               <div>
-                <label>Угол (°)</label>
-                <input type="number" value={gradientAngle} onChange={e => setGradientAngle(+e.target.value)} min="0" max="360" />
-                <label>Цвет 1</label>
-                <input type="color" value={gradColors[0] || '#ffaa00'} onChange={e => setGradColors(prev => { const n = [...prev]; n[0] = e.target.value; return n; })} />
-                <label>Цвет 2</label>
-                <input type="color" value={gradColors[1] || '#dd2a7b'} onChange={e => setGradColors(prev => { const n = [...prev]; n[1] = e.target.value; return n; })} />
-                <label>Цвет 3</label>
-                <input type="color" value={gradColors[2] || '#8134af'} onChange={e => setGradColors(prev => { const n = [...prev]; n[2] = e.target.value; return n; })} />
+                <label>Угол (°)</label><input type="number" value={gradientAngle} onChange={e => setGradientAngle(+e.target.value)} min="0" max="360" />
+                <label>Цвет 1</label><input type="color" value={gradColors[0]||'#ffaa00'} onChange={e => setGradColors(p => { const n=[...p]; n[0]=e.target.value; return n; })} />
+                <label>Цвет 2</label><input type="color" value={gradColors[1]||'#dd2a7b'} onChange={e => setGradColors(p => { const n=[...p]; n[1]=e.target.value; return n; })} />
+                <label>Цвет 3</label><input type="color" value={gradColors[2]||'#8134af'} onChange={e => setGradColors(p => { const n=[...p]; n[2]=e.target.value; return n; })} />
               </div>
             )}
-            <label>Размытие (px)</label>
-            <input type="range" min="0" max="10" step="0.5" value={blur} onChange={e => setBlur(+e.target.value)} />
+            <label>Размытие (px)</label><input type="range" min="0" max="10" step="0.5" value={blur} onChange={e => setBlur(+e.target.value)} />
           </div>
-
-          {/* Карточка */}
           <div className="section">
             <label>Карточка</label>
-            <label>Цвет фона</label>
-            <input type="color" value={cardStyle.bg} onChange={e => setCardStyle(p => ({...p, bg: e.target.value}))} />
-            <label>Ширина</label>
-            <input type="text" value={cardStyle.width} onChange={e => setCardStyle(p => ({...p, width: e.target.value}))} />
+            <label>Цвет фона</label><input type="color" value={cardStyle.bg} onChange={e => setCardStyle(p=>({...p,bg:e.target.value}))} />
+            <label>Ширина</label><input type="text" value={cardStyle.width} onChange={e => setCardStyle(p=>({...p,width:e.target.value}))} />
             <label>Форма</label>
-            <select value={cardStyle.shape} onChange={e => setCardStyle(p => ({...p, shape: e.target.value}))}>
+            <select value={cardStyle.shape} onChange={e => setCardStyle(p=>({...p,shape:e.target.value}))}>
               <option value="rounded">Скруглённая</option>
               <option value="circle">Круг</option>
               <option value="oval">Овал</option>
             </select>
-            <label>Радиус</label>
-            <input type="number" value={cardStyle.radius} onChange={e => setCardStyle(p => ({...p, radius: +e.target.value}))} />
-            <label>Обводка (px)</label>
-            <input type="number" value={cardStyle.borderWidth} onChange={e => setCardStyle(p => ({...p, borderWidth: +e.target.value}))} />
-            <label>Цвет обводки</label>
-            <input type="color" value={cardStyle.borderColor} onChange={e => setCardStyle(p => ({...p, borderColor: e.target.value}))} />
+            <label>Радиус</label><input type="number" value={cardStyle.radius} onChange={e => setCardStyle(p=>({...p,radius:+e.target.value}))} />
+            <label>Обводка (px)</label><input type="number" value={cardStyle.borderWidth} onChange={e => setCardStyle(p=>({...p,borderWidth:+e.target.value}))} />
+            <label>Цвет обводки</label><input type="color" value={cardStyle.borderColor} onChange={e => setCardStyle(p=>({...p,borderColor:e.target.value}))} />
             <label>Шрифт</label>
-            <select value={cardStyle.font} onChange={e => setCardStyle(p => ({...p, font: e.target.value}))}>
+            <select value={cardStyle.font} onChange={e => setCardStyle(p=>({...p,font:e.target.value}))}>
               <option value="'Segoe UI', sans-serif">Segoe UI</option>
               <option value="'Roboto', sans-serif">Roboto</option>
               <option value="'Playfair Display', serif">Playfair Display</option>
@@ -475,11 +463,8 @@ const PresentationEditorPage: React.FC = () => {
               <option value="'Comfortaa', cursive">Comfortaa</option>
               <option value="'Pacifico', cursive">Pacifico</option>
             </select>
-            <label>Цвет текста</label>
-            <input type="color" value={cardStyle.textColor} onChange={e => setCardStyle(p => ({...p, textColor: e.target.value}))} />
+            <label>Цвет текста</label><input type="color" value={cardStyle.textColor} onChange={e => setCardStyle(p=>({...p,textColor:e.target.value}))} />
           </div>
-
-          {/* Слои */}
           <div className="section">
             <label>Слои фона</label>
             <button onClick={addLayer}><i className="fas fa-plus"/> Добавить</button>
@@ -495,8 +480,7 @@ const PresentationEditorPage: React.FC = () => {
                   </div>
                   {!layer.collapsed && (
                     <div className="layer-details">
-                      <label>Название</label>
-                      <input type="text" value={layer.name} onChange={e => updateLayer(layer.id, { name: e.target.value })} />
+                      <label>Название</label><input type="text" value={layer.name} onChange={e => updateLayer(layer.id, { name: e.target.value })} />
                       <label>Тип</label>
                       <select value={layer.type} onChange={e => updateLayer(layer.id, { type: e.target.value as Layer['type'] })}>
                         <option value="circle">Круг</option>
@@ -518,10 +502,8 @@ const PresentationEditorPage: React.FC = () => {
                         <input type="number" value={layer.minSize} onChange={e => updateLayer(layer.id, { minSize: +e.target.value })} />
                         <input type="number" value={layer.maxSize} onChange={e => updateLayer(layer.id, { maxSize: +e.target.value })} />
                       </div>
-                      <label>Количество</label>
-                      <input type="range" min="1" max="30" value={layer.count} onChange={e => updateLayer(layer.id, { count: +e.target.value })} />
-                      <label>Прозрачность</label>
-                      <input type="range" min="0.1" max="1" step="0.1" value={layer.opacity} onChange={e => updateLayer(layer.id, { opacity: +e.target.value })} />
+                      <label>Количество</label><input type="range" min="1" max="30" value={layer.count} onChange={e => updateLayer(layer.id, { count: +e.target.value })} />
+                      <label>Прозрачность</label><input type="range" min="0.1" max="1" step="0.1" value={layer.opacity} onChange={e => updateLayer(layer.id, { opacity: +e.target.value })} />
                       <label>Анимация</label>
                       <select value={layer.anim} onChange={e => updateLayer(layer.id, { anim: e.target.value })}>
                         <option value="fallDown">Падение вниз</option>
@@ -535,24 +517,20 @@ const PresentationEditorPage: React.FC = () => {
                         <option value="rotateOnly">Вращение</option>
                         <option value="chaotic">Хаос</option>
                       </select>
-                      <label>Вращение</label>
-                      <input type="range" min="0" max="2" step="0.1" value={layer.rot} onChange={e => updateLayer(layer.id, { rot: +e.target.value })} />
+                      <label>Вращение</label><input type="range" min="0" max="2" step="0.1" value={layer.rot} onChange={e => updateLayer(layer.id, { rot: +e.target.value })} />
                     </div>
                   )}
                 </div>
               ))}
             </div>
-            <label>Общая скорость</label>
-            <input type="range" min="0.1" max="2" step="0.1" value={globalSpeed} onChange={e => setGlobalSpeed(+e.target.value)} />
+            <label>Общая скорость</label><input type="range" min="0.1" max="2" step="0.1" value={globalSpeed} onChange={e => setGlobalSpeed(+e.target.value)} />
           </div>
-
           <button onClick={handleExport} className="export-btn"><i className="fas fa-download"/> Экспорт HTML</button>
         </div>
 
-        {/* Слайды */}
         <div className="slides-viewport" ref={containerRef}>
           <div className="slides-container">
-            {slides.map((slide) => (
+            {slides.map(slide => (
               <div className="slide" key={slide.id} style={{ position: 'relative' }}>
                 {activeSlideId === slide.id && (
                   <div className="formatting-toolbar" style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}>
@@ -581,8 +559,6 @@ const PresentationEditorPage: React.FC = () => {
             ))}
           </div>
         </div>
-
-        {/* Индикаторы */}
         <div className="indicators">
           {slides.map((_, i) => (
             <div key={i} className={`indicator ${i === currentSlide ? 'active' : ''}`} onClick={() => scrollToSlide(i)} />
