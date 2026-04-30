@@ -26,6 +26,7 @@
   height: 100%;
   z-index: 0;
   opacity: 0.85;
+  transition: filter 0.3s;
 }
 
 .editor-layout {
@@ -36,56 +37,61 @@
   z-index: 1;
 }
 
-/* Сайдбар */
+/* ---------- САЙДБАР ---------- */
 .sidebar {
   width: 340px;
   background: var(--editor-panel-bg);
   border-right: 1px solid var(--editor-border);
   display: flex;
   flex-direction: column;
-  padding: 24px 20px;
+  padding: 20px;
   overflow-y: auto;
   flex-shrink: 0;
+  font-size: 0.85rem;
 }
 
 .sidebar h3 {
   color: var(--editor-accent);
   font-weight: 600;
-  margin-bottom: 20px;
-  font-size: 1.1rem;
+  margin-bottom: 16px;
+  font-size: 1rem;
 }
 
 .section {
-  margin-bottom: 24px;
-  padding-bottom: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--editor-border);
 }
 
 .section label {
-  font-size: 0.75rem;
-  color: var(--editor-text-secondary);
-  margin: 10px 0 4px;
   display: block;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  color: var(--editor-text-secondary);
+  margin: 10px 0 4px;
+  font-weight: 500;
 }
 
-.sidebar select, .sidebar input {
+.sidebar select,
+.sidebar input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border: 1px solid var(--editor-border);
   border-radius: 12px;
   background: var(--editor-bg);
   color: var(--editor-text);
-  font-size: 0.85rem;
-  margin-bottom: 8px;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
   outline: none;
   transition: border-color 0.2s;
 }
-.sidebar select:focus, .sidebar input:focus {
+.sidebar select:focus,
+.sidebar input:focus {
   border-color: var(--editor-accent);
 }
 
+/* ---------- КНОПКИ ---------- */
 button {
   background: var(--editor-accent);
   color: white;
@@ -95,8 +101,8 @@ button {
   border-radius: 40px;
   cursor: pointer;
   font-size: 0.8rem;
-  margin-right: 6px;
-  margin-bottom: 6px;
+  margin-right: 4px;
+  margin-bottom: 4px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -114,35 +120,29 @@ button.secondary:hover {
   background: var(--accent-glow);
 }
 
+/* ---------- СЛОИ ---------- */
 .layers-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: 10px 0;
+  margin: 8px 0;
 }
 
 .layer-panel {
   background: var(--editor-bg);
   border: 1px solid var(--editor-border);
   border-radius: 12px;
-  padding: 12px;
+  padding: 10px;
 }
 
 .layer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
   cursor: pointer;
 }
-
 .layer-header span {
   font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.layer-details {
-  margin-top: 8px;
 }
 
 .range-group {
@@ -153,162 +153,78 @@ button.secondary:hover {
   flex: 1;
 }
 
-.range-value {
-  font-size: 0.8rem;
-  color: var(--editor-text-secondary);
-  margin-left: 8px;
-}
-
-.export-btn {
-  margin-top: 20px;
-  width: 100%;
-}
-
-/* Область слайдов */
-.slides-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-.formatting-toolbar {
-  display: flex;
-  gap: 6px;
-  padding: 8px 16px;
-  background: var(--editor-panel-bg);
-  border-bottom: 1px solid var(--editor-border);
-  flex-wrap: wrap;
-  align-items: center;
-}
-.formatting-toolbar button {
-  font-size: 0.75rem;
-  padding: 4px 8px;
-  margin: 0;
-}
-
+/* ---------- ОБЛАСТЬ СЛАЙДОВ ---------- */
 .slides-viewport {
   flex: 1;
-  overflow: hidden;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  height: 100vh;
 }
 
 .slides-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: auto;
 }
 
 .slide {
-  flex: 0 0 100%;
+  scroll-snap-align: start;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 60px;
+  position: relative;
 }
 
 .slide-card {
-  padding: 50px;
+  background: rgba(255,255,255,0.92);
   max-width: 800px;
   width: 100%;
-  box-shadow: var(--editor-shadow);
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 30px 40px rgba(0,0,0,0.1);
+  transition: all 0.3s;
   word-wrap: break-word;
+  outline: none;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
-  background: white;
 }
-
 .slide-card.active {
   border-color: var(--editor-accent) !important;
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.indicators {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 2;
-}
-
-.indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.2);
-  cursor: pointer;
-  transition: 0.3s;
-}
-.indicator.active {
-  background: var(--editor-accent);
-  transform: scale(1.4);
-}
-/* TipTap стили */
-.tiptap-editor {
-  outline: none;
-  min-height: 200px;
-}
-
-.tiptap-editor h1 { font-size: 2em; }
-.tiptap-editor h2 { font-size: 1.5em; }
-
+/* ---------- ТУЛБАР ФОРМАТИРОВАНИЯ ---------- */
 .formatting-toolbar {
   display: flex;
   gap: 4px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+  position: absolute;
+  top: 10px;
+  right: 10px;
   background: var(--editor-panel-bg);
-  padding: 6px;
-  border-radius: 8px;
   border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  padding: 5px;
+  z-index: 10;
+  flex-wrap: wrap;
 }
 .formatting-toolbar button {
+  font-size: 0.75rem;
   padding: 4px 8px;
-  font-size: 0.8rem;
   margin: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--editor-text);
+  border-radius: 4px;
 }
-.formatting-toolbar button.is-active {
-  background: var(--editor-accent);
-  color: white;
+.formatting-toolbar button:hover {
+  background: var(--editor-accent-glow);
+  border-color: var(--editor-accent);
 }
 
-/* Убираем Embla */
-.slides-viewport {
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-  height: 100vh;
-}
-.slides-container {
-  flex-direction: column;
-  height: auto;
-}
-.slide {
-  scroll-snap-align: start;
-  height: 100vh;
-}
-/* Добавьте в конец PresentationEditorPage.css */
-.slides-viewport {
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-  height: 100vh;
-  flex: 1;
-}
-.slides-container {
-  flex-direction: column;
-  height: auto;
-}
-.slide {
-  scroll-snap-align: start;
-  height: 100vh;
-}
+/* ---------- ИНДИКАТОРЫ ---------- */
 .indicators {
   position: absolute;
   right: 20px;
@@ -325,38 +241,15 @@ button.secondary:hover {
   border-radius: 50%;
   background: rgba(0,0,0,0.25);
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.3s;
 }
 .indicator.active {
-  background: var(--accent);
-  transform: scale(1.5);
+  background: var(--editor-accent);
+  transform: scale(1.6);
 }
 
-/* TipTap */
-.tiptap-editor {
-  outline: none;
-  min-height: 200px;
-}
-.tiptap-editor h1 { font-size: 2em; }
-.tiptap-editor h2 { font-size: 1.5em; }
-
-.formatting-toolbar {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  background: var(--editor-panel-bg);
-  padding: 6px;
-  border-radius: 8px;
-  border: 1px solid var(--editor-border);
-}
-.formatting-toolbar button {
-  padding: 4px 8px;
-  font-size: 0.8rem;
-  margin: 0;
-  border-radius: 4px;
-}
-.formatting-toolbar button.is-active {
-  background: var(--accent);
-  color: white;
+/* ---------- ЭКСПОРТ ---------- */
+.export-btn {
+  margin-top: 20px;
+  width: 100%;
 }
