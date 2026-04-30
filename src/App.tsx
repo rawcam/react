@@ -26,6 +26,7 @@ import { FinanceTaxesPage } from './pages/FinanceTaxesPage';
 import { FinanceOverheadPage } from './pages/FinanceOverheadPage';
 import { FinanceStaffPage } from './pages/FinanceStaffPage';
 import { FinanceStatisticsPage } from './pages/FinanceStatisticsPage';
+import { PresentationEditorPage } from './pages/PresentationEditorPage';
 import './index.css';
 
 const clearStorage = () => {
@@ -161,6 +162,7 @@ const AppContent: React.FC = () => {
                 <Route path="/finance/overhead" element={<FinanceOverheadPage />} />
                 <Route path="/finance/staff" element={<FinanceStaffPage />} />
                 <Route path="/finance/statistics" element={<FinanceStatisticsPage />} />
+                <Route path="/presentation-editor" element={<PresentationEditorPage />} />
               </Routes>
             </main>
           </div>
