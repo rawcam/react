@@ -8,8 +8,8 @@ import './PresentationEditorPage.css';
 // Типы
 interface SlideData {
   id: string;
-  // TipTap хранит JSON, а не HTML, для надёжности
-  content: any;
+  content: any;   // JSON для TipTap
+  html: string;   // HTML для экспорта и отображения (будет синхронизироваться)
 }
 
 interface Layer {
@@ -59,9 +59,18 @@ const ICON_UNICODE: Record<string, number> = {
   'fa-umbrella':0xf0e9, 'fa-moon':0xf186, 'fa-sun':0xf185
 };
 
+// Начальные слайды с HTML
 const DEFAULT_SLIDES: SlideData[] = [
-  { id: '1', content: { type: 'doc', content: [{ type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Добро пожаловать!' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'Это редактор презентаций Sputnik Studio.' }] }] } },
-  { id: '2', content: { type: 'doc', content: [{ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Второй слайд' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'Редактируйте текст как в привычном редакторе.' }] }] } }
+  {
+    id: '1',
+    content: { type: 'doc', content: [{ type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Добро пожаловать!' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'Это редактор презентаций Sputnik Studio.' }] }] },
+    html: '<h1>Добро пожаловать!</h1><p>Это редактор презентаций Sputnik Studio.</p>'
+  },
+  {
+    id: '2',
+    content: { type: 'doc', content: [{ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Второй слайд' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'Редактируйте текст как в привычном редакторе.' }] }] },
+    html: '<h2>Второй слайд</h2><p>Редактируйте текст как в привычном редакторе.</p>'
+  }
 ];
 
 const DEFAULT_LAYERS: Layer[] = [
@@ -78,15 +87,14 @@ const PresentationEditorPage: React.FC = () => {
   const animFrameRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
 
-  // Карточка
   const [cardStyle, setCardStyle] = useState({
     bg: '#ffffff', width: '100%', height: 'auto', shape: 'rounded',
     radius: 28, borderWidth: 2, borderColor: '#000000',
     font: "'Segoe UI', sans-serif", textColor: '#333333'
   });
 
-  // Подготовка items для слоёв
   const initLayerItems = useCallback(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -106,10 +114,8 @@ const PresentationEditorPage: React.FC = () => {
 
   useEffect(() => { initLayerItems(); }, [initLayerItems]);
 
-  // Кеш изображений (чтобы не создавать Image каждый кадр)
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
 
-  // Анимация канваса
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -125,7 +131,6 @@ const PresentationEditorPage: React.FC = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       layers.forEach(layer => {
         layer.items.forEach(item => {
-          // движение
           if (layer.anim === 'fallDown') item.y += globalSpeed * 0.8;
           else if (layer.anim === 'fallUp') item.y -= globalSpeed * 0.8;
           else if (layer.anim === 'fallLeft') item.x -= globalSpeed * 0.8;
@@ -192,7 +197,6 @@ const PresentationEditorPage: React.FC = () => {
     };
   }, [layers, globalSpeed]);
 
-  // Обработчик скролла (переключение слайдов)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -208,14 +212,12 @@ const PresentationEditorPage: React.FC = () => {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [currentSlide, slides.length]);
 
-  // Прокрутка к слайду по клику на индикатор
   const scrollToSlide = (index: number) => {
     containerRef.current?.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
   };
 
-  // Слайды
   const addSlide = () => {
-    setSlides(prev => [...prev, { id: Date.now().toString(), content: { type: 'doc', content: [{ type: 'paragraph' }] } }]);
+    setSlides(prev => [...prev, { id: Date.now().toString(), content: { type: 'doc', content: [{ type: 'paragraph' }] }, html: '<p></p>' }]);
   };
   const removeSlide = () => {
     if (slides.length <= 1) return;
@@ -223,12 +225,10 @@ const PresentationEditorPage: React.FC = () => {
     if (currentSlide >= slides.length - 1) setCurrentSlide(slides.length - 2);
   };
 
-  // Обновление контента слайда (из TipTap)
-  const updateSlideContent = (id: string, json: any) => {
-    setSlides(prev => prev.map(s => s.id === id ? { ...s, content: json } : s));
+  const updateSlideContent = (id: string, json: any, html: string) => {
+    setSlides(prev => prev.map(s => s.id === id ? { ...s, content: json, html } : s));
   };
 
-  // Стиль карточки (исправлен круг)
   const cardInline: React.CSSProperties = {
     background: cardStyle.bg,
     width: cardStyle.shape === 'circle' ? cardStyle.radius * 2 + 'px' : cardStyle.width,
@@ -241,7 +241,7 @@ const PresentationEditorPage: React.FC = () => {
     aspectRatio: cardStyle.shape === 'circle' ? '1' : 'auto',
   };
 
-  // TipTap редактор для одного слайда
+  // Компонент SlideEditor использует useEditor и синхронизирует JSON+HTML
   const SlideEditor: React.FC<{ slide: SlideData; isActive: boolean; onActivate: () => void }> = ({ slide, isActive, onActivate }) => {
     const editor = useEditor({
       extensions: [StarterKit, Placeholder.configure({ placeholder: 'Введите текст...' })],
@@ -249,7 +249,8 @@ const PresentationEditorPage: React.FC = () => {
       editable: isActive,
       onUpdate: ({ editor }) => {
         const json = editor.getJSON();
-        updateSlideContent(slide.id, json);
+        const html = editor.getHTML();
+        updateSlideContent(slide.id, json, html);
       },
       editorProps: {
         attributes: {
@@ -278,7 +279,6 @@ const PresentationEditorPage: React.FC = () => {
     );
   };
 
-  // Управление слоями
   const updateLayer = (id: string, patch: Partial<Layer>) => {
     setLayers(prev => prev.map(l => {
       if (l.id !== id) return l;
@@ -317,13 +317,14 @@ const PresentationEditorPage: React.FC = () => {
   };
 
   const handleExport = () => {
-    const html = slides.map(s => `<section>${editor?.getHTML() ?? ''}</section>`).join('');
-    const full = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>body{margin:0}</style></head><body>${html}</body></html>`;
-    const blob = new Blob([full], {type:'text/html'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'presentation.html'; a.click();
+    const htmlContent = slides.map(s => `<section>${s.html}</section>`).join('');
+    const full = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>body{margin:0;overflow:hidden;background:#f0f0f0;font-family:sans-serif}section{display:flex;align-items:center;justify-content:center;height:100vh;padding:2em}</style></head><body>${htmlContent}</body></html>`;
+    const blob = new Blob([full], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'presentation.html';
+    a.click();
   };
-
-  const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
 
   return (
     <div className="presentation-editor">
@@ -395,9 +396,7 @@ const PresentationEditorPage: React.FC = () => {
                           </select>
                         </>
                       )}
-                      {layer.type !== 'image' && (
-                        <label>Цвет</label>
-                      )}
+                      {layer.type !== 'image' && <label>Цвет</label>}
                       {layer.type === 'image' && <button onClick={() => handleLayerImage(layer.id)}>Загрузить PNG</button>}
                       <label>Размер (мин/макс)</label>
                       <div className="range-group">
