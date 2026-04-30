@@ -3,12 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setVcConfig } from '../../store/vcSlice';
-import { addDeviceToTract } from '../../store/tractsSlice';
 
-export const VcCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+interface VcCalculatorProps {
+  onBack: () => void;
+  engine: any; // ReturnType<typeof useTractEngine>
+}
+
+export const VcCalculator: React.FC<VcCalculatorProps> = ({ onBack, engine }) => {
   const dispatch = useDispatch();
   const vc = useSelector((state: RootState) => state.vc);
-  const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId);
+  const activeTractId = engine.activeTractId;
 
   const [mode, setMode] = useState(vc.activeMode);
   const [codecPreset, setCodecPreset] = useState(vc.codecPreset);
@@ -40,21 +44,16 @@ export const VcCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       alert('Нет активного тракта. Сначала создайте или выберите тракт.');
       return;
     }
-    const newDevice = {
-      id: Date.now().toString(),
-      type: 'vcDevice',
-      modelName: `Кодек ВКС (${result.text})`,
+    engine.addDevice(activeTractId, {
+      name: `Кодек ВКС (${result.text})`,
       latency: 0,
-      poe: false,
-      poePower: 0,
-      poeEnabled: false,
       powerW: 0,
-      shortName: `VC${Math.floor(Math.random() * 1000)}`,
-      ethernet: true,
       shortPrefix: 'VC',
       icon: 'fas fa-chalkboard',
-    };
-    dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }));
+      bitrateFactor: undefined,
+      poe: false,
+      hasNetwork: true,
+    }, 'vcDevice', 'sink');
     alert('Устройство добавлено в тракт');
   };
 
