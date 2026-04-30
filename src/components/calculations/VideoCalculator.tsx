@@ -1,12 +1,12 @@
 // src/components/calculations/VideoCalculator.tsx
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setVideoSettings, calcVideoBitrate } from '../../store/videoSlice';
 
 interface VideoCalculatorProps {
   onBack?: () => void;
-  engine: any; // ReturnType<typeof useTractEngine>
+  engine: any;
 }
 
 export const VideoCalculator: React.FC<VideoCalculatorProps> = ({ onBack, engine }) => {
