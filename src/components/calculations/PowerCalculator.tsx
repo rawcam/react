@@ -3,12 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setPowerConfig } from '../../store/powerSlice';
-import { addDeviceToTract } from '../../store/tractsSlice';
 
-export const PowerCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+interface PowerCalculatorProps {
+  onBack: () => void;
+  engine: any; // ReturnType<typeof useTractEngine>
+}
+
+export const PowerCalculator: React.FC<PowerCalculatorProps> = ({ onBack, engine }) => {
   const dispatch = useDispatch();
   const power = useSelector((state: RootState) => state.power);
-  const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId);
+  const activeTractId = engine.activeTractId;
 
   const [totalPower, setTotalPower] = useState(power.totalPower);
   const [upsAutonomy, setUpsAutonomy] = useState(power.upsAutonomy);
@@ -27,21 +31,16 @@ export const PowerCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) =>
       alert('Нет активного тракта. Сначала создайте или выберите тракт.');
       return;
     }
-    const newDevice = {
-      id: Date.now().toString(),
-      type: 'powerDevice',
-      modelName: `ИБП ${Math.round(totalPower * upsAutonomy * 1.2)} ВА`,
+    engine.addDevice(activeTractId, {
+      name: `ИБП ${Math.round(totalPower * upsAutonomy * 1.2)} ВА`,
       latency: 0,
-      poe: false,
-      poePower: 0,
-      poeEnabled: false,
       powerW: 0,
-      shortName: `UPS${Math.floor(Math.random() * 1000)}`,
-      ethernet: false,
       shortPrefix: 'UPS',
       icon: 'fas fa-battery-full',
-    };
-    dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }));
+      bitrateFactor: undefined,
+      poe: false,
+      hasNetwork: false,
+    }, 'powerDevice', 'sink');
     alert('Устройство добавлено в тракт');
   };
 
