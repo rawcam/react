@@ -1,15 +1,19 @@
 // src/components/calculations/VideoCalculator.tsx
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setVideoSettings, calcVideoBitrate } from '../../store/videoSlice';
-import { addDeviceToTract } from '../../store/tractsSlice';
 
-export const VideoCalculator: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+interface VideoCalculatorProps {
+  onBack?: () => void;
+  engine: any; // ReturnType<typeof useTractEngine>
+}
+
+export const VideoCalculator: React.FC<VideoCalculatorProps> = ({ onBack, engine }) => {
   const dispatch = useDispatch();
   const settings = useSelector((state: RootState) => state.video);
-  const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId);
   const bitrate = calcVideoBitrate(settings);
+  const activeTractId = engine.activeTractId;
 
   const handleChange = (field: string, value: any) => {
     dispatch(setVideoSettings({ [field]: value }));
@@ -20,22 +24,16 @@ export const VideoCalculator: React.FC<{ onBack?: () => void }> = ({ onBack }) =
       alert('Нет активного тракта. Сначала создайте или выберите тракт.');
       return;
     }
-    const newDevice = {
-      id: Date.now().toString(),
-      type: 'videoSource',
-      modelName: `Видеоисточник (${bitrate} Мбит/с)`,
+    engine.addDevice(activeTractId, {
+      name: `Видеоисточник (${bitrate} Мбит/с)`,
       latency: 0.5,
-      poe: false,
-      poePower: 0,
-      poeEnabled: false,
       powerW: 5,
-      shortName: `VID${Math.floor(Math.random() * 1000)}`,
-      ethernet: true,
-      bitrateFactor: 1,
       shortPrefix: 'VID',
       icon: 'fas fa-video',
-    };
-    dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'source' }));
+      bitrateFactor: 1,
+      poe: false,
+      hasNetwork: true,
+    }, 'videoSource', 'source');
     alert('Устройство добавлено в тракт');
   };
 
