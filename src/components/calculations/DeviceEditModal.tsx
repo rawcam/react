@@ -1,19 +1,15 @@
 // src/components/calculations/DeviceEditModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useAppDispatch } from '../../hooks/hooks';
-import { updateDevice, updateTract, TractDevice, MatrixDevice } from '../../store/tractsSlice';
 
 interface DeviceEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  device: TractDevice | MatrixDevice;
+  device: any; // TractDeviceSimple | MatrixSimple
   tractId: string;
+  engine: any; // ReturnType<typeof useTractEngine>
 }
 
-export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, tractId }) => {
-  const dispatch = useAppDispatch();
-  const isMatrix = device.type === 'matrix';
-
+export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, tractId, engine }) => {
   const [latency, setLatency] = useState<number>(0);
   const [powerW, setPowerW] = useState<number>(0);
   const [poeEnabled, setPoeEnabled] = useState<boolean>(false);
@@ -25,16 +21,18 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
   const [inputs, setInputs] = useState<number>(0);
   const [outputs, setOutputs] = useState<number>(0);
 
+  const isMatrix = device.type === 'matrix';
+
   useEffect(() => {
     if (isMatrix) {
-      const m = device as MatrixDevice;
+      const m = device;
       setLatency((m.latencyIn || 0) + (m.latencyOut || 0));
       setPowerW(m.powerW || 0);
       setInputs(m.inputs || 0);
       setOutputs(m.outputs || 0);
       setShortName(m.shortName || m.shortPrefix || '');
     } else {
-      const d = device as TractDevice;
+      const d = device;
       setLatency(d.latency || 0);
       setPowerW(d.powerW || 0);
       setPoeEnabled(d.poeEnabled || false);
@@ -49,45 +47,40 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
   }, [device, isMatrix]);
 
   const handleSave = () => {
+    const updates: any = { shortName };
+
     if (isMatrix) {
-      const m = device as MatrixDevice;
-      const halfLatency = latency / 2;
-      dispatch(updateTract({
-        ...m,
-        id: tractId,
-        matrixDevices: [{ ...m, latencyIn: halfLatency, latencyOut: halfLatency, powerW, inputs, outputs, shortName }],
-      } as any));
+      updates.latencyIn = latency / 2;
+      updates.latencyOut = latency / 2;
+      updates.powerW = powerW;
+      updates.inputs = inputs;
+      updates.outputs = outputs;
     } else {
-      dispatch(updateDevice({
-        tractId,
-        deviceId: device.id,
-        updates: {
-          latency,
-          powerW,
-          poeEnabled,
-          poePower: poeEnabled ? poePower : 0,
-          ethernet,
-          shortName,
-          usb,
-          usbVersion,
-          inputs,
-          outputs,
-        },
-      }));
+      updates.latency = latency;
+      updates.powerW = powerW;
+      updates.poeEnabled = poeEnabled;
+      updates.poePower = poeEnabled ? poePower : 0;
+      updates.ethernet = ethernet;
+      updates.usb = usb;
+      updates.usbVersion = usbVersion;
+      updates.inputs = inputs;
+      updates.outputs = outputs;
     }
+
+    engine.updateDevice(tractId, device.id, updates);
     onClose();
   };
 
   if (!isOpen) return null;
 
-  const supportsPoE = 'poe' in device ? (device as TractDevice).poe === true : false;
-  const hasNetwork = 'hasNetwork' in device ? (device as TractDevice).hasNetwork !== false : false;
+  const supportsPoE = !isMatrix && device.poe === true;
+  const hasNetwork = !isMatrix && device.hasNetwork !== false;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ width: '420px', maxWidth: '90vw', padding: '24px' }}>
         <div className="modal-header">
-          <h3>Редактировать: {isMatrix ? (device as MatrixDevice).name : (device as TractDevice).modelName}</h3>
+          <h3>Редактировать: {isMatrix ? device.name : device.modelName}</h3>
           <button className="modal-close" onClick={onClose}>&times;</button>
         </div>
 
