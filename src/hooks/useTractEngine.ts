@@ -100,7 +100,8 @@ const getResolutionFactor = (resolution: string): number => {
   return map[resolution] || 1.0;
 };
 
-const createDevice = (model: DeviceModel, type: string): TractDeviceSimple => ({
+// Универсальная фабрика устройств
+const createDevice = (model: Partial<DeviceModel> & { name: string }, type: string): TractDeviceSimple => ({
   id: Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
   modelName: model.name,
   type,
@@ -110,17 +111,24 @@ const createDevice = (model: DeviceModel, type: string): TractDeviceSimple => ({
   ethernet: false,
   poeEnabled: false,
   poePower: model.poePower || 0,
-  bitrateFactor: model.bitrateFactor,
-  hasNetwork: model.hasNetwork !== false,
-  shortPrefix: model.shortPrefix,
+  bitrateFactor: (model as any).bitrateFactor,
+  hasNetwork: model.hasNetwork !== undefined ? model.hasNetwork : true,
+  shortPrefix: model.shortPrefix || 'DEV',
   icon: `fas ${model.icon || 'fa-question-circle'}`,
   expanded: true,
   inputs: model.inputs,
   outputs: model.outputs,
-  poe: model.poe,
-  usb: model.usb,
-  usbVersion: model.usbVersion,
-  audioEmbed: model.audioEmbed,
+  poe: (model as any).poe,
+  usb: (model as any).usb,
+  usbVersion: (model as any).usbVersion,
+  audioEmbed: (model as any).audioEmbed,
+  width_m: (model as any).width_m,
+  height_m: (model as any).height_m,
+  resW: (model as any).resW,
+  resH: (model as any).resH,
+  area: (model as any).area,
+  pitch: (model as any).pitch,
+  powerPerSqm: (model as any).powerPerSqm,
 });
 
 export const useTractEngine = () => {
@@ -181,12 +189,17 @@ export const useTractEngine = () => {
     [videoSettings, networkSettings]
   );
 
-  // Автоматически пересчитываем при изменении настроек
   const recalcAll = useCallback(() => {
     setTracts(prev => prev.map(t => recalc(t)));
   }, [recalc]);
 
-  // при изменении video/network вызываем recalcAll (через useEffect в компоненте или здесь)
+  // Обновление имени тракта
+  const renameTract = useCallback((tractId: string, newName: string) => {
+    setTracts(prev =>
+      prev.map(t => (t.id === tractId ? { ...t, name: newName } : t))
+    );
+  }, []);
+
   const addTract = useCallback((name: string) => {
     const id = Date.now().toString();
     const newTract: TractSimple = {
@@ -206,14 +219,13 @@ export const useTractEngine = () => {
     setShowAll(false);
   }, [recalc]);
 
-  const addDevice = useCallback((tractId: string, model: DeviceModel, type: string, column: 'source' | 'matrix' | 'sink') => {
+  const addDevice = useCallback((tractId: string, model: Partial<DeviceModel> & { name: string }, type: string, column: 'source' | 'matrix' | 'sink') => {
     setTracts(prev =>
       prev.map(t => {
         if (t.id !== tractId) return t;
         const dev = createDevice(model, type);
         const newTract = { ...t };
         if (column === 'matrix') {
-          // Создаём MatrixSimple
           const matrix: MatrixSimple = {
             id: dev.id,
             type: 'matrix',
@@ -224,7 +236,7 @@ export const useTractEngine = () => {
             latencyOut: 0,
             powerW: model.powerW || 0,
             icon: `fas ${model.icon || 'fa-project-diagram'}`,
-            shortPrefix: model.shortPrefix,
+            shortPrefix: model.shortPrefix || 'MX',
             shortName: '',
             expanded: true,
             hasNetwork: model.hasNetwork !== false,
@@ -284,6 +296,7 @@ export const useTractEngine = () => {
     setShowAll,
     recalcAll,
     addTract,
+    renameTract,
     addDevice,
     removeDevice,
     updateDevice,
