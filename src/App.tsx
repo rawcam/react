@@ -26,7 +26,7 @@ import { FinanceTaxesPage } from './pages/FinanceTaxesPage';
 import { FinanceOverheadPage } from './pages/FinanceOverheadPage';
 import { FinanceStaffPage } from './pages/FinanceStaffPage';
 import { FinanceStatisticsPage } from './pages/FinanceStatisticsPage';
-import { PresentationEditorPage } from './pages/PresentationEditorPage';
+import PresentationEditorPage from './pages/PresentationEditorPage';
 import './index.css';
 
 const clearStorage = () => {
