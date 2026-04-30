@@ -3,16 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setSoundConfig } from '../../store/soundSlice';
+import { addDeviceToTract } from '../../store/tractsSlice';
 
 interface SoundCalculatorProps {
   onBack: () => void;
-  engine: any; // ReturnType<typeof useTractEngine>
+  engine?: any;
 }
 
 export const SoundCalculator: React.FC<SoundCalculatorProps> = ({ onBack, engine }) => {
   const dispatch = useDispatch();
   const sound = useSelector((state: RootState) => state.sound);
-  const activeTractId = engine.activeTractId;
+  const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId);
 
   const [mode, setMode] = useState(sound.activeMode);
   const [sensitivity, setSensitivity] = useState(sound.sensitivity);
@@ -53,20 +54,39 @@ export const SoundCalculator: React.FC<SoundCalculatorProps> = ({ onBack, engine
   }, [sound]);
 
   const handleAddToTract = () => {
-    if (!activeTractId) {
+    const tractId = engine?.activeTractId || activeTractId;
+    if (!tractId) {
       alert('Нет активного тракта. Сначала создайте или выберите тракт.');
       return;
     }
-    engine.addDevice(activeTractId, {
-      name: `Акустическая система (${result.text})`,
+    const newDevice = {
+      id: Date.now().toString(),
+      type: 'soundDevice',
+      modelName: `Акустическая система (${result.text})`,
       latency: 0,
+      poe: false,
+      poePower: 0,
+      poeEnabled: false,
       powerW: 0,
+      shortName: `SPK${Math.floor(Math.random() * 1000)}`,
+      ethernet: false,
       shortPrefix: 'SPK',
       icon: 'fas fa-volume-up',
-      bitrateFactor: undefined,
-      poe: false,
-      hasNetwork: false,
-    }, 'soundDevice', 'sink');
+    };
+    if (engine) {
+      engine.addDevice(tractId, {
+        name: newDevice.modelName,
+        latency: newDevice.latency,
+        powerW: newDevice.powerW,
+        shortPrefix: newDevice.shortPrefix,
+        icon: newDevice.icon,
+        bitrateFactor: undefined,
+        poe: false,
+        hasNetwork: false,
+      }, 'soundDevice', 'sink');
+    } else {
+      dispatch(addDeviceToTract({ tractId, device: newDevice, column: 'sink' }));
+    }
     alert('Устройство добавлено в тракт');
   };
 
@@ -91,50 +111,15 @@ export const SoundCalculator: React.FC<SoundCalculatorProps> = ({ onBack, engine
             {modes.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
         </div>
-        {mode === 'spl' && (
-          <>
-            <div className="setting"><label>Чувствительность (дБ):</label><input type="number" value={sensitivity} onChange={e => setSensitivity(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Мощность (Вт):</label><input type="number" value={sourcePower} onChange={e => setSourcePower(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Расстояние (м):</label><input type="number" step="0.1" value={distance} onChange={e => setDistance(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Запас по звуку (дБ):</label><input type="number" value={headroom} onChange={e => setHeadroom(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Усиление помещения (дБ):</label><input type="number" value={roomGain} onChange={e => setRoomGain(parseFloat(e.target.value))} /></div>
-          </>
-        )}
-        {mode === 'drop' && (
-          <>
-            <div className="setting"><label>Начальное расстояние (м):</label><input type="number" step="0.1" value={startDistance} onChange={e => setStartDistance(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Конечное расстояние (м):</label><input type="number" step="0.1" value={endDistance} onChange={e => setEndDistance(parseFloat(e.target.value))} /></div>
-          </>
-        )}
-        {mode === 'power' && (
-          <>
-            <div className="setting"><label>Начальная мощность (Вт):</label><input type="number" value={powerChangeFrom} onChange={e => setPowerChangeFrom(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Конечная мощность (Вт):</label><input type="number" value={powerChangeTo} onChange={e => setPowerChangeTo(parseFloat(e.target.value))} /></div>
-          </>
-        )}
-        {mode === 'rt60' && (
-          <>
-            <div className="setting"><label>Объём помещения (м³):</label><input type="number" value={roomVolume} onChange={e => setRoomVolume(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Площадь поверхностей (м²):</label><input type="number" value={roomArea} onChange={e => setRoomArea(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Средний коэффициент поглощения:</label><input type="number" step="0.01" value={avgAbsorption} onChange={e => setAvgAbsorption(parseFloat(e.target.value))} /></div>
-          </>
-        )}
-        {mode === 'speakers' && (
-          <>
-            <div className="setting"><label>Требуемый SPL (дБ):</label><input type="number" value={requiredSPL} onChange={e => setRequiredSPL(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Чувствительность громкоговорителя (дБ):</label><input type="number" value={speakerSensitivity} onChange={e => setSpeakerSensitivity(parseFloat(e.target.value))} /></div>
-            <div className="setting"><label>Расстояние (м):</label><input type="number" step="0.1" value={distance} onChange={e => setDistance(parseFloat(e.target.value))} /></div>
-          </>
-        )}
-        <div className="result-item">
-          <span className="result-label">Результат</span>
-          <span className="result-value">{result.text}</span>
-        </div>
+        {mode === 'spl' && (<><div className="setting"><label>Чувствительность (дБ):</label><input type="number" value={sensitivity} onChange={e => setSensitivity(parseFloat(e.target.value))} /></div><div className="setting"><label>Мощность (Вт):</label><input type="number" value={sourcePower} onChange={e => setSourcePower(parseFloat(e.target.value))} /></div><div className="setting"><label>Расстояние (м):</label><input type="number" step="0.1" value={distance} onChange={e => setDistance(parseFloat(e.target.value))} /></div><div className="setting"><label>Запас по звуку (дБ):</label><input type="number" value={headroom} onChange={e => setHeadroom(parseFloat(e.target.value))} /></div><div className="setting"><label>Усиление помещения (дБ):</label><input type="number" value={roomGain} onChange={e => setRoomGain(parseFloat(e.target.value))} /></div></>)}
+        {mode === 'drop' && (<><div className="setting"><label>Начальное расстояние (м):</label><input type="number" step="0.1" value={startDistance} onChange={e => setStartDistance(parseFloat(e.target.value))} /></div><div className="setting"><label>Конечное расстояние (м):</label><input type="number" step="0.1" value={endDistance} onChange={e => setEndDistance(parseFloat(e.target.value))} /></div></>)}
+        {mode === 'power' && (<><div className="setting"><label>Начальная мощность (Вт):</label><input type="number" value={powerChangeFrom} onChange={e => setPowerChangeFrom(parseFloat(e.target.value))} /></div><div className="setting"><label>Конечная мощность (Вт):</label><input type="number" value={powerChangeTo} onChange={e => setPowerChangeTo(parseFloat(e.target.value))} /></div></>)}
+        {mode === 'rt60' && (<><div className="setting"><label>Объём помещения (м³):</label><input type="number" value={roomVolume} onChange={e => setRoomVolume(parseFloat(e.target.value))} /></div><div className="setting"><label>Площадь поверхностей (м²):</label><input type="number" value={roomArea} onChange={e => setRoomArea(parseFloat(e.target.value))} /></div><div className="setting"><label>Средний коэффициент поглощения:</label><input type="number" step="0.01" value={avgAbsorption} onChange={e => setAvgAbsorption(parseFloat(e.target.value))} /></div></>)}
+        {mode === 'speakers' && (<><div className="setting"><label>Требуемый SPL (дБ):</label><input type="number" value={requiredSPL} onChange={e => setRequiredSPL(parseFloat(e.target.value))} /></div><div className="setting"><label>Чувствительность громкоговорителя (дБ):</label><input type="number" value={speakerSensitivity} onChange={e => setSpeakerSensitivity(parseFloat(e.target.value))} /></div><div className="setting"><label>Расстояние (м):</label><input type="number" step="0.1" value={distance} onChange={e => setDistance(parseFloat(e.target.value))} /></div></>)}
+        <div className="result-item"><span className="result-label">Результат</span><span className="result-value">{result.text}</span></div>
       </div>
       <div className="calculator-actions">
-        <button className="btn-primary" onClick={handleAddToTract}>
-          <i className="fas fa-plus"></i> Добавить в тракт
-        </button>
+        <button className="btn-primary" onClick={handleAddToTract}><i className="fas fa-plus"></i> Добавить в тракт</button>
       </div>
     </div>
   );
