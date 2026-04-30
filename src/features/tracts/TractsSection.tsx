@@ -1,37 +1,64 @@
 // src/features/tracts/TractsSection.tsx
 import React, { useState } from 'react';
-import { useTractEngine } from '../../hooks/useTractEngine';
+import { useAppDispatch, useAppSelector } from '../../hooks/hooks';
+import { addTract, setActiveTract, setViewMode, Tract } from '../../store/tractsSlice';
 import { ActiveTract } from '../../components/calculations/ActiveTract';
 import { TractList } from '../../components/calculations/TractList';
 
 interface TractsSectionProps {
-  engine: ReturnType<typeof useTractEngine>;
   onSelectCalculator: (id: string) => void;
+  engine?: any;
 }
 
-export const TractsSection: React.FC<TractsSectionProps> = ({ engine, onSelectCalculator }) => {
+export const TractsSection: React.FC<TractsSectionProps> = ({ onSelectCalculator, engine }) => {
+  const dispatch = useAppDispatch();
+  const tracts = useAppSelector(state => state.tracts.tracts);
+  const activeTractId = useAppSelector(state => state.tracts.activeTractId);
+  const viewMode = useAppSelector(state => state.tracts.viewMode);
   const [newTractName, setNewTractName] = useState('');
 
   const handleCreateTract = () => {
-    const name = newTractName.trim();
-    if (!name) return;
-    engine.addTract(name);
+    if (!newTractName.trim()) return;
+    if (engine) {
+      engine.addTract(newTractName);
+    } else {
+      const newTract: Omit<Tract, 'id'> = {
+        name: newTractName,
+        sourceDevices: [],
+        matrixDevices: [],
+        sinkDevices: [],
+        totalLatency: 0,
+        totalBitrate: 0,
+        totalPower: 0,
+        totalPoE: 0,
+        poeBudgetUsed: 0,
+      };
+      dispatch(addTract(newTract));
+    }
     setNewTractName('');
   };
 
   const handleSelectTract = (id: string) => {
-    engine.setActiveTractId(id);
-    engine.setShowAll(false);
+    if (engine) {
+      engine.setActiveTractId(id);
+      engine.setShowAll(false);
+    } else {
+      dispatch(setActiveTract(id));
+      dispatch(setViewMode('active'));
+    }
   };
 
   const handleBackToList = () => {
-    engine.setActiveTractId(null);
-    engine.setShowAll(true);
+    if (engine) {
+      engine.setActiveTractId(null);
+      engine.setShowAll(true);
+    } else {
+      dispatch(setViewMode('all'));
+    }
   };
 
-  // Если активен конкретный тракт, показываем его
-  if (engine.activeTractId && !engine.showAll) {
-    const activeTract = engine.tracts.find(t => t.id === engine.activeTractId);
+  if (viewMode === 'active' && activeTractId) {
+    const activeTract = tracts.find(t => t.id === activeTractId);
     if (activeTract) {
       return (
         <ActiveTract
@@ -44,11 +71,10 @@ export const TractsSection: React.FC<TractsSectionProps> = ({ engine, onSelectCa
     }
   }
 
-  // Иначе показываем список всех трактов
   return (
     <TractList
-      tracts={engine.tracts}
-      activeTractId={engine.activeTractId}
+      tracts={tracts}
+      activeTractId={activeTractId}
       newTractName={newTractName}
       onNewTractNameChange={setNewTractName}
       onCreateTract={handleCreateTract}
