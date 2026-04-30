@@ -3,12 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setLedConfig } from '../../store/ledSlice';
-import { addDeviceToTract } from '../../store/tractsSlice';
 
-export const LedCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+interface LedCalculatorProps {
+  onBack: () => void;
+  engine: any; // ReturnType<typeof useTractEngine>
+}
+
+export const LedCalculator: React.FC<LedCalculatorProps> = ({ onBack, engine }) => {
   const dispatch = useDispatch();
   const ledConfig = useSelector((state: RootState) => state.led);
-  const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId);
+  const activeTractId = engine.activeTractId;
 
   const [mode, setMode] = useState<'cabinets' | 'resolution'>(ledConfig.activeMode);
   const [pitch, setPitch] = useState(ledConfig.pitch);
@@ -60,26 +64,21 @@ export const LedCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       alert('Нет активного тракта. Сначала создайте или выберите тракт.');
       return;
     }
-    const newDevice = {
-      id: Date.now().toString(),
-      type: 'ledScreen',
-      modelName: `LED экран ${result.resW}x${result.resH}`,
+    engine.addDevice(activeTractId, {
+      name: `LED экран ${result.resW}x${result.resH}`,
       latency: 4.5,
-      poe: false,
-      poePower: 0,
-      poeEnabled: false,
       powerW: result.power,
-      shortName: `LED${Math.floor(Math.random() * 1000)}`,
-      ethernet: false,
+      shortPrefix: 'LED',
+      icon: 'fas fa-border-all',
+      bitrateFactor: undefined,
+      poe: false,
+      hasNetwork: false,
       width_m: result.width_m,
       height_m: result.height_m,
       resW: result.resW,
       resH: result.resH,
       area: result.area,
-      shortPrefix: 'LED',
-      icon: 'fas fa-border-all',
-    };
-    dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }));
+    }, 'ledScreen', 'sink');
     alert('Устройство добавлено в тракт');
   };
 
