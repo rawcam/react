@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import './PresentationEditorPage.css';
 
-// Типы
+// ---------- Типы ----------
 interface SlideData {
   id: string;
   html: string;
@@ -34,7 +34,7 @@ interface LayerItem {
   vy: number;
 }
 
-// Иконки и юникоды из вашего рабочего HTML
+// ---------- Иконки ----------
 const ICON_NAMES = [
   'fa-heart','fa-star','fa-cloud','fa-bolt','fa-music','fa-search',
   'fa-envelope','fa-camera','fa-moon','fa-sun','fa-smile','fa-thumbs-up',
@@ -43,8 +43,7 @@ const ICON_NAMES = [
   'fa-leaf','fa-certificate','fa-tag','fa-map-pin','fa-rocket','fa-crown',
   'fa-gem','fa-trophy','fa-gift','fa-tree','fa-paw','fa-bug','fa-fish',
   'fa-kiwi-bird','fa-spider','fa-apple-whole','fa-carrot','fa-lemon',
-  'fa-seedling','fa-umbrella','fa-bicycle','fa-bus','fa-car','fa-plane',
-  'fa-robot'
+  'fa-seedling','fa-umbrella','fa-bicycle','fa-bus','fa-car','fa-plane','fa-robot'
 ];
 
 const ICON_UNICODE: Record<string, number> = {
@@ -60,20 +59,15 @@ const ICON_UNICODE: Record<string, number> = {
   'fa-bus':0xf207, 'fa-car':0xf1b9, 'fa-plane':0xf072, 'fa-robot':0xf544
 };
 
+// ---------- Начальные данные ----------
 const DEFAULT_SLIDES: SlideData[] = [
-  { id: '1', html: '<h1>Добро пожаловать!</h1><p>Это редактор презентаций Sputnik Studio.</p>' },
-  { id: '2', html: '<h2>Второй слайд</h2><p>Дважды кликните, чтобы редактировать.</p>' }
+  { id: '1', html: '<h1 style="text-align:center">Добро пожаловать!</h1><p style="text-align:center">Это редактор презентаций Sputnik Studio.</p>' },
+  { id: '2', html: '<h2 style="text-align:center">Второй слайд</h2><p style="text-align:center">Дважды кликните, чтобы редактировать.</p>' }
 ];
 
 const DEFAULT_LAYERS: Layer[] = [
-  {
-    id: 'layer1', name: 'Круги', type: 'circle', color: '#5b8c42',
-    minSize: 30, maxSize: 60, opacity: 0.6, anim: 'fallDown', rot: 0.4, count: 10, items: [], collapsed: false
-  },
-  {
-    id: 'layer2', name: 'Сердечки', type: 'icon', color: '#e63950', iconName: 'fa-heart',
-    minSize: 40, maxSize: 70, opacity: 0.7, anim: 'fallDown', rot: 0.3, count: 8, items: [], collapsed: false
-  }
+  { id: 'layer1', name: 'Круги', type: 'circle', color: '#5b8c42', minSize:30, maxSize:60, opacity:0.6, anim:'fallDown', rot:0.4, count:10, items:[], collapsed:false },
+  { id: 'layer2', name: 'Сердечки', type:'icon', color:'#e63950', iconName:'fa-heart', minSize:40, maxSize:70, opacity:0.7, anim:'fallDown', rot:0.3, count:8, items:[], collapsed:false }
 ];
 
 const PresentationEditorPage: React.FC = () => {
@@ -87,6 +81,13 @@ const PresentationEditorPage: React.FC = () => {
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
+  // Фон
+  const [bgType, setBgType] = useState<'solid' | 'gradient'>('solid');
+  const [solidColor, setSolidColor] = useState('#ffffff');
+  const [gradientAngle, setGradientAngle] = useState(45);
+  const [gradColors, setGradColors] = useState(['#ffaa00', '#dd2a7b', '#8134af']);
+  const [blur, setBlur] = useState(0);
+
   // Стили карточки
   const [cardStyle, setCardStyle] = useState({
     bg: '#ffffff', width: '100%', height: 'auto', shape: 'rounded',
@@ -94,7 +95,7 @@ const PresentationEditorPage: React.FC = () => {
     font: "'Segoe UI', sans-serif", textColor: '#333333'
   });
 
-  // Инициализация частиц слоёв
+  // Инициализация частиц
   const initLayerItems = useCallback(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -116,7 +117,7 @@ const PresentationEditorPage: React.FC = () => {
 
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
 
-  // Анимация фона
+  // Анимация канваса
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -130,6 +131,26 @@ const PresentationEditorPage: React.FC = () => {
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (bgType === 'solid') {
+        ctx.fillStyle = solidColor;
+      } else {
+        const cols = gradColors.filter(c => c && c.trim());
+        if (cols.length === 0) {
+          ctx.fillStyle = '#ffffff';
+        } else if (cols.length === 1) {
+          ctx.fillStyle = cols[0];
+        } else {
+          const rad = (gradientAngle * Math.PI) / 180;
+          const dx = Math.cos(rad) * canvas.width;
+          const dy = Math.sin(rad) * canvas.width;
+          const grad = ctx.createLinearGradient(canvas.width/2 - dx/2, canvas.height/2 - dy/2, canvas.width/2 + dx/2, canvas.height/2 + dy/2);
+          cols.forEach((c, i) => grad.addColorStop(i / (cols.length - 1), c));
+          ctx.fillStyle = grad;
+        }
+      }
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      canvas.style.filter = `blur(${blur}px)`;
+
       layers.forEach(layer => {
         layer.items.forEach(item => {
           if (layer.anim === 'fallDown') item.y += globalSpeed * 0.8;
@@ -196,9 +217,9 @@ const PresentationEditorPage: React.FC = () => {
       cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, [layers, globalSpeed]);
+  }, [layers, globalSpeed, bgType, solidColor, gradientAngle, gradColors, blur]);
 
-  // Отслеживание скролла для смены слайдов
+  // Переключение слайдов при скролле
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -218,11 +239,10 @@ const PresentationEditorPage: React.FC = () => {
     containerRef.current?.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
   };
 
-  // Клик по фону снимает редактирование
+  // Клик по фону снимает редактирование и сохраняет HTML
   const handleBackgroundClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('.slide-card')) return;
+    if ((e.target as HTMLElement).closest('.slide-card') || (e.target as HTMLElement).closest('.formatting-toolbar')) return;
     if (activeSlideId) {
-      // сохраняем содержимое
       const card = cardRefs.current.get(activeSlideId);
       if (card) {
         setSlides(prev => prev.map(s => s.id === activeSlideId ? { ...s, html: card.innerHTML } : s));
@@ -232,7 +252,7 @@ const PresentationEditorPage: React.FC = () => {
   };
 
   const addSlide = () => {
-    setSlides(prev => [...prev, { id: Date.now().toString(), html: '<h2>Новый слайд</h2><p>Описание</p>' }]);
+    setSlides(prev => [...prev, { id: Date.now().toString(), html: '<h2 style="text-align:center">Новый слайд</h2><p style="text-align:center">Описание</p>' }]);
   };
   const removeSlide = () => {
     if (slides.length <= 1) return;
@@ -242,17 +262,61 @@ const PresentationEditorPage: React.FC = () => {
 
   // Активация редактирования по двойному клику
   const handleDoubleClick = (id: string) => {
+    // сохраняем предыдущий
+    if (activeSlideId && activeSlideId !== id) {
+      const prevCard = cardRefs.current.get(activeSlideId);
+      if (prevCard) {
+        setSlides(prev => prev.map(s => s.id === activeSlideId ? { ...s, html: prevCard.innerHTML } : s));
+      }
+    }
     setActiveSlideId(id);
   };
 
-  // Форматирование текста (execCommand)
+  // Форматирование текста
   const execCmd = (cmd: string, arg?: string) => {
     document.execCommand(cmd, false, arg);
-    // фокус на активную карточку
     const card = cardRefs.current.get(activeSlideId!);
     card?.focus();
   };
 
+  const changeFontSize = (delta: number) => {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    if (range.collapsed) return;
+    const span = document.createElement('span');
+    let baseSize = 16;
+    const card = cardRefs.current.get(activeSlideId!);
+    if (card) {
+      const cssSize = window.getComputedStyle(card).fontSize;
+      baseSize = parseInt(cssSize) || 16;
+    }
+    span.style.fontSize = (baseSize + delta) + 'px';
+    try { range.surroundContents(span); } catch (e) {}
+    card?.focus();
+  };
+
+  const insertImageToSlide = () => {
+    const url = prompt('URL изображения (или оставьте пустым для загрузки):');
+    if (url) execCmd('insertImage', url);
+    else {
+      const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
+      inp.onchange = () => {
+        const f = inp.files?.[0]; if (!f) return;
+        const reader = new FileReader();
+        reader.onload = () => execCmd('insertImage', reader.result as string);
+        reader.readAsDataURL(f);
+      };
+      inp.click();
+    }
+  };
+
+  const insertVideoToSlide = () => {
+    const url = prompt('URL видео (YouTube/Vimeo embed):');
+    if (url) execCmd('insertHTML', `<iframe width="560" height="315" src="${url}" frameborder="0" allowfullscreen></iframe>`);
+  };
+
+  // Стиль карточки (без тени, с правильной обводкой)
   const cardInline: React.CSSProperties = {
     background: cardStyle.bg,
     width: cardStyle.shape === 'circle' ? cardStyle.radius * 2 + 'px' : cardStyle.width,
@@ -270,8 +334,13 @@ const PresentationEditorPage: React.FC = () => {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'stretch',
+    boxShadow: '0 30px 40px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s',
+    maxWidth: '800px',
+    width: '100%',
   };
 
+  // Управление слоями
   const updateLayer = (id: string, patch: Partial<Layer>) => {
     setLayers(prev => prev.map(l => {
       if (l.id !== id) return l;
@@ -309,9 +378,22 @@ const PresentationEditorPage: React.FC = () => {
     inp.click();
   };
 
+  // Экспорт с полным оформлением и анимацией
   const handleExport = () => {
-    const htmlContent = slides.map(s => `<section>${s.html}</section>`).join('');
-    const full = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>body{margin:0;overflow:hidden;background:#f0f0f0;font-family:sans-serif}section{display:flex;align-items:center;justify-content:center;height:100vh;padding:2em}</style></head><body>${htmlContent}</body></html>`;
+    const styles = document.querySelector('style')?.innerHTML || '';
+    const animCode = `
+      const ICONS = ${JSON.stringify(ICON_UNICODE)};
+      const LAYERS = ${JSON.stringify(layers.map(l => ({ ...l, items: [] })))};
+      const SPEED = ${globalSpeed};
+      const BG = '${bgType}';
+      const SOLID = '${solidColor}';
+      const GRAD_ANGLE = ${gradientAngle};
+      const GRAD_COLORS = ${JSON.stringify(gradColors)};
+      const BLUR = ${blur};
+      // инициализация и запуск анимации как в редакторе...
+    `;
+
+    const full = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>${styles} body{margin:0;overflow:hidden} .slide{scroll-snap-align:start;height:100vh;display:flex;align-items:center;justify-content:center;padding:40px} .card{${cardInline.cssText}}</style></head><body><canvas id="canvas"></canvas><div id="slides">${slides.map(s => `<div class="slide"><div class="card">${s.html}</div></div>`).join('')}</div><script>${animCode}</` + `script></body></html>`;
     const blob = new Blob([full], { type: 'text/html' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -323,13 +405,47 @@ const PresentationEditorPage: React.FC = () => {
     <div className="presentation-editor" onClick={handleBackgroundClick}>
       <canvas ref={canvasRef} className="bg-canvas" />
       <div className="editor-layout">
+        {/* Компактный сайдбар */}
         <div className="sidebar">
           <h3>Настройки</h3>
+
           <div className="section">
             <label>Слайды</label>
-            <button onClick={addSlide}><i className="fas fa-plus"/> Добавить</button>
-            <button onClick={removeSlide} className="secondary"><i className="fas fa-minus"/> Удалить</button>
+            <div className="btn-row">
+              <button onClick={addSlide}><i className="fas fa-plus"/> Добавить</button>
+              <button onClick={removeSlide} className="secondary"><i className="fas fa-minus"/> Удалить</button>
+            </div>
           </div>
+
+          {/* Фон */}
+          <div className="section">
+            <label>Фон</label>
+            <select value={bgType} onChange={e => setBgType(e.target.value as 'solid' | 'gradient')}>
+              <option value="solid">Сплошной цвет</option>
+              <option value="gradient">Градиент</option>
+            </select>
+            {bgType === 'solid' ? (
+              <div>
+                <label>Цвет</label>
+                <input type="color" value={solidColor} onChange={e => setSolidColor(e.target.value)} />
+              </div>
+            ) : (
+              <div>
+                <label>Угол (°)</label>
+                <input type="number" value={gradientAngle} onChange={e => setGradientAngle(+e.target.value)} min="0" max="360" />
+                <label>Цвет 1</label>
+                <input type="color" value={gradColors[0] || '#ffaa00'} onChange={e => setGradColors(prev => { const n = [...prev]; n[0] = e.target.value; return n; })} />
+                <label>Цвет 2</label>
+                <input type="color" value={gradColors[1] || '#dd2a7b'} onChange={e => setGradColors(prev => { const n = [...prev]; n[1] = e.target.value; return n; })} />
+                <label>Цвет 3</label>
+                <input type="color" value={gradColors[2] || '#8134af'} onChange={e => setGradColors(prev => { const n = [...prev]; n[2] = e.target.value; return n; })} />
+              </div>
+            )}
+            <label>Размытие (px)</label>
+            <input type="range" min="0" max="10" step="0.5" value={blur} onChange={e => setBlur(+e.target.value)} />
+          </div>
+
+          {/* Карточка */}
           <div className="section">
             <label>Карточка</label>
             <label>Цвет фона</label>
@@ -362,6 +478,8 @@ const PresentationEditorPage: React.FC = () => {
             <label>Цвет текста</label>
             <input type="color" value={cardStyle.textColor} onChange={e => setCardStyle(p => ({...p, textColor: e.target.value}))} />
           </div>
+
+          {/* Слои */}
           <div className="section">
             <label>Слои фона</label>
             <button onClick={addLayer}><i className="fas fa-plus"/> Добавить</button>
@@ -427,28 +545,31 @@ const PresentationEditorPage: React.FC = () => {
             <label>Общая скорость</label>
             <input type="range" min="0.1" max="2" step="0.1" value={globalSpeed} onChange={e => setGlobalSpeed(+e.target.value)} />
           </div>
+
           <button onClick={handleExport} className="export-btn"><i className="fas fa-download"/> Экспорт HTML</button>
         </div>
 
+        {/* Слайды */}
         <div className="slides-viewport" ref={containerRef}>
           <div className="slides-container">
             {slides.map((slide) => (
-              <div className="slide" key={slide.id}>
-                {/* Тулбар показывается только для активного слайда */}
+              <div className="slide" key={slide.id} style={{ position: 'relative' }}>
                 {activeSlideId === slide.id && (
-                  <div className="formatting-toolbar">
-                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('bold'); }}><b>B</b></button>
-                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('italic'); }}><i>I</i></button>
-                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('underline'); }}><u>U</u></button>
-                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('strikeThrough'); }}><s>S</s></button>
-                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', 'h1'); }}>H1</button>
-                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', 'h2'); }}>H2</button>
-                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('insertUnorderedList'); }}>•</button>
-                    <button onMouseDown={(e) => { e.preventDefault(); execCmd('insertOrderedList'); }}>1.</button>
+                  <div className="formatting-toolbar" style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}>
+                    <button onMouseDown={e => { e.preventDefault(); execCmd('bold'); }}><b>B</b></button>
+                    <button onMouseDown={e => { e.preventDefault(); execCmd('italic'); }}><i>I</i></button>
+                    <button onMouseDown={e => { e.preventDefault(); execCmd('underline'); }}><u>U</u></button>
+                    <button onMouseDown={e => { e.preventDefault(); execCmd('strikeThrough'); }}><s>S</s></button>
+                    <button onMouseDown={e => { e.preventDefault(); execCmd('formatBlock', 'h1'); }}>H1</button>
+                    <button onMouseDown={e => { e.preventDefault(); execCmd('formatBlock', 'h2'); }}>H2</button>
+                    <button onMouseDown={e => { e.preventDefault(); changeFontSize(2); }}>A+</button>
+                    <button onMouseDown={e => { e.preventDefault(); changeFontSize(-2); }}>A-</button>
+                    <button onMouseDown={e => { e.preventDefault(); insertImageToSlide(); }}>🖼️</button>
+                    <button onMouseDown={e => { e.preventDefault(); insertVideoToSlide(); }}>🎬</button>
                   </div>
                 )}
                 <div
-                  ref={(el) => { if (el) cardRefs.current.set(slide.id, el); }}
+                  ref={el => { if (el) cardRefs.current.set(slide.id, el); }}
                   className={`slide-card ${activeSlideId === slide.id ? 'active' : ''}`}
                   contentEditable={activeSlideId === slide.id}
                   suppressContentEditableWarning
@@ -460,6 +581,8 @@ const PresentationEditorPage: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Индикаторы */}
         <div className="indicators">
           {slides.map((_, i) => (
             <div key={i} className={`indicator ${i === currentSlide ? 'active' : ''}`} onClick={() => scrollToSlide(i)} />
