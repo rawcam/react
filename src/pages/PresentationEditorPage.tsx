@@ -64,6 +64,19 @@ const PresentationEditorPage: React.FC = () => {
       link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';
       document.head.appendChild(link);
     }
+
+    // Ждём загрузки шрифта перед началом рисования на холсте
+    const loadFont = async () => {
+      try {
+        // Используем Font Face API для ожидания Font Awesome 6 Free (Solid, weight 900)
+        await document.fonts.load('900 1em "Font Awesome 6 Free"');
+        // Обновляем элементы на холсте, чтобы применить шрифт
+        initItems(); // перегенерируем элементы слоёв
+      } catch (e) {
+        console.warn('Font Awesome 6 Free load failed, icons may not render on canvas.', e);
+      }
+    };
+    loadFont();
   }, []);
 
   /* состояние */
@@ -220,7 +233,6 @@ const PresentationEditorPage: React.FC = () => {
   };
 
   const exec = (cmd: string, arg?: string) => { document.execCommand(cmd, false, arg); cardRefs.current.get(activeId!)?.focus(); };
-
   const fontSize = (delta: number) => {
     const sel = window.getSelection(); if (!sel?.rangeCount) return;
     const r = sel.getRangeAt(0); if (r.collapsed) return;
