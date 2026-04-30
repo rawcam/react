@@ -3,13 +3,21 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import Image from '@tiptap/extension-image';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+
 import './PresentationEditorPage.css';
 
 // Типы
 interface SlideData {
   id: string;
-  content: any;   // JSON для TipTap
-  html: string;   // HTML для экспорта и отображения (будет синхронизироваться)
+  content: any; // TipTap JSON
+  html: string;
 }
 
 interface Layer {
@@ -38,28 +46,32 @@ interface LayerItem {
   vy: number;
 }
 
-// Иконки (юникоды)
+// Все иконки из рабочего прототипа + юникоды
 const ICON_NAMES = [
-  'fa-heart','fa-star','fa-cloud','fa-bolt','fa-music','fa-camera','fa-smile','fa-fire',
-  'fa-leaf','fa-rocket','fa-crown','fa-gem','fa-paper-plane','fa-globe','fa-certificate',
-  'fa-bell','fa-calendar','fa-comment','fa-envelope','fa-thumbs-up','fa-bicycle','fa-bus',
-  'fa-car','fa-plane','fa-robot','fa-trophy','fa-gift','fa-tree','fa-paw','fa-bug','fa-fish',
-  'fa-kiwi-bird','fa-spider','fa-apple-whole','fa-carrot','fa-lemon','fa-seedling','fa-umbrella',
-  'fa-moon','fa-sun'
+  'fa-heart','fa-star','fa-cloud','fa-bolt','fa-music','fa-search',
+  'fa-envelope','fa-camera','fa-moon','fa-sun','fa-smile','fa-thumbs-up',
+  'fa-comment','fa-share','fa-cog','fa-home','fa-paper-plane','fa-fire',
+  'fa-bell','fa-calendar','fa-play','fa-pause','fa-stop','fa-globe',
+  'fa-leaf','fa-certificate','fa-tag','fa-map-pin','fa-rocket','fa-crown',
+  'fa-gem','fa-trophy','fa-gift','fa-tree','fa-paw','fa-bug','fa-fish',
+  'fa-kiwi-bird','fa-spider','fa-apple-whole','fa-carrot','fa-lemon',
+  'fa-seedling','fa-umbrella','fa-bicycle','fa-bus','fa-car','fa-plane',
+  'fa-robot'
 ];
 
 const ICON_UNICODE: Record<string, number> = {
   'fa-heart':0xf004, 'fa-star':0xf005, 'fa-cloud':0xf0c2, 'fa-bolt':0xf0e7, 'fa-music':0xf001,
-  'fa-camera':0xf030, 'fa-smile':0xf118, 'fa-fire':0xf06d, 'fa-leaf':0xf06c, 'fa-rocket':0xf135,
-  'fa-crown':0xf521, 'fa-gem':0xf3a5, 'fa-paper-plane':0xf1d8, 'fa-globe':0xf0ac, 'fa-certificate':0xf0a3,
-  'fa-bell':0xf0f3, 'fa-calendar':0xf133, 'fa-comment':0xf075, 'fa-envelope':0xf0e0, 'fa-thumbs-up':0xf164,
-  'fa-bicycle':0xf206, 'fa-bus':0xf207, 'fa-car':0xf1b9, 'fa-plane':0xf072, 'fa-robot':0xf544, 'fa-trophy':0xf091,
-  'fa-gift':0xf06b, 'fa-tree':0xf1bb, 'fa-paw':0xf1b0, 'fa-bug':0xf188, 'fa-fish':0xf578, 'fa-kiwi-bird':0xf535,
-  'fa-spider':0xf717, 'fa-apple-whole':0xf5d1, 'fa-carrot':0xf787, 'fa-lemon':0xf094, 'fa-seedling':0xf4d8,
-  'fa-umbrella':0xf0e9, 'fa-moon':0xf186, 'fa-sun':0xf185
+  'fa-search':0xf002, 'fa-envelope':0xf0e0, 'fa-camera':0xf030, 'fa-moon':0xf186, 'fa-sun':0xf185,
+  'fa-smile':0xf118, 'fa-thumbs-up':0xf164, 'fa-comment':0xf075, 'fa-share':0xf064, 'fa-cog':0xf013,
+  'fa-home':0xf015, 'fa-paper-plane':0xf1d8, 'fa-fire':0xf06d, 'fa-bell':0xf0f3, 'fa-calendar':0xf133,
+  'fa-play':0xf04b, 'fa-pause':0xf04c, 'fa-stop':0xf04d, 'fa-globe':0xf0ac, 'fa-leaf':0xf06c,
+  'fa-certificate':0xf0a3, 'fa-tag':0xf02b, 'fa-map-pin':0xf276, 'fa-rocket':0xf135, 'fa-crown':0xf521,
+  'fa-gem':0xf3a5, 'fa-trophy':0xf091, 'fa-gift':0xf06b, 'fa-tree':0xf1bb, 'fa-paw':0xf1b0,
+  'fa-bug':0xf188, 'fa-fish':0xf578, 'fa-kiwi-bird':0xf535, 'fa-spider':0xf717, 'fa-apple-whole':0xf5d1,
+  'fa-carrot':0xf787, 'fa-lemon':0xf094, 'fa-seedling':0xf4d8, 'fa-umbrella':0xf0e9, 'fa-bicycle':0xf206,
+  'fa-bus':0xf207, 'fa-car':0xf1b9, 'fa-plane':0xf072, 'fa-robot':0xf544
 };
 
-// Начальные слайды с HTML
 const DEFAULT_SLIDES: SlideData[] = [
   {
     id: '1',
@@ -74,8 +86,16 @@ const DEFAULT_SLIDES: SlideData[] = [
 ];
 
 const DEFAULT_LAYERS: Layer[] = [
-  { id: 'layer1', name: 'Круги', type: 'circle', color: '#5b8c42', minSize:30, maxSize:60, opacity:0.6, anim:'fallDown', rot:0.4, count:10, items:[], collapsed:false },
-  { id: 'layer2', name: 'Сердечки', type:'icon', color:'#e63950', iconName:'fa-heart', minSize:40, maxSize:70, opacity:0.7, anim:'fallDown', rot:0.3, count:8, items:[], collapsed:false }
+  {
+    id: 'layer1', name: 'Круги', type: 'circle', color: '#5b8c42',
+    minSize: 30, maxSize: 60, opacity: 0.6, anim: 'fallDown', rot: 0.4, count: 10,
+    items: [], collapsed: false
+  },
+  {
+    id: 'layer2', name: 'Сердечки', type: 'icon', color: '#e63950', iconName: 'fa-heart',
+    minSize: 40, maxSize: 70, opacity: 0.7, anim: 'fallDown', rot: 0.3, count: 8,
+    items: [], collapsed: false
+  }
 ];
 
 const PresentationEditorPage: React.FC = () => {
@@ -86,7 +106,6 @@ const PresentationEditorPage: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
 
   const [cardStyle, setCardStyle] = useState({
@@ -95,6 +114,7 @@ const PresentationEditorPage: React.FC = () => {
     font: "'Segoe UI', sans-serif", textColor: '#333333'
   });
 
+  // Инициализация частиц
   const initLayerItems = useCallback(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -116,6 +136,7 @@ const PresentationEditorPage: React.FC = () => {
 
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
 
+  // Анимация канваса
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -169,7 +190,7 @@ const PresentationEditorPage: React.FC = () => {
             ctx.fill();
           } else if (layer.type === 'icon') {
             const code = ICON_UNICODE[layer.iconName || layer.color] || 0xf004;
-            ctx.font = `${item.size}px "Font Awesome 6 Free"`;
+            ctx.font = `900 ${item.size}px "Font Awesome 6 Free"`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = layer.color;
@@ -197,6 +218,7 @@ const PresentationEditorPage: React.FC = () => {
     };
   }, [layers, globalSpeed]);
 
+  // Переключение слайдов при скролле
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -214,6 +236,12 @@ const PresentationEditorPage: React.FC = () => {
 
   const scrollToSlide = (index: number) => {
     containerRef.current?.scrollTo({ top: index * window.innerHeight, behavior: 'smooth' });
+  };
+
+  // Закрытие редактирования при клике вне слайда
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('.slide-card')) return;
+    setActiveSlideId(null);
   };
 
   const addSlide = () => {
@@ -241,10 +269,18 @@ const PresentationEditorPage: React.FC = () => {
     aspectRatio: cardStyle.shape === 'circle' ? '1' : 'auto',
   };
 
-  // Компонент SlideEditor использует useEditor и синхронизирует JSON+HTML
+  // Компонент редактора TipTap для одного слайда
   const SlideEditor: React.FC<{ slide: SlideData; isActive: boolean; onActivate: () => void }> = ({ slide, isActive, onActivate }) => {
     const editor = useEditor({
-      extensions: [StarterKit, Placeholder.configure({ placeholder: 'Введите текст...' })],
+      extensions: [
+        StarterKit.configure({ heading: { levels: [1, 2] } }),
+        Placeholder.configure({ placeholder: 'Начните писать...' }),
+        Underline,
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        Image,
+        Table.configure({ resizable: true }),
+        TableRow, TableCell, TableHeader,
+      ],
       content: slide.content,
       editable: isActive,
       onUpdate: ({ editor }) => {
@@ -261,17 +297,35 @@ const PresentationEditorPage: React.FC = () => {
 
     if (!editor) return null;
 
+    const addImage = () => {
+      const url = prompt('Введите URL изображения:');
+      if (url) editor.chain().focus().setImage({ src: url }).run();
+    };
+
+    const addVideo = () => {
+      const url = prompt('Введите URL видео (YouTube/Vimeo embed):');
+      if (url) {
+        editor.chain().focus().insertContent(`<iframe width="560" height="315" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
+      }
+    };
+
     return (
       <div className={`slide-card ${isActive ? 'active' : ''}`} style={cardInline} onClick={onActivate}>
         {isActive && (
           <div className="formatting-toolbar">
             <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'is-active' : ''}><b>B</b></button>
             <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'is-active' : ''}><i>I</i></button>
+            <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? 'is-active' : ''}><u>U</u></button>
             <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'is-active' : ''}><s>S</s></button>
+            <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}>⫷</button>
+            <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}>⫸</button>
+            <button onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}>⫹</button>
             <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}>H1</button>
             <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}>H2</button>
             <button onClick={() => editor.chain().focus().toggleBulletList().run()}>•</button>
             <button onClick={() => editor.chain().focus().toggleOrderedList().run()}>1.</button>
+            <button onClick={addImage}>🖼️</button>
+            <button onClick={addVideo}>🎬</button>
           </div>
         )}
         <EditorContent editor={editor} />
@@ -327,7 +381,7 @@ const PresentationEditorPage: React.FC = () => {
   };
 
   return (
-    <div className="presentation-editor">
+    <div className="presentation-editor" onClick={handleBackgroundClick}>
       <canvas ref={canvasRef} className="bg-canvas" />
       <div className="editor-layout">
         <div className="sidebar">
@@ -361,6 +415,10 @@ const PresentationEditorPage: React.FC = () => {
               <option value="'Roboto', sans-serif">Roboto</option>
               <option value="'Playfair Display', serif">Playfair Display</option>
               <option value="'Montserrat', sans-serif">Montserrat</option>
+              <option value="'Oswald', sans-serif">Oswald</option>
+              <option value="'Lobster', cursive">Lobster</option>
+              <option value="'Comfortaa', cursive">Comfortaa</option>
+              <option value="'Pacifico', cursive">Pacifico</option>
             </select>
             <label>Цвет текста</label>
             <input type="color" value={cardStyle.textColor} onChange={e => setCardStyle(p => ({...p, textColor: e.target.value}))} />
@@ -433,11 +491,10 @@ const PresentationEditorPage: React.FC = () => {
           <button onClick={handleExport} className="export-btn"><i className="fas fa-download"/> Экспорт HTML</button>
         </div>
 
-        {/* Область слайдов */}
         <div className="slides-viewport" ref={containerRef}>
           <div className="slides-container">
             {slides.map((slide, index) => (
-              <div className="slide" key={slide.id} ref={el => slideRefs.current[index] = el}>
+              <div className="slide" key={slide.id}>
                 <SlideEditor
                   slide={slide}
                   isActive={activeSlideId === slide.id}
