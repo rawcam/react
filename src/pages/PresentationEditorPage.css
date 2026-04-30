@@ -293,3 +293,70 @@ button.secondary:hover {
   scroll-snap-align: start;
   height: 100vh;
 }
+/* Добавьте в конец PresentationEditorPage.css */
+.slides-viewport {
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  height: 100vh;
+  flex: 1;
+}
+.slides-container {
+  flex-direction: column;
+  height: auto;
+}
+.slide {
+  scroll-snap-align: start;
+  height: 100vh;
+}
+.indicators {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 2;
+}
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.indicator.active {
+  background: var(--accent);
+  transform: scale(1.5);
+}
+
+/* TipTap */
+.tiptap-editor {
+  outline: none;
+  min-height: 200px;
+}
+.tiptap-editor h1 { font-size: 2em; }
+.tiptap-editor h2 { font-size: 1.5em; }
+
+.formatting-toolbar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  background: var(--editor-panel-bg);
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--editor-border);
+}
+.formatting-toolbar button {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  margin: 0;
+  border-radius: 4px;
+}
+.formatting-toolbar button.is-active {
+  background: var(--accent);
+  color: white;
+}
