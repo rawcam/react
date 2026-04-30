@@ -18,7 +18,7 @@ type LayerItem = {
   rot: number; rotV: number; vx: number; vy: number;
 };
 
-/* ---------- иконки (из рабочего HTML) ---------- */
+/* ---------- иконки ---------- */
 const ICON_LIST = [
   'fa-heart','fa-star','fa-cloud','fa-bolt','fa-music','fa-search',
   'fa-envelope','fa-camera','fa-moon','fa-sun','fa-smile','fa-thumbs-up',
@@ -55,6 +55,18 @@ const DEFAULT_LAYERS: Layer[] = [
 ];
 
 const PresentationEditorPage: React.FC = () => {
+  /* ---- динамическая загрузка Font Awesome 6.4.2 (Solid, 900) ---- */
+  useEffect(() => {
+    // Проверяем, не загружен ли уже Font Awesome 6.4.2 (чтобы не дублировать)
+    const existingLink = document.querySelector('link[href*="font-awesome@6.4.2"]');
+    if (!existingLink) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';
+      document.head.appendChild(link);
+    }
+  }, []);
+
   /* состояние */
   const [slides, setSlides] = useState<SlideData[]>(DEFAULT_SLIDES);
   const [current, setCurrent] = useState(0);
@@ -289,12 +301,96 @@ const PresentationEditorPage: React.FC = () => {
     inp.click();
   };
 
+  /* экспорт с правильными стилями и анимацией */
   const exportHTML = () => {
-    const style = document.querySelector('style')?.innerHTML || '';
-    const anim = `const layers=${JSON.stringify(layers.map(l=>({...l,items:[]})))};const speed=${speed};const W=window.innerWidth,H=window.innerHeight;layers.forEach(l=>l.items=Array.from({length:l.count},()=>({x:Math.random()*W,y:Math.random()*H,size:l.minSize+Math.random()*(l.maxSize-l.minSize),rot:Math.random()*360,rotV:l.rot*(Math.random()-0.5)*2,vx:(Math.random()-0.5)*1.5,vy:(Math.random()-0.5)*1.5})));const c=document.getElementById('c'),x=c.getContext('2d');c.width=W;c.height=H;function d(){x.clearRect(0,0,W,H);layers.forEach(l=>l.items.forEach(i=>{if(l.anim==='fallDown')i.y+=speed*0.8;else if(l.anim==='fallUp')i.y-=speed*0.8;else if(l.anim==='float'){i.x+=i.vx*speed*0.3;i.y+=i.vy*speed*0.3;if(i.x<0||i.x>W)i.vx*=-1;if(i.y<0||i.y>H)i.vy*=-1}i.rot+=i.rotV*speed;if(i.y>H+i.size)i.y=-i.size;if(i.y<-i.size)i.y=H+i.size;x.save();x.translate(i.x,i.y);x.rotate(i.rot*Math.PI/180);x.globalAlpha=l.opacity;if(l.type==='circle'){x.beginPath();x.arc(0,0,i.size/2,0,Math.PI*2);x.fillStyle=l.color;x.fill()}else if(l.type==='icon'){x.font='900 '+i.size+'px "Font Awesome 6 Free"';x.textAlign='center';x.textBaseline='middle';x.fillStyle=l.color;x.fillText(String.fromCharCode(0xf004),0,0)}x.restore()}));requestAnimationFrame(d)}d();window.addEventListener('resize',()=>{c.width=window.innerWidth;c.height=window.innerHeight;layers.forEach(l=>l.items=Array.from({length:l.count},()=>({x:Math.random()*W,y:Math.random()*H,size:l.minSize+Math.random()*(l.maxSize-l.minSize),rot:Math.random()*360,rotV:l.rot*(Math.random()-0.5)*2,vx:(Math.random()-0.5)*1.5,vy:(Math.random()-0.5)*1.5})))});`;
-    const full = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>${style} body{margin:0;overflow:hidden} .slide{scroll-snap-align:start;height:100vh;display:flex;align-items:center;justify-content:center;padding:40px} .card{background:${card.bg};border-radius:${card.shape==='circle'?'50%':card.radius+'px'};border:${card.borderW}px solid ${card.borderColor};font-family:${card.font};color:${card.textColor};overflow:hidden;padding:50px;max-width:800px;width:${card.width};box-shadow:0 30px 40px rgba(0,0,0,0.1);word-wrap:break-word;display:flex;flex-direction:column;justify-content:center;align-items:stretch}</style></head><body><canvas id="c"></canvas><div id="slides">${slides.map(s=>`<div class="slide"><div class="card">${s.html}</div></div>`).join('')}</div><script>${anim}</`+`script></body></html>`;
-    const blob = new Blob([full], {type:'text/html'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'presentation.html'; a.click();
+    const layersConfig = layers.map(l => ({ ...l, items: [] }));
+
+    const styles = `
+body { margin:0; overflow:hidden; }
+.slide { scroll-snap-align:start; height:100vh; display:flex; align-items:center; justify-content:center; padding:40px; }
+.card {
+  background: ${card.bg}; border-radius: ${card.shape==='circle' ? '50%' : card.radius+'px'};
+  border: ${card.borderW}px solid ${card.borderColor}; font-family: ${card.font}; color: ${card.textColor};
+  overflow:hidden; padding:50px; max-width:800px; width:${card.width};
+  box-shadow:0 30px 40px rgba(0,0,0,0.1); word-wrap:break-word;
+  display:flex; flex-direction:column; justify-content:center; align-items:stretch;
+}`;
+
+    const animCode = `
+const layers = ${JSON.stringify(layersConfig)};
+const speed = ${speed};
+const icons = ${JSON.stringify(ICON_UNICODE)};
+const W = window.innerWidth, H = window.innerHeight;
+layers.forEach(l => {
+  l.items = Array.from({length:l.count}, () => ({
+    x:Math.random()*W, y:Math.random()*H,
+    size:l.minSize+Math.random()*(l.maxSize-l.minSize),
+    rot:Math.random()*360,
+    rotV:l.rot*(Math.random()-0.5)*2,
+    vx:(Math.random()-0.5)*1.5, vy:(Math.random()-0.5)*1.5
+  }));
+});
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = W; canvas.height = H;
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  layers.forEach(l => l.items.forEach(it => {
+    if (l.anim==='fallDown') it.y += speed*0.8;
+    else if (l.anim==='fallUp') it.y -= speed*0.8;
+    else if (l.anim==='float') {
+      it.x += it.vx*speed*0.3; it.y += it.vy*speed*0.3;
+      if (it.x<0||it.x>W) it.vx*=-1;
+      if (it.y<0||it.y>H) it.vy*=-1;
+    }
+    it.rot += it.rotV*speed;
+    if (it.y>H+it.size) it.y = -it.size;
+    if (it.y<-it.size) it.y = H+it.size;
+    ctx.save();
+    ctx.translate(it.x, it.y);
+    ctx.rotate(it.rot*Math.PI/180);
+    ctx.globalAlpha = l.opacity;
+    if (l.type==='circle') {
+      ctx.beginPath(); ctx.arc(0,0,it.size/2,0,Math.PI*2);
+      ctx.fillStyle=l.color; ctx.fill();
+    } else if (l.type==='icon') {
+      const code = icons[l.iconName||l.color] || 0xf004;
+      ctx.font = '900 '+it.size+'px "Font Awesome 6 Free"';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle=l.color;
+      ctx.fillText(String.fromCharCode(code),0,0);
+    }
+    ctx.restore();
+  }));
+  requestAnimationFrame(draw);
+}
+draw();
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  layers.forEach(l => {
+    l.items = Array.from({length:l.count}, () => ({
+      x:Math.random()*W, y:Math.random()*H,
+      size:l.minSize+Math.random()*(l.maxSize-l.minSize),
+      rot:Math.random()*360,
+      rotV:l.rot*(Math.random()-0.5)*2,
+      vx:(Math.random()-0.5)*1.5, vy:(Math.random()-0.5)*1.5
+    }));
+  });
+});
+`;
+    const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Презентация</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<style>${styles}</style></head><body>
+<canvas id="c"></canvas>
+<div id="slides">${slides.map(s => `<div class="slide"><div class="card">${s.html}</div></div>`).join('')}</div>
+<script>${animCode}</script></body></html>`;
+
+    const blob = new Blob([fullHtml], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'presentation.html';
+    a.click();
   };
 
   return (
@@ -415,7 +511,6 @@ const PresentationEditorPage: React.FC = () => {
           <button onClick={exportHTML} className="export-btn"><i className="fas fa-download"/> Экспорт HTML</button>
         </div>
 
-        {/* слайды */}
         <div className="slides-viewport" ref={viewportRef}>
           <div className="slides-container">
             {slides.map(s => (
