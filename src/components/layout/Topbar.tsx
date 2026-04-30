@@ -22,6 +22,7 @@ export const Topbar: React.FC = () => {
     { path: '/vacation-requests', label: 'Заявки' },
     { path: '/flow-editor', label: 'Редактор' },
     { path: '/calculations', label: 'Расчёты' },
+    { path: '/presentation-editor', label: 'Презентации' },
   ];
 
   const getRoleLabel = (role: string) => {
